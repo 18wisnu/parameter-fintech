@@ -1,59 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 Parameter Fintech
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=for-the-badge&logo=laravel&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Alpine.js](https://img.shields.io/badge/alpine.js-%238BC0D0.svg?style=for-the-badge&logo=alpine.js&logoColor=white)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
 
-## About Laravel
+**Parameter Fintech** adalah sistem manajemen keuangan dan penagihan modern yang dirancang khusus untuk kebutuhan pengelolaan bisnis (ISP/Radius). Aplikasi ini menggabungkan kemudahan manajemen data pelanggan dengan sistem akuntansi dan penggajian yang otomatis.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 📊 Dashboard Utama (Admin)
+- **Financial Overview**: Pantau saldo kas real-time, dana cadangan, dan setoran yang menunggu verifikasi.
+- **Auto-Journaling**: Pencatatan transaksi otomatis ke Buku Kas Besar setelah verifikasi setoran.
 
-## Learning Laravel
+### 👥 Manajemen Pelanggan & Tagihan
+- **Data Pelanggan**: Kelola informasi pelanggan secara terpusat.
+- **Invoice Otomatis**: Generate tagihan bulanan dan kelola status pembayaran secara efisien.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 💰 Penggajian (Payroll)
+- **Manajemen Gaji**: Pengaturan gaji pokok untuk setiap staf/teknisi.
+- **Bonus Aktivasi**: Penghitungan bonus otomatis berdasarkan aktivasi pelanggan baru.
+- **Slip Gaji Digital**: Staf dapat melihat riwayat gaji mereka melalui antarmuka mobile.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 📈 Laporan & Dana Cadangan
+- **Bagi Hasil**: Sistem pembagian keuntungan yang transparan.
+- **Riwayat Transaksi**: Lacak setiap arus kas masuk dan keluar dengan detail.
 
-## Laravel Sponsors
+### 📱 Antarmuka Mobile (Staf/Kolektor)
+- **Mobile First Design**: Antarmuka premium yang dioptimalkan untuk penggunaan di lapangan.
+- **Setor Tunai**: Laporkan setoran harian langsung dari lokasi.
+- **Lapor Gangguan**: Komunikasi cepat terkait isu di lapangan.
+- **Akses Dashboard**: Akses cepat kembali ke panel admin bagi user dengan role Admin/Owner.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🛠️ Tech Stack
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Backend**: Laravel 11.x (PHP 8.2+)
+- **Frontend**: Blade Template, Tailwind CSS, Alpine.js
+- **Build Tool**: Vite
+- **Database**: MySQL / MariaDB
+- **UI System**: Premium Typography (Outfit Font), Glassmorphism Effects, Responsive Design.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## ⚙️ Persyaratan Sistem
 
-## Code of Conduct
+- PHP >= 8.2
+- Composer
+- Node.js & NPM
+- MySQL 8.0+
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🚀 Instalasi
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/18wisnu/parameter-fintech.git
+   cd parameter-fintech
+   ```
 
-## License
+2. **Instal Dependensi**
+   ```bash
+   composer install
+   npm install
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+3. **Konfigurasi Environment**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   *Atur konfigurasi database Anda di file `.env`.*
+
+4. **Migrasi Database**
+   ```bash
+   php artisan migrate
+   ```
+
+5. **Build Aset Frontend**
+   ```bash
+   npm run build
+   ```
+
+6. **Jalankan Aplikasi**
+   ```bash
+   php artisan serve
+   ```
+
+---
+
+## 🔐 Hak Akses (Roles)
+
+1. **Owner/Admin**: Akses penuh ke semua fitur finansial, laporan, manajemen user, dan menu setoran.
+2. **Teknisi/Kolektor**: Akses khusus fitur mobile (setoran, lapor gangguan, slip gaji).
+
+---
+
+## 📄 Lisensi
+
+Aplikasi ini bersifat internal dan berlisensi di bawah kepemilikan **Parameter Fintech**.
