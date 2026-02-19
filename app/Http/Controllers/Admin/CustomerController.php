@@ -35,13 +35,10 @@ class CustomerController extends Controller
 
         $customer = Customer::create($request->all());
 
-        // --- TAMBAHKAN INI (Kirim Notif ke Semua Admin) ---
         $admins = User::all();
         foreach ($admins as $admin) {
             $admin->notify(new NewCustomerNotification($customer));
         }
-        
-        Customer::create($request->all());
 
         return redirect()->route('customers.index')->with('success', 'Pelanggan berhasil ditambahkan');
     }
