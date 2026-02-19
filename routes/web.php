@@ -57,6 +57,9 @@ Route::middleware(['auth'])->prefix('mobile')->group(function () {
     // Rute Setoran Baru
     Route::get('/deposits/create', [DepositController::class, 'create'])->name('mobile.deposits.create');
     Route::post('/deposits', [DepositController::class, 'store'])->name('mobile.deposits.store');
+
+    // Rute Slip Gaji Mobile
+    Route::get('/salary', [\App\Http\Controllers\Mobile\SalaryController::class, 'show'])->name('mobile.salary.show');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -64,6 +67,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Action Approve Setoran
     Route::post('/deposit/{id}/approve', [DashboardController::class, 'approveDeposit'])->name('admin.deposit.approve');
+
+    // MANAJEMEN GAJI (Payroll)
+    Route::get('/salaries', [\App\Http\Controllers\Admin\SalaryController::class, 'index'])->name('admin.salaries.index');
+    Route::post('/salaries/generate', [\App\Http\Controllers\Admin\SalaryController::class, 'generate'])->name('admin.salaries.generate');
+    Route::post('/salaries/{id}/pay', [\App\Http\Controllers\Admin\SalaryController::class, 'pay'])->name('admin.salaries.pay');
+    Route::patch('/salaries/user/{userId}/update-base', [\App\Http\Controllers\Admin\SalaryController::class, 'updateBaseSalary'])->name('admin.salaries.update-base');
 });
 
 Route::middleware('auth')->group(function () {

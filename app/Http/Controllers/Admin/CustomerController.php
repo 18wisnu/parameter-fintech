@@ -21,7 +21,8 @@ class CustomerController extends Controller
 
     public function create()
     {
-        return view('admin.customers.create');
+        $staff = User::whereIn('role', ['teknisi', 'kolektor'])->get();
+        return view('admin.customers.create', compact('staff'));
     }
 
     public function store(Request $request)
@@ -33,7 +34,8 @@ class CustomerController extends Controller
             'customer_id' => 'nullable|unique:customers,customer_id', 
         ]);
 
-        $customer = Customer::create($request->all());
+        $data = $request->all();
+        $customer = Customer::create($data);
 
         $admins = User::all();
         foreach ($admins as $admin) {
@@ -47,7 +49,8 @@ class CustomerController extends Controller
     public function edit($id)
     {
         $customer = Customer::findOrFail($id);
-        return view('admin.customers.edit', compact('customer'));
+        $staff = User::whereIn('role', ['teknisi', 'kolektor'])->get();
+        return view('admin.customers.edit', compact('customer', 'staff'));
     }
 
     public function update(Request $request, $id)

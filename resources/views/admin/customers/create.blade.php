@@ -48,6 +48,16 @@
                     <label class="block text-sm font-bold text-slate-700 mb-2">No. WhatsApp</label>
                     <input type="number" name="phone" class="w-full px-4 py-3 rounded-xl border-slate-200" placeholder="08xxxxx">
                 </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Diaktifkan Oleh (Teknisi)</label>
+                    <select name="activated_by_id" class="w-full px-4 py-3 rounded-xl border-slate-200 bg-white">
+                        <option value="">-- Tanpa Bonus --</option>
+                        @foreach($staff as $s)
+                            <option value="{{ $s->id }}">{{ $s->name }} ({{ ucfirst($s->role) }})</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             <div class="mb-6">

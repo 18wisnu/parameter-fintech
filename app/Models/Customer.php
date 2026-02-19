@@ -19,7 +19,13 @@ class Customer extends Model
         'address',
         'due_date',
         'is_isolated',
+        'activated_by_id',
     ];
+
+    public function activatedBy()
+    {
+        return $this->belongsTo(User::class, 'activated_by_id');
+    }
 
     public function invoices()
     {
