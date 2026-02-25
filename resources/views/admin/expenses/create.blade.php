@@ -17,6 +17,15 @@
 
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
         <form action="{{ route('expenses.store') }}" method="POST">
+            @if ($errors->any())
+                <div class="alert alert-danger" style="background: red; color: white; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             @csrf
 
             <div class="mb-6">

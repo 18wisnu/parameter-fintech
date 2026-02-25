@@ -11,16 +11,37 @@
         <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
 
         <form action="{{ route('incomes.store') }}" method="POST">
+            @if ($errors->any())
+                <div class="alert alert-danger" style="background: red; color: white; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            
             @csrf
             
             <div class="mb-5">
                 <label class="block text-sm font-bold text-slate-700 mb-2">Tanggal Transaksi</label>
-                <input type="date" name="transaction_date" value="{{ date('Y-m-d') }}" class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-100 font-medium">
+                <input type="date" name="date" value="{{ date('Y-m-d') }}" class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-100 font-medium">
             </div>
 
             <div class="mb-5">
-                <label class="block text-sm font-bold text-slate-700 mb-2">Sumber Dana</label>
-                <select name="account_id" class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-100 bg-white">
+                <label class="block text-sm font-bold text-slate-700 mb-2">Simpan Ke (Kas/Bank)</label>
+                <select name="account_id" required class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-100 bg-white border-2 border-emerald-200">
+                    <option value="">-- Pilih Kas/Bank Penerima --</option>
+                    @foreach($accounts as $acc)
+                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-slate-700 mb-2">Sumber Dana / Kategori</label>
+                <select name="target_account_id" required class="w-full px-4 py-3 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-100 bg-white">
+                    <option value="">-- Pilih Asal Dana --</option>
                     @foreach($accounts as $acc)
                         <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
                     @endforeach

@@ -18,50 +18,62 @@ class DashboardController extends Controller
         $pendingDeposits = Deposit::where('status', 'pending')->with('user')->latest()->get();
         $totalPending = $pendingDeposits->sum('amount');
 
-        // 2. Saldo Kas Besar (Real)
-        $kasId = ChartOfAccount::where('code', '1001')->value('id');
-        $masuk = Transaction::where('source_account_id', $kasId)->where('type', 'income')->sum('amount');
-        $keluar = Transaction::where('source_account_id', $kasId)->where('type', 'expense')->sum('amount');
-        $saldoReal = $masuk - $keluar;
+        // Cari ID Akun Dana Cadangan
+        $akunCadangan = ChartOfAccount::where('name', 'like', '%Cadangan%')->first();
+        $idCadangan = $akunCadangan ? $akunCadangan->id : 0;
 
-        // 3. TOTAL DANA CADANGAN (Akumulasi dari Laporan Bagi Hasil)
-        // Kita ambil total dari semua laporan yang pernah disimpan
-        $totalCadangan = ProfitDistribution::sum('reserve_fund_amount');
+        // 2. PEMASUKAN & PENGELUARAN KAS BIASA (Pisahkan dari Cadangan)
+        $masukKasBiasa = Transaction::where('type', 'income')
+                                    ->where('account_id', '!=', $idCadangan)
+                                    ->sum('amount');
+        
+        $keluarKasBiasa = Transaction::where('type', 'expense')
+                                     ->where('account_id', '!=', $idCadangan)
+                                     ->sum('amount');
+
+        $saldoRealAwal = $masukKasBiasa - $keluarKasBiasa;
+
+        // 3. HITUNG DANA CADANGAN
+        // A. Potongan 10% murni dari Pemasukan Kas Biasa saja
+        $potonganSepuluhPersen = $masukKasBiasa * 0.10;
+
+        // B. Suntikan Dana Manual HANYA untuk Cadangan
+        $modalCadanganManual = Transaction::where('account_id', $idCadangan)
+                                          ->where('type', 'income')
+                                          ->sum('amount');
+        
+        $totalCadangan = $modalCadanganManual + $potonganSepuluhPersen;
+
+        // 4. KOREKSI KAS BESAR
+        // Karena 10% uangnya dipindah ke Cadangan, Saldo Kas Besar harus dikurangi 10% tersebut
+        $saldoReal = $saldoRealAwal - $potonganSepuluhPersen;
 
         return view('dashboard', compact('pendingDeposits', 'totalPending', 'saldoReal', 'totalCadangan'));
     }
 
-    // Fungsi untuk menyetujui setoran
     public function approveDeposit($id)
     {
         $deposit = Deposit::findOrFail($id);
-        
-        // 1. Cek apakah sudah diapprove sebelumnya? (Biar gak double jurnal)
         if ($deposit->status == 'approved') {
             return redirect()->back();
         }
 
-        // 2. Ubah Status Setoran jadi Approved
         $deposit->status = 'approved';
         $deposit->approved_by = auth()->id();
         $deposit->approved_at = now();
         $deposit->save();
 
-        // 3. AUTO-JOURNAL: Masukkan ke Buku Kas
-        // Kita asumsikan uang masuk ke "Kas Besar (1001)" dan sumbernya "Pendapatan Internet (4001)"
-        // Nanti bisa dibuat lebih dinamis, tapi untuk sekarang kita hardcode dulu biar jalan.
-        
-        $kasAkun = ChartOfAccount::where('code', '1001')->first(); // Kas Besar
-        $pendapatanAkun = ChartOfAccount::where('code', '4001')->first(); // Pendapatan Internet
+        $kasAkun = ChartOfAccount::where('code', '1001')->first(); 
+        $pendapatanAkun = ChartOfAccount::where('code', '4001')->first(); 
 
         Transaction::create([
             'date' => now(),
-            'account_id' => $pendapatanAkun->id, // Kategori: Pendapatan
-            'source_account_id' => $kasAkun->id, // Masuk ke: Kas Besar
+            'account_id' => $pendapatanAkun->id,
+            'source_account_id' => $kasAkun->id,
             'description' => 'Setoran dari ' . $deposit->user->name . ': ' . $deposit->description,
             'amount' => $deposit->amount,
-            'type' => 'income', // Pemasukan
-            'is_locked' => true, // Kunci biar gak bisa diedit sembarangan
+            'type' => 'income',
+            'is_locked' => true,
         ]);
 
         return redirect()->back()->with('success', 'Uang diterima & Jurnal tercatat otomatis!');

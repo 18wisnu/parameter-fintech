@@ -16,7 +16,7 @@
             <button @click="sidebarOpen = true" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
-            <span class="font-bold text-lg text-sky-600 tracking-wider">PARAMETER</span>
+            <span class="font-bold text-lg text-sky-600 tracking-wider">PARAMETER FINTECH</span>
         </div>
         
         <div class="relative mr-4" x-data="{ open: false }">
@@ -125,6 +125,13 @@
             <a href="{{ route('mobile.home') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('mobile.*') ? 'bg-white text-sky-700 font-bold' : 'text-sky-100 hover:bg-sky-500' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                 Menu Setoran
+            </a>
+
+            <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.users.index') ? 'bg-white text-sky-700 font-bold' : 'text-sky-100 hover:bg-sky-500' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span class="font-medium">Data Pegawai</span>
             </a>
 
         </nav>

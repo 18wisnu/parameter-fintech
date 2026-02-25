@@ -43,6 +43,16 @@
                 <td class="px-6 py-4">{{ $trx->description }}</td>
                 <td class="px-6 py-4 text-right font-bold {{ $trx->type == 'in' ? 'text-emerald-600' : 'text-rose-600' }}">
                     {{ $trx->type == 'in' ? '+' : '-' }} Rp {{ number_format($trx->amount, 0, ',', '.') }}
+
+                    @if(auth()->user()->role === 'owner')
+                        <form action="{{ route('transactions.destroy', $trx->id) }}" method="POST" onsubmit="return confirm('Yakin hapus permanen?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="bg-red-100 text-red-600 px-2 py-1 rounded">
+                                🗑️ Hapus
+                            </button>
+                        </form>
+                    @endif
                 </td>
             </tr>
             @endforeach

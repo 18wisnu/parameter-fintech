@@ -25,7 +25,7 @@ class SocialiteController extends Controller
             $user = User::where('email', $googleUser->email)->first();
 
             if ($user) {
-                // Jika ada, update ID Google & Avatar, lalu Login
+                // Update data Google terbaru
                 $user->update([
                     'google_id' => $googleUser->id,
                     'avatar' => $googleUser->avatar,
@@ -33,8 +33,9 @@ class SocialiteController extends Controller
 
                 Auth::login($user);
 
-                // Arahkan sesuai Role (Logika Satpam)
+                // Panggil "Satpam" untuk mengarahkan halaman berdasarkan role
                 return $this->redirectByRole($user);
+
             } else {
                 // Jika email tidak dikenal, tolak!
                 return redirect('/login')->with('error', 'Email Anda tidak terdaftar di sistem Parameter Fintech.');
@@ -44,15 +45,22 @@ class SocialiteController extends Controller
         }
     }
 
-    // Fungsi Logika Satpam (Redirect)
+    /**
+     * Logika Satpam (Redirect berdasarkan Role)
+     */
     protected function redirectByRole($user)
     {
+        // Jalur Utama (Owner & Admin)
         if (in_array($user->role, ['owner', 'admin'])) {
             return redirect()->intended('/dashboard');
-        } elseif (in_array($user->role, ['teknisi', 'kolektor'])) {
+        } 
+        
+        // Jalur Lapangan (Teknisi & Kolektor)
+        if (in_array($user->role, ['teknisi', 'kolektor'])) {
             return redirect()->intended('/mobile/home');
         }
         
+        // Default jika role tidak dikenal
         return redirect('/');
     }
 }
