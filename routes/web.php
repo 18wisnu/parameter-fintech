@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/reserve', [ReportController::class, 'reserve'])->name('reports.reserve');
     Route::post('reports/reserve', [ReportController::class, 'storeUsage'])->name('reports.reserve.store');
     Route::get('reports/reserve/pdf', [ReportController::class, 'exportReservePdf'])->name('reports.reserve.pdf');
+    Route::post('/reports/reserve/inject', [App\Http\Controllers\Admin\ReportController::class, 'storeInjection'])->name('reports.reserve.inject');
 
     // HISTORY TRANSAKSI & TOMBOL HAPUS
     Route::get('reports/history', [ReportController::class, 'history'])->name('reports.history');

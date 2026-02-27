@@ -14,51 +14,44 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. Setoran Pending
+        // 1. Ambil Setoran dari Kolektor yang masih menunggu konfirmasi
         $pendingDeposits = Deposit::where('status', 'pending')->with('user')->latest()->get();
         $totalPending = $pendingDeposits->sum('amount');
 
-        // 2. Cari Akun Cadangan
+        // 2. Identifikasi Akun Kas Biasa vs Cadangan (Untuk Saldo Real)
         $akunCadangan = ChartOfAccount::where('name', 'like', '%Cadangan%')->first();
         $idCadangan = $akunCadangan ? $akunCadangan->id : 0;
 
-        // 3. TOTAL PENDAPATAN (SEMUA WAKTU) - Biar tidak kosong kalau ganti bulan
-        // Kita ambil semua 'income' dari kategori PPPOE dan HOTSPOT
         $totalPemasukan = Transaction::where('type', 'income')
                                     ->where('account_id', '!=', $idCadangan)
                                     ->sum('amount');
         
         $totalPengeluaran = Transaction::where('type', 'expense')
-                                    ->where('account_id', '!=', $idCadangan)
-                                    ->sum('amount');
+                                     ->where('account_id', '!=', $idCadangan)
+                                     ->sum('amount');
 
-        // LABA BERSIH (Pemasukan - Pengeluaran Operasional)
-        $labaBersih = $totalPemasukan - $totalPengeluaran;
+        $labaOperasional = $totalPemasukan - $totalPengeluaran;
+        
+        // Asumsi 10% sudah diamankan untuk cadangan secara sistem
+        $jatahSepuluhPersen = $labaOperasional > 0 ? $labaOperasional * 0.10 : 0;
+        $saldoReal = $labaOperasional - $jatahSepuluhPersen;
 
-        // 4. HITUNG DANA CADANGAN (Dinamis dari Laba Bersih)
-        // Jatah 10% dari Laba Bersih yang pernah didapat
-        $jatahCadangan = $labaBersih > 0 ? $labaBersih * 0.10 : 0;
-
-        // Suntikan manual ke akun cadangan (jika ada)
-        $masukCadanganManual = Transaction::where('account_id', $idCadangan)
-                                        ->where('type', 'income')
-                                        ->sum('amount');
-
-        // Pengeluaran yang ditarik dari tabungan cadangan
-        $keluarCadangan = Transaction::where('account_id', $idCadangan)
-                                    ->where('type', 'expense')
-                                    ->sum('amount');
-
-        // ANGKA UNTUK DASHBOARD
-        $totalCadangan = ($jatahCadangan + $masukCadanganManual) - $keluarCadangan;
-        $saldoReal = $labaBersih - $jatahCadangan;
+        // ---------------------------------------------------------
+        // 3. HITUNG DANA CADANGAN (AMBIL LANGSUNG DARI TABEL LOG)
+        // ---------------------------------------------------------
+        // Ini akan menjumlahkan semua hasil Simpan Laporan + Suntik Dana Manual
+        $totalMasukCadangan = \App\Models\ReserveFundLog::where('type', 'in')->sum('amount');
+        $totalKeluarCadangan = \App\Models\ReserveFundLog::where('type', 'out')->sum('amount');
+        
+        // TOTAL FIX DANA CADANGAN UNTUK DASHBOARD
+        $totalCadangan = $totalMasukCadangan - $totalKeluarCadangan;
 
         return view('dashboard', compact(
             'pendingDeposits', 
             'totalPending', 
             'saldoReal', 
-            'totalCadangan',
-            'totalPemasukan',
+            'totalCadangan', 
+            'totalPemasukan', 
             'totalPengeluaran'
         ));
     }

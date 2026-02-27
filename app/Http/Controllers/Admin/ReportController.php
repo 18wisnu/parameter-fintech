@@ -116,6 +116,10 @@ class ReportController extends Controller
 
     public function storeUsage(Request $request)
     {
+        if (auth()->user()->role !== 'owner') {
+            return redirect()->back()->with('error', 'Akses ditolak! Anda bukan Owner.');
+        }
+
         $request->validate([
             'amount' => 'required|numeric|min:1',
             'description' => 'required',
@@ -130,6 +134,31 @@ class ReportController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Penggunaan Dana Cadangan tercatat.');
+    }
+
+    // FITUR BARU: Simpan Suntikan Dana Cadangan (Uang Masuk Manual)
+    public function storeInjection(Request $request)
+    {
+        // 🔒 CEK ROLE OWNER
+        if (auth()->user()->role !== 'owner') {
+            return redirect()->back()->with('error', 'Akses ditolak! Anda bukan Owner.');
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'description' => 'required',
+            'transaction_date' => 'required|date',
+        ]);
+
+        // Simpan ke database
+        ReserveFundLog::create([
+            'type' => 'in', // 'in' berarti uang masuk
+            'amount' => $request->amount,
+            'description' => 'Suntikan: ' . $request->description,
+            'transaction_date' => $request->transaction_date,
+        ]);
+
+        return redirect()->back()->with('success', 'Suntikan Dana Cadangan berhasil dicatat.');
     }
 
     public function exportReservePdf()

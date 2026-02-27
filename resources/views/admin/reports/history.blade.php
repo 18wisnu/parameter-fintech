@@ -34,21 +34,27 @@
         <tbody>
             @foreach($transactions as $trx)
             <tr class="border-b border-slate-50 hover:bg-slate-50">
-                <td class="px-6 py-4 text-sm">{{ \Carbon\Carbon::parse($trx->transaction_date)->format('d/m/Y') }}</td>
+                {{-- PERBAIKAN: Ubah transaction_date menjadi date --}}
+                <td class="px-6 py-4 text-sm">{{ \Carbon\Carbon::parse($trx->date)->format('d/m/Y') }}</td>
+                
                 <td class="px-6 py-4">
-                    <span class="font-bold text-xs {{ $trx->type == 'in' ? 'text-emerald-600' : 'text-rose-600' }}">
-                        {{ $trx->type == 'in' ? 'PEMASUKAN' : 'PENGELUARAN' }}
+                    {{-- PERBAIKAN: Ubah 'in' menjadi 'income' --}}
+                    <span class="font-bold text-xs {{ $trx->type == 'income' ? 'text-emerald-600' : 'text-rose-600' }}">
+                        {{ $trx->type == 'income' ? 'PEMASUKAN' : 'PENGELUARAN' }}
                     </span>
                 </td>
+                
                 <td class="px-6 py-4">{{ $trx->description }}</td>
-                <td class="px-6 py-4 text-right font-bold {{ $trx->type == 'in' ? 'text-emerald-600' : 'text-rose-600' }}">
-                    {{ $trx->type == 'in' ? '+' : '-' }} Rp {{ number_format($trx->amount, 0, ',', '.') }}
+                
+                <td class="px-6 py-4 text-right font-bold {{ $trx->type == 'income' ? 'text-emerald-600' : 'text-rose-600' }}">
+                    {{-- PERBAIKAN: Ubah 'in' menjadi 'income' --}}
+                    {{ $trx->type == 'income' ? '+' : '-' }} Rp {{ number_format($trx->amount, 0, ',', '.') }}
 
                     @if(auth()->user()->role === 'owner')
-                        <form action="{{ route('transactions.destroy', $trx->id) }}" method="POST" onsubmit="return confirm('Yakin hapus permanen?')">
+                        <form action="{{ route('transactions.destroy', $trx->id) }}" method="POST" onsubmit="return confirm('Yakin hapus permanen?')" class="mt-2 inline-block">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-red-100 text-red-600 px-2 py-1 rounded">
+                            <button type="submit" class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs">
                                 🗑️ Hapus
                             </button>
                         </form>
