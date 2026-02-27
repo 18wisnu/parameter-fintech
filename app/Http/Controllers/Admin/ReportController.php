@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ReserveFundLog;
-use App\Models\Transaction; // Menggunakan satu pintu tabel transactions
+use App\Models\Transaction; 
 use App\Models\ChartOfAccount;
 use App\Models\ProfitDistribution;
 use Illuminate\Support\Facades\DB;
@@ -15,27 +15,27 @@ use Carbon\Carbon;
 class ReportController extends Controller
 {
     // ----------------------------------------------------------------------
-    // 1. FITUR BAGI HASIL (DIVIDEN) - SUDAH DIPERBAIKI
+    // 1. FITUR BAGI HASIL (DIVIDEN)
     // ----------------------------------------------------------------------
 
     public function index(Request $request)
     {
-        // 1. Filter Waktu (Default bulan & tahun sekarang)
+        // 1. Filter Waktu (Default bulan & tahun berjalan)
         $month = $request->month ?? date('n');
         $year  = $request->year ?? date('Y');
 
-        // Identifikasi Akun Dana Cadangan agar pengeluaran tabungan tidak tercampur operasional
+        // Identifikasi Akun Dana Cadangan agar tidak tercampur ke operasional
         $akunCadangan = ChartOfAccount::where('name', 'like', '%Cadangan%')->first();
         $idCadangan = $akunCadangan ? $akunCadangan->id : 0;
 
-        // 2. Hitung Pemasukan (PPPoE + Hotspot dari tabel Transactions)
+        // 2. Hitung Pemasukan (Semua Income kecuali transaksi internal cadangan)
         $revenue = Transaction::where('type', 'income')
                                 ->where('account_id', '!=', $idCadangan)
                                 ->whereYear('date', $year)
                                 ->whereMonth('date', $month)
                                 ->sum('amount');
 
-        // 3. Hitung Pengeluaran Operasional (Dari tabel Transactions)
+        // 3. Hitung Pengeluaran Operasional
         $expense = Transaction::where('type', 'expense')
                                  ->where('account_id', '!=', $idCadangan)
                                  ->whereYear('date', $year)
@@ -47,7 +47,7 @@ class ReportController extends Controller
 
         if ($netProfit > 0) {
             $reserveFund   = $netProfit * 0.10; // 10% Cadangan dari Laba Bersih
-            $distributable = $netProfit - $reserveFund; // Sisa yang dibagi ke pemilik
+            $distributable = $netProfit - $reserveFund; // Sisa yang siap dibagi
             
             $shareA = $distributable * 0.60; // Junaidi & Eka (60%)
             $shareB = $distributable * 0.40; // Bagus (40%)
@@ -58,7 +58,7 @@ class ReportController extends Controller
             $shareB = 0;
         }
 
-        // 5. Ambil History Laporan
+        // 5. Ambil History Laporan yang sudah disimpan
         $history = ProfitDistribution::latest('period')->get();
 
         return view('admin.reports.index', compact(
@@ -86,6 +86,7 @@ class ReportController extends Controller
             'share_group_b'        => $request->share_b,
         ]);
 
+        // Otomatis masukkan ke log Dana Cadangan jika ada alokasi
         if ($request->reserve_fund > 0) {
             ReserveFundLog::create([
                 'type' => 'in',
@@ -95,7 +96,7 @@ class ReportController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Laporan berhasil disimpan dan dikunci.');
+        return redirect()->back()->with('success', 'Laporan berhasil disimpan!');
     }
 
     // ----------------------------------------------------------------------
@@ -139,12 +140,12 @@ class ReportController extends Controller
     }
 
     // ----------------------------------------------------------------------
-    // 3. FITUR RIWAYAT TRANSAKSI (MENGGUNAKAN TABEL TRANSACTION)
+    // 3. FITUR RIWAYAT TRANSAKSI (FIX PEMASUKAN/PENGELUARAN)
     // ----------------------------------------------------------------------
 
     public function history(Request $request)
     {
-        $query = Transaction::query()->with('account');
+        $query = Transaction::query()->with(['account', 'sourceAccount']);
 
         if ($request->start_date && $request->end_date) {
             $query->whereBetween('date', [$request->start_date, $request->end_date]);
