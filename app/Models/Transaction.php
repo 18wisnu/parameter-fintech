@@ -20,9 +20,15 @@ class Transaction extends Model
         'is_locked',
     ];
 
-    // Relasi ke Akun
+    // Relasi ke Akun Utama (Tujuan)
     public function account()
     {
         return $this->belongsTo(ChartOfAccount::class, 'account_id');
+    }
+
+    // Relasi ke Akun Sumber (Asal Uang) - INI YANG TADI BIKIN ERROR
+    public function sourceAccount()
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'source_account_id');
     }
 }
