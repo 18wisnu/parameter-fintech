@@ -20,13 +20,22 @@
             </div>
 
             <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Tipe Layanan</label>
+                <select id="filter_tipe" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
+                    <option value="" selected>-- Pilih Tipe --</option>
+                    <option value="PPPOE">Bulanan (PPPoE)</option>
+                    <option value="HOTSPOT">Reseller (Hotspot)</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Terima Dari Siapa?</label>
-                <select name="customer_id" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
+                <select name="customer_id" id="select_pelanggan" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
                     <option value="" disabled selected>-- Pilih Nama Pelanggan --</option>
                     @foreach($customers as $c)
-                        <option value="{{ $c->id }}">
-                            {{ $c->name }} 
-                            ({{ strtoupper($c->type) }})
+                        {{-- Atribut data-type inilah yang akan dibaca oleh Javascript di bawah --}}
+                        <option value="{{ $c->id }}" data-type="{{ strtoupper($c->type) }}" style="display: none;">
+                            {{ $c->name }} ({{ strtoupper($c->type) }})
                         </option>
                     @endforeach
                 </select>
@@ -47,4 +56,27 @@
             </button>
         </form>
     </div>
+
+    {{-- LOGIKA JAVASCRIPT: Biar saringannya jalan otomatis --}}
+    <script>
+        document.getElementById('filter_tipe').addEventListener('change', function() {
+            const selectedTipe = this.value;
+            const selectPelanggan = document.getElementById('select_pelanggan');
+            const options = selectPelanggan.options;
+
+            // Reset pilihan pelanggan setiap kali tipe diubah
+            selectPelanggan.value = "";
+
+            for (let i = 0; i < options.length; i++) {
+                const optionTipe = options[i].getAttribute('data-type');
+                
+                // Tampilkan hanya yang cocok dengan tipe yang dipilih
+                if (selectedTipe === "" || optionTipe === selectedTipe) {
+                    options[i].style.display = "block";
+                } else {
+                    options[i].style.display = "none";
+                }
+            }
+        });
+    </script>
 @endsection
