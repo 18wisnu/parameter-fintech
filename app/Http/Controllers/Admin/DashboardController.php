@@ -18,42 +18,55 @@ class DashboardController extends Controller
         $pendingDeposits = Deposit::where('status', 'pending')->with('user')->latest()->get();
         $totalPending = $pendingDeposits->sum('amount');
 
-        // Cari ID Akun Dana Cadangan
+        // 2. Cari Akun Cadangan
         $akunCadangan = ChartOfAccount::where('name', 'like', '%Cadangan%')->first();
         $idCadangan = $akunCadangan ? $akunCadangan->id : 0;
 
-        // 2. PEMASUKAN & PENGELUARAN KAS BIASA (Pisahkan dari Cadangan)
-        $masukKasBiasa = Transaction::where('type', 'income')
+        // 3. TOTAL PENDAPATAN (SEMUA WAKTU) - Biar tidak kosong kalau ganti bulan
+        // Kita ambil semua 'income' dari kategori PPPOE dan HOTSPOT
+        $totalPemasukan = Transaction::where('type', 'income')
                                     ->where('account_id', '!=', $idCadangan)
                                     ->sum('amount');
         
-        $keluarKasBiasa = Transaction::where('type', 'expense')
-                                     ->where('account_id', '!=', $idCadangan)
-                                     ->sum('amount');
+        $totalPengeluaran = Transaction::where('type', 'expense')
+                                    ->where('account_id', '!=', $idCadangan)
+                                    ->sum('amount');
 
-        $saldoRealAwal = $masukKasBiasa - $keluarKasBiasa;
+        // LABA BERSIH (Pemasukan - Pengeluaran Operasional)
+        $labaBersih = $totalPemasukan - $totalPengeluaran;
 
-        // 3. HITUNG DANA CADANGAN
-        // A. Potongan 10% murni dari Pemasukan Kas Biasa saja
-        $potonganSepuluhPersen = $masukKasBiasa * 0.10;
+        // 4. HITUNG DANA CADANGAN (Dinamis dari Laba Bersih)
+        // Jatah 10% dari Laba Bersih yang pernah didapat
+        $jatahCadangan = $labaBersih > 0 ? $labaBersih * 0.10 : 0;
 
-        // B. Suntikan Dana Manual HANYA untuk Cadangan
-        $modalCadanganManual = Transaction::where('account_id', $idCadangan)
-                                          ->where('type', 'income')
-                                          ->sum('amount');
-        
-        $totalCadangan = $modalCadanganManual + $potonganSepuluhPersen;
+        // Suntikan manual ke akun cadangan (jika ada)
+        $masukCadanganManual = Transaction::where('account_id', $idCadangan)
+                                        ->where('type', 'income')
+                                        ->sum('amount');
 
-        // 4. KOREKSI KAS BESAR
-        // Karena 10% uangnya dipindah ke Cadangan, Saldo Kas Besar harus dikurangi 10% tersebut
-        $saldoReal = $saldoRealAwal - $potonganSepuluhPersen;
+        // Pengeluaran yang ditarik dari tabungan cadangan
+        $keluarCadangan = Transaction::where('account_id', $idCadangan)
+                                    ->where('type', 'expense')
+                                    ->sum('amount');
 
-        return view('dashboard', compact('pendingDeposits', 'totalPending', 'saldoReal', 'totalCadangan'));
+        // ANGKA UNTUK DASHBOARD
+        $totalCadangan = ($jatahCadangan + $masukCadanganManual) - $keluarCadangan;
+        $saldoReal = $labaBersih - $jatahCadangan;
+
+        return view('dashboard', compact(
+            'pendingDeposits', 
+            'totalPending', 
+            'saldoReal', 
+            'totalCadangan',
+            'totalPemasukan',
+            'totalPengeluaran'
+        ));
     }
 
     public function approveDeposit($id)
     {
         $deposit = Deposit::findOrFail($id);
+        
         if ($deposit->status == 'approved') {
             return redirect()->back();
         }
@@ -63,19 +76,21 @@ class DashboardController extends Controller
         $deposit->approved_at = now();
         $deposit->save();
 
+        // Ambil akun Kas (1001) dan akun Pendapatan (4001)
         $kasAkun = ChartOfAccount::where('code', '1001')->first(); 
         $pendapatanAkun = ChartOfAccount::where('code', '4001')->first(); 
 
+        // Otomatis catat ke Jurnal Transaksi
         Transaction::create([
             'date' => now(),
             'account_id' => $pendapatanAkun->id,
             'source_account_id' => $kasAkun->id,
-            'description' => 'Setoran dari ' . $deposit->user->name . ': ' . $deposit->description,
+            'description' => 'Setoran dari ' . $deposit->user->name . ' (' . strtoupper($deposit->type ?? 'UMUM') . ')',
             'amount' => $deposit->amount,
             'type' => 'income',
             'is_locked' => true,
         ]);
 
-        return redirect()->back()->with('success', 'Uang diterima & Jurnal tercatat otomatis!');
+        return redirect()->back()->with('success', 'Setoran berhasil disetujui dan saldo diperbarui!');
     }
 }

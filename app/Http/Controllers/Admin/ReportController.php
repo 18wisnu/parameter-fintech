@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ReserveFundLog;
-use App\Models\Income;
-use App\Models\Expense;
+use App\Models\Transaction; // Menggunakan satu pintu tabel transactions
+use App\Models\ChartOfAccount;
 use App\Models\ProfitDistribution;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -15,31 +15,39 @@ use Carbon\Carbon;
 class ReportController extends Controller
 {
     // ----------------------------------------------------------------------
-    // 1. FITUR BAGI HASIL (DIVIDEN)
+    // 1. FITUR BAGI HASIL (DIVIDEN) - SUDAH DIPERBAIKI
     // ----------------------------------------------------------------------
 
-    // Halaman Utama Laporan Bagi Hasil
     public function index(Request $request)
     {
-        // 1. Filter Waktu
-        $month = $request->month ?? date('n'); // 1-12
+        // 1. Filter Waktu (Default bulan & tahun sekarang)
+        $month = $request->month ?? date('n');
         $year  = $request->year ?? date('Y');
 
-        // 2. Hitung Pemasukan & Pengeluaran Real-time
-        $revenue = Income::whereYear('transaction_date', $year)
-                         ->whereMonth('transaction_date', $month)
-                         ->sum('amount');
+        // Identifikasi Akun Dana Cadangan agar pengeluaran tabungan tidak tercampur operasional
+        $akunCadangan = ChartOfAccount::where('name', 'like', '%Cadangan%')->first();
+        $idCadangan = $akunCadangan ? $akunCadangan->id : 0;
 
-        $expense = Expense::whereYear('transaction_date', $year)
-                          ->whereMonth('transaction_date', $month)
-                          ->sum('amount');
+        // 2. Hitung Pemasukan (PPPoE + Hotspot dari tabel Transactions)
+        $revenue = Transaction::where('type', 'income')
+                                ->where('account_id', '!=', $idCadangan)
+                                ->whereYear('date', $year)
+                                ->whereMonth('date', $month)
+                                ->sum('amount');
 
-        // 3. Kalkulasi Pembagian
+        // 3. Hitung Pengeluaran Operasional (Dari tabel Transactions)
+        $expense = Transaction::where('type', 'expense')
+                                 ->where('account_id', '!=', $idCadangan)
+                                 ->whereYear('date', $year)
+                                 ->whereMonth('date', $month)
+                                 ->sum('amount');
+
+        // 4. Kalkulasi Pembagian Laba
         $netProfit = $revenue - $expense;
 
         if ($netProfit > 0) {
-            $reserveFund   = $netProfit * 0.10; // 10% Cadangan
-            $distributable = $netProfit - $reserveFund; // Sisa dibagi
+            $reserveFund   = $netProfit * 0.10; // 10% Cadangan dari Laba Bersih
+            $distributable = $netProfit - $reserveFund; // Sisa yang dibagi ke pemilik
             
             $shareA = $distributable * 0.60; // Junaidi & Eka (60%)
             $shareB = $distributable * 0.40; // Bagus (40%)
@@ -50,7 +58,7 @@ class ReportController extends Controller
             $shareB = 0;
         }
 
-        // 4. Ambil History Laporan (Dari Tabel profit_distributions)
+        // 5. Ambil History Laporan
         $history = ProfitDistribution::latest('period')->get();
 
         return view('admin.reports.index', compact(
@@ -59,17 +67,14 @@ class ReportController extends Controller
         ));
     }
 
-    // Simpan / Kunci Laporan Bagi Hasil
     public function store(Request $request)
     {
-        // Cek Duplikasi Periode
         $period = Carbon::createFromDate($request->year, $request->month, 1)->format('Y-m-d');
         
         if (ProfitDistribution::where('period', $period)->exists()) {
             return redirect()->back()->with('error', 'Laporan periode ini sudah pernah disimpan!');
         }
 
-        // Simpan ke Database
         ProfitDistribution::create([
             'period'               => $period,
             'total_revenue'        => $request->revenue,
@@ -81,7 +86,6 @@ class ReportController extends Controller
             'share_group_b'        => $request->share_b,
         ]);
 
-        // Opsional: Catat otomatis ke Log Tabungan Perusahaan jika ada profit
         if ($request->reserve_fund > 0) {
             ReserveFundLog::create([
                 'type' => 'in',
@@ -94,12 +98,10 @@ class ReportController extends Controller
         return redirect()->back()->with('success', 'Laporan berhasil disimpan dan dikunci.');
     }
 
-
     // ----------------------------------------------------------------------
     // 2. FITUR DANA CADANGAN
     // ----------------------------------------------------------------------
 
-    // Halaman Dana Cadangan
     public function reserve()
     {
         $totalMasuk = ReserveFundLog::where('type', 'in')->sum('amount');
@@ -111,7 +113,6 @@ class ReportController extends Controller
         return view('admin.reports.reserve', compact('saldoCadangan', 'logs'));
     }
 
-    // Simpan Penggunaan Dana Cadangan (Uang Keluar dari Tabungan)
     public function storeUsage(Request $request)
     {
         $request->validate([
@@ -130,7 +131,6 @@ class ReportController extends Controller
         return redirect()->back()->with('success', 'Penggunaan Dana Cadangan tercatat.');
     }
 
-    // Export PDF Dana Cadangan
     public function exportReservePdf()
     {
         $logs = ReserveFundLog::orderBy('transaction_date', 'asc')->get();
@@ -138,43 +138,32 @@ class ReportController extends Controller
         return $pdf->download('laporan-dana-cadangan.pdf');
     }
 
-
     // ----------------------------------------------------------------------
-    // 3. FITUR RIWAYAT TRANSAKSI (INCOME & EXPENSE)
+    // 3. FITUR RIWAYAT TRANSAKSI (MENGGUNAKAN TABEL TRANSACTION)
     // ----------------------------------------------------------------------
 
-    // Halaman History Transaksi
     public function history(Request $request)
     {
-        $queryIn = Income::select('id', 'amount', 'description', 'transaction_date', DB::raw("'in' as type"));
-        $queryOut = Expense::select('id', 'amount', 'description', 'transaction_date', DB::raw("'out' as type"));
+        $query = Transaction::query()->with('account');
 
-        // Filter Tanggal
         if ($request->start_date && $request->end_date) {
-            $queryIn->whereBetween('transaction_date', [$request->start_date, $request->end_date]);
-            $queryOut->whereBetween('transaction_date', [$request->start_date, $request->end_date]);
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
         }
 
-        // Gabungkan dan Urutkan
-        $transactions = $queryIn->union($queryOut)
-                                ->orderBy('transaction_date', 'desc')
-                                ->paginate(15);
+        $transactions = $query->orderBy('date', 'desc')->paginate(15);
 
         return view('admin.reports.history', compact('transactions'));
     }
 
-    // Export PDF History Transaksi
     public function exportHistoryPdf(Request $request)
     {
-        $queryIn = Income::select('amount', 'description', 'transaction_date', DB::raw("'Pemasukan' as type"));
-        $queryOut = Expense::select('amount', 'description', 'transaction_date', DB::raw("'Pengeluaran' as type"));
+        $query = Transaction::query();
 
         if ($request->start_date && $request->end_date) {
-            $queryIn->whereBetween('transaction_date', [$request->start_date, $request->end_date]);
-            $queryOut->whereBetween('transaction_date', [$request->start_date, $request->end_date]);
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
         }
 
-        $transactions = $queryIn->union($queryOut)->orderBy('transaction_date', 'desc')->get();
+        $transactions = $query->orderBy('date', 'desc')->get();
         
         $pdf = Pdf::loadView('admin.reports.pdf_history', compact('transactions'));
         return $pdf->download('laporan-riwayat-transaksi.pdf');
