@@ -26,15 +26,20 @@
                         </span>
                     </td>
                     <td class="px-4 py-4">
+                        {{-- PERBAIKAN DI SINI: --}}
                         <form action="{{ route('admin.users.updateRole', $user->id) }}" method="POST" class="flex gap-2">
                             @csrf
-                            @method('PATCH')
+                            
+                            {{-- INI KUNCINYA BOS! GANTI PATCH JADI PUT --}}
+                            @method('PUT')
+
                             <select name="role" class="text-sm border-slate-200 rounded-lg focus:ring-emerald-500">
                                 <option value="owner" {{ $user->role == 'owner' ? 'selected' : '' }}>Owner</option>
                                 <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
                                 <option value="teknisi" {{ $user->role == 'teknisi' ? 'selected' : '' }}>Teknisi</option>
-                                <option value="kolektor" {{ $user->role == 'kolektor' ? 'selected' : '' }}>Kolektor</option>
+                                <option value="staff" {{ $user->role == 'staff' ? 'selected' : '' }}>Staff</option>
                             </select>
+                            
                             <button type="submit" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-emerald-700">Set</button>
                         </form>
                     </td>
