@@ -20,9 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Tambahkan 3 baris ini: Jika aplikasi diakses selain dari localhost, paksa pakai HTTPS
-        if (config('app.env') === 'production' || request()->header('X-Forwarded-Proto') == 'https') {
-            URL::forceScheme('https');
+        if (config('app.env') === 'production') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
         }
     }
 }

@@ -14,6 +14,11 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // 🔒 SATPAM: Kalau yang masuk Staff/Teknisi, Tendang ke Menu Setoran!
+        if (in_array(auth()->user()->role, ['staff', 'teknisi'])) {
+            return redirect()->route('mobile.home');
+        }
+        
         // 1. Ambil Setoran dari Kolektor yang masih menunggu konfirmasi
         $pendingDeposits = Deposit::where('status', 'pending')->with('user')->latest()->get();
         $totalPending = $pendingDeposits->sum('amount');
