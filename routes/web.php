@@ -111,6 +111,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Hapus Transaksi
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
 
+    // --- SISTEM & UPDATE ---
+    Route::get('/system', [\App\Http\Controllers\Admin\SystemController::class, 'index'])->name('admin.system.index');
+    Route::post('/system/update', [\App\Http\Controllers\Admin\SystemController::class, 'updateVersion'])->name('admin.system.update');
+
     // --- PROFILE ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

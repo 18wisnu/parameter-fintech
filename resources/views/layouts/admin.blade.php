@@ -151,6 +151,13 @@
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 Data Pegawai
             </a>
+
+            @if(auth()->user()->role == 'owner')
+                <a href="{{ route('admin.system.index') }}" class="flex items-center px-4 py-3 rounded-xl mt-4 bg-sky-800/50 border border-sky-400/20 transition-all {{ request()->routeIs('admin.system.*') ? 'bg-white text-sky-800 shadow-md font-bold border-none' : 'text-sky-200 hover:bg-sky-600/50 hover:text-white' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Update Sistem
+                </a>
+            @endif
         </nav>
 
         <div class="p-5 bg-sky-800/80 border-t border-sky-600/50 mt-auto">
