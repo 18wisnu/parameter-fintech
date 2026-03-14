@@ -51,13 +51,26 @@ class DashboardController extends Controller
         // TOTAL FIX DANA CADANGAN UNTUK DASHBOARD
         $totalCadangan = $totalMasukCadangan - $totalKeluarCadangan;
 
+        // 4. HITUNG PENDAPATAN & PENGELUARAN BULAN INI (TANPA POTONGAN)
+        $incomeThisMonth = Transaction::where('type', 'income')
+                                    ->whereYear('date', now()->year)
+                                    ->whereMonth('date', now()->month)
+                                    ->sum('amount');
+        
+        $expenseThisMonth = Transaction::where('type', 'expense')
+                                     ->whereYear('date', now()->year)
+                                     ->whereMonth('date', now()->month)
+                                     ->sum('amount');
+
         return view('dashboard', compact(
             'pendingDeposits', 
             'totalPending', 
             'saldoReal', 
             'totalCadangan', 
             'totalPemasukan', 
-            'totalPengeluaran'
+            'totalPengeluaran',
+            'incomeThisMonth',
+            'expenseThisMonth'
         ));
     }
 

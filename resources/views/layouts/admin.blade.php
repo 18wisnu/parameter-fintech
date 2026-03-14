@@ -22,48 +22,51 @@
             </div>
         </div>
         
-        <div class="relative mr-4" x-data="{ open: false }">
-            <button @click="open = !open" class="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                
-                @if(auth()->user()->unreadNotifications->count() > 0)
-                    <span class="absolute top-1 right-1 w-4 h-4 bg-rose-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold border border-white">
-                        {{ auth()->user()->unreadNotifications->count() }}
-                    </span>
-                @endif
-            </button>
+        <div class="flex items-center gap-3 pr-2">
+            <!-- NOTIFIKASI -->
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    
+                    @if(auth()->user()->unreadNotifications->count() > 0)
+                        <span class="absolute top-1 right-1 w-4 h-4 bg-rose-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold border border-white">
+                            {{ auth()->user()->unreadNotifications->count() }}
+                        </span>
+                    @endif
+                </button>
 
-            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-slate-100" style="display: none;">
-                <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <h3 class="text-xs font-bold text-slate-700 uppercase">Notifikasi</h3>
-                    <a href="{{ route('notifications.readAll') }}" class="text-[10px] text-sky-600 hover:text-sky-800 font-bold">Tandai Sudah Baca</a>
-                </div>
-                
-                <div class="max-h-64 overflow-y-auto">
-                    @forelse(auth()->user()->notifications as $notification)
-                        <a href="{{ $notification->data['link'] ?? '#' }}" class="block p-4 border-b border-slate-50 hover:bg-slate-50 transition {{ $notification->read_at ? 'opacity-60' : 'bg-sky-50/50' }}">
-                            <div class="flex gap-3">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-full {{ $notification->data['color'] ?? 'bg-slate-400' }} flex items-center justify-center text-white">
-                                    @if(($notification->data['icon'] ?? '') == 'money')
-                                        <span>💰</span>
-                                    @else
-                                        <span>👤</span>
-                                    @endif
+                <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-slate-100" style="display: none;">
+                    <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                        <h3 class="text-[10px] font-black text-slate-700 uppercase tracking-widest">Notifikasi</h3>
+                        <a href="{{ route('notifications.readAll') }}" class="text-[10px] text-sky-600 hover:text-sky-800 font-bold">Baca Semua</a>
+                    </div>
+                    
+                    <div class="max-h-64 overflow-y-auto">
+                        @forelse(auth()->user()->notifications->take(5) as $notification)
+                            <a href="{{ $notification->data['link'] ?? '#' }}" class="block p-3 border-b border-slate-50 hover:bg-slate-50 transition {{ $notification->read_at ? 'opacity-60' : 'bg-sky-50/50' }}">
+                                <div class="flex gap-3">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full {{ $notification->data['color'] ?? 'bg-slate-400' }} flex items-center justify-center text-white text-xs">
+                                        @if(($notification->data['icon'] ?? '') == 'money')
+                                            <span>💰</span>
+                                        @else
+                                            <span>👤</span>
+                                        @endif
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-xs font-bold text-slate-800 truncate">{{ $notification->data['title'] }}</p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{{ $notification->data['message'] }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-xs font-bold text-slate-800">{{ $notification->data['title'] }}</p>
-                                    <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">{{ $notification->data['message'] }}</p>
-                                    <p class="text-[10px] text-slate-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
-                                </div>
-                            </div>
-                        </a>
-                    @empty
-                        <div class="p-4 text-center text-slate-400 text-xs">Tidak ada notifikasi baru.</div>
-                    @endforelse
+                            </a>
+                        @empty
+                            <div class="p-4 text-center text-slate-400 text-xs italic">Kosong</div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
-            
-            <div class="absolute -right-4 top-1 w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-sky-700 text-white flex items-center justify-center font-bold text-xs shadow-md border-2 border-white">
+
+            <!-- PROFILE ICON -->
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-sky-700 text-white flex items-center justify-center font-black text-xs shadow-lg border-2 border-white ring-1 ring-sky-100">
                 {{ substr(Auth::user()->name, 0, 1) }}
             </div>
         </div>

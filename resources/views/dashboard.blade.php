@@ -50,6 +50,31 @@
 
     </div>
 
+    <!-- Monthly Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-emerald-50 p-6 rounded-lg shadow-sm border border-emerald-100">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-emerald-700 font-bold uppercase tracking-wider text-xs">Pendapatan Bulan Ini (Kotor)</p>
+                <div class="bg-emerald-500 text-white p-1 rounded">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            <h3 class="text-3xl font-black text-emerald-800">Rp {{ number_format($incomeThisMonth, 0, ',', '.') }}</h3>
+            <p class="text-emerald-600 text-xs mt-2 italic font-medium">Tanpa potongan operasional & cadangan</p>
+        </div>
+
+        <div class="bg-rose-50 p-6 rounded-lg shadow-sm border border-rose-100">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-rose-700 font-bold uppercase tracking-wider text-xs">Pengeluaran Bulan Ini</p>
+                <div class="bg-rose-500 text-white p-1 rounded">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            <h3 class="text-3xl font-black text-rose-800">Rp {{ number_format($expenseThisMonth, 0, ',', '.') }}</h3>
+            <p class="text-rose-600 text-xs mt-2 italic font-medium">Biaya operasional & teknisi</p>
+        </div>
+    </div>
+
     <div class="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
         <div class="p-6 border-b border-slate-100">
             <h3 class="font-bold text-lg text-slate-800">Setoran Masuk (Butuh Approval)</h3>

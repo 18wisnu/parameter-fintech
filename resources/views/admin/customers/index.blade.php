@@ -4,25 +4,48 @@
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-slate-800">Data Pelanggan</h2>
-            <p class="text-slate-500 text-sm">Kelola daftar pelanggan, status isolir, dan export data.</p>
+            <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Data Pelanggan</h2>
+            <p class="text-slate-500 text-sm">Kelola daftar pelanggan, status isolir, dan aktivasi.</p>
         </div>
 
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('customers.export') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-md font-bold flex items-center transition-all">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Export Excel
+        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+            <a href="{{ route('customers.export') }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-4 py-2.5 rounded-xl border border-emerald-200 font-bold flex items-center transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Export
             </a>
 
-            <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-md font-bold flex items-center transition-all">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Import Excel
+            <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 font-bold flex items-center transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Import
             </button>
 
-            <a href="{{ route('customers.create') }}" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 shadow-md font-bold flex items-center transition-all">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Baru
+            <a href="{{ route('customers.create') }}" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 font-bold flex items-center transition-all ml-auto md:ml-0">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Pelanggan Baru
             </a>
+        </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
+            <a href="{{ route('customers.index') }}" class="px-4 py-2 rounded-lg text-sm font-bold transition-all {{ !request('status') ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-50' }}">Semua</a>
+            <a href="{{ route('customers.index', ['status' => 'active', 'search' => request('search')]) }}" class="px-4 py-2 rounded-lg text-sm font-bold transition-all {{ request('status') == 'active' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-500 hover:bg-slate-50' }}">Aktif</a>
+            <a href="{{ route('customers.index', ['status' => 'isolated', 'search' => request('search')]) }}" class="px-4 py-2 rounded-lg text-sm font-bold transition-all {{ request('status') == 'isolated' ? 'bg-rose-100 text-rose-700' : 'text-slate-500 hover:bg-slate-50' }}">Terisolir</a>
+        </div>
+
+        <div class="relative w-full md:w-80">
+            <form action="{{ route('customers.index') }}" method="GET">
+                @if(request('status'))
+                    <input type="hidden" name="status" value="{{ request('status') }}">
+                @endif
+                <input type="text" name="search" value="{{ request('search') }}" 
+                    placeholder="Cari nama, HP atau ID..." 
+                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm">
+                <div class="absolute left-3 top-3 text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </form>
         </div>
     </div>
 

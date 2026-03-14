@@ -58,8 +58,8 @@ class IncomeController extends Controller
                     'is_locked'         => false,
                 ]);
 
-                // 3. Kirim Notif Lonceng
-                $admins = User::all();
+                // 3. Kirim Notif Lonceng khusus Owner & Admin saja
+                $admins = User::whereIn('role', ['admin', 'owner'])->get();
                 Notification::send($admins, new NewIncomeNotification($income));
             });
 

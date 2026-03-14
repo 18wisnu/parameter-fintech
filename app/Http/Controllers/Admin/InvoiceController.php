@@ -13,14 +13,34 @@ class InvoiceController extends Controller
     // 1. LIHAT DAFTAR TAGIHAN
     public function index(Request $request)
     {
-        // Filter Status (Unpaid/Paid)
+        // Filter & Search
         $query = Invoice::with('customer')->latest();
         
+        // 1. Filter Status (unpaid/paid)
         if ($request->status) {
             $query->where('status', $request->status);
         }
 
-        $invoices = $query->paginate(20);
+        // 2. Filter Periode (Bulan & Tahun)
+        if ($request->month) {
+            $query->whereMonth('period_date', $request->month);
+        }
+        if ($request->year) {
+            $query->whereYear('period_date', $request->year);
+        }
+
+        // 3. Search (By Name or Invoice Number)
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function($sq) use ($search) {
+                      $sq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $invoices = $query->paginate(20)->withQueryString(); // Keep filters in pagination links
         return view('admin.invoices.index', compact('invoices'));
     }
 
@@ -57,25 +77,40 @@ class InvoiceController extends Controller
     // 3. BAYAR TAGIHAN (LUNAS & AUTO AKTIF)
     public function markAsPaid($id)
     {
-        $invoice = Invoice::findOrFail($id);
+        $invoice = Invoice::with('customer')->findOrFail($id);
         
-        // Update status invoice jadi PAID
-        $invoice->update(['status' => 'paid']);
-        
-        // LOGIKA AUTO AKTIF:
-        // Jika pelanggan statusnya ISOLIR, kita kembalikan jadi AKTIF (0)
-        if ($invoice->customer->is_isolated == 1) {
-            $invoice->customer->update(['is_isolated' => 0]);
-            $pesan = 'Tagihan lunas! Status Pelanggan kembali AKTIF.';
-        } else {
-            $pesan = 'Tagihan berhasil ditandai Lunas.';
+        if ($invoice->status == 'paid') {
+            return redirect()->back()->with('info', 'Tagihan ini sudah lunas.');
         }
 
-        // Opsional: Perbarui due_date ke bulan depan otomatis?
-        // $newDueDate = Carbon::parse($invoice->customer->due_date)->addMonth();
-        // $invoice->customer->update(['due_date' => $newDueDate]);
+        \Illuminate\Support\Facades\DB::transaction(function() use ($invoice) {
+            // 1. Update status invoice jadi PAID
+            $invoice->update(['status' => 'paid']);
+            
+            // 2. LOGIKA AUTO AKTIF:
+            // Jika pelanggan statusnya ISOLIR, kita kembalikan jadi AKTIF (0)
+            if ($invoice->customer->is_isolated == 1) {
+                $invoice->customer->update(['is_isolated' => 0]);
+            }
 
-        return redirect()->back()->with('success', $pesan);
+            // 3. OTOMATIS CATAT KE KEUANGAN (TRANSAKSI)
+            // Ambil akun Kas (1001) dan akun Pendapatan PPPoE (4001)
+            $kasAkun = \App\Models\ChartOfAccount::where('code', '1001')->first(); 
+            $pendapatanAkun = \App\Models\ChartOfAccount::where('code', '4001')->first(); 
+
+            \App\Models\Transaction::create([
+                'date' => now(),
+                'account_id' => $pendapatanAkun->id,
+                'source_account_id' => $kasAkun->id,
+                'customer_id' => $invoice->customer_id,
+                'description' => 'Pembayaran PPPoE: ' . $invoice->customer->name . ' (' . $invoice->invoice_number . ')',
+                'amount' => $invoice->amount,
+                'type' => 'income',
+                'is_locked' => true,
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Tagihan lunas! Status Pelanggan kembali AKTIF dan transaksi tercatat.');
     }
 
     // 4. CEK ISOLIR OTOMATIS (Berdasarkan Tanggal Jatuh Tempo)

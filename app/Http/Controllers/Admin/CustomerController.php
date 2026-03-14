@@ -13,9 +13,30 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $customers = Customer::latest()->paginate(10);
+        $query = Customer::latest();
+
+        // 1. Search
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('customer_id', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // 2. Filter Status
+        if ($request->status) {
+            if ($request->status == 'isolated') {
+                $query->where('is_isolated', 1);
+            } elseif ($request->status == 'active') {
+                $query->where('is_isolated', 0);
+            }
+        }
+
+        $customers = $query->paginate(15)->withQueryString();
         return view('admin.customers.index', compact('customers'));
     }
 
@@ -37,7 +58,7 @@ class CustomerController extends Controller
         $data = $request->all();
         $customer = Customer::create($data);
 
-        $admins = User::all();
+        $admins = User::whereIn('role', ['admin', 'owner'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new NewCustomerNotification($customer));
         }
