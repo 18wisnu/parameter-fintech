@@ -16,6 +16,7 @@ class SystemController extends Controller
 
         $currentBranch = 'N/A';
         try {
+            chdir(base_path());
             $branch = shell_exec('git branch --show-current');
             $currentBranch = trim($branch);
         } catch (\Exception $e) {}
@@ -29,22 +30,32 @@ class SystemController extends Controller
             return redirect()->back()->with('error', 'Akses ditolak!');
         }
 
+        $basePath = base_path();
         $output = [];
         $commands = [
             'git fetch origin main',
             'git reset --hard origin/main',
             'composer install --no-interaction --prefer-dist --optimize-autoloader',
             'php artisan migrate --force',
+            'php artisan config:clear',
             'php artisan config:cache',
             'php artisan route:cache',
             'php artisan view:cache'
         ];
 
         try {
+            // Store current directory
+            $currentDir = getcwd();
+            // Change to base path
+            chdir($basePath);
+
             foreach ($commands as $command) {
                 $process = shell_exec($command . ' 2>&1');
                 $output[] = "$ " . $command . "\n" . $process;
             }
+            
+            // Restore current directory
+            chdir($currentDir);
             
             Log::info('System updated by Owner: ' . auth()->user()->email, ['output' => $output]);
             
