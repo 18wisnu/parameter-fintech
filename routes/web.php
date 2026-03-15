@@ -107,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('reports/history', [ReportController::class, 'history'])->name('reports.history');
     Route::get('reports/history/pdf', [ReportController::class, 'exportHistoryPdf'])->name('reports.history.pdf');
+    Route::get('reports/vouchers', [ReportController::class, 'vouchers'])->name('reports.vouchers');
     
     // Hapus Transaksi
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');

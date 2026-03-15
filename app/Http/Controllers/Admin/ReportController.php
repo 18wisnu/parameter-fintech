@@ -198,4 +198,49 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('admin.reports.pdf_history', compact('transactions'));
         return $pdf->download('laporan-riwayat-transaksi.pdf');
     }
+
+    // ----------------------------------------------------------------------
+    // 4. FITUR ANALITIK VOUCHER (TREND & RESELLER TERBANYAK)
+    // ----------------------------------------------------------------------
+
+    public function vouchers()
+    {
+        // 1. Cari Akun Pendapatan Voucher (Code: 4002)
+        $voucherAccount = ChartOfAccount::where('code', '4002')->first();
+        
+        if (!$voucherAccount) {
+            return redirect()->back()->with('error', 'Akun Pendapatan Voucher (4002) tidak ditemukan di Chart of Accounts!');
+        }
+
+        // 2. Data Trend Voucher (6 Bulan Terakhir)
+        $voucherTrend = Transaction::where('account_id', $voucherAccount->id)
+            ->where('type', 'income')
+            ->select(
+                DB::raw("DATE_FORMAT(date, '%Y-%m') as month"), 
+                DB::raw("SUM(amount) as total_amount"),
+                DB::raw("COUNT(*) as transaction_count")
+            )
+            ->groupBy('month')
+            ->orderBy('month', 'desc')
+            ->take(6)
+            ->get()
+            ->reverse();
+
+        // 3. Top Reseller Voucher (Berdasarkan Total Nominal)
+        $topResellers = Transaction::where('account_id', $voucherAccount->id)
+            ->where('type', 'income')
+            ->whereNotNull('customer_id')
+            ->with('customer')
+            ->select(
+                'customer_id',
+                DB::raw("SUM(amount) as total_spent"),
+                DB::raw("COUNT(*) as total_vouchers")
+            )
+            ->groupBy('customer_id')
+            ->orderBy('total_spent', 'desc')
+            ->take(10)
+            ->get();
+
+        return view('admin.reports.vouchers', compact('voucherTrend', 'topResellers', 'voucherAccount'));
+    }
 }
