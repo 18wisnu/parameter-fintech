@@ -18,6 +18,8 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\TransactionController; 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SalaryController as AdminSalaryController;
+use App\Http\Controllers\HelpdeskController;
+use App\Http\Controllers\SiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -126,6 +128,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         auth()->user()->unreadNotifications->markAsRead();
         return redirect()->back();
     })->name('notifications.readAll');
+
+    // --- FITUR HELPDESK & GENIEACS ---
+    Route::prefix('helpdesk')->name('helpdesk.')->group(function () {
+        Route::get('/', [HelpdeskController::class, 'index'])->name('index');
+        Route::post('/sync-devices', [HelpdeskController::class, 'syncDevices'])->name('sync');
+        Route::post('/update-wifi', [HelpdeskController::class, 'updateWifi'])->name('update-wifi');
+        Route::post('/update-pppoe', [HelpdeskController::class, 'updatePppoe'])->name('update-pppoe');
+        Route::post('/register-customer', [HelpdeskController::class, 'registerCustomer'])->name('register-customer');
+        Route::get('/device/{id}', [HelpdeskController::class, 'show'])->name('detail');
+        Route::post('/device/{id}/reboot', [HelpdeskController::class, 'reboot'])->name('reboot');
+        Route::post('/update-site', [HelpdeskController::class, 'updateSite'])->name('update-site');
+    });
+
+    // --- FITUR MANAJEMEN SITE (OLT/LOKASI) ---
+    Route::prefix('sites')->name('sites.')->group(function () {
+        Route::get('/', [SiteController::class, 'index'])->name('index');
+        Route::post('/store', [SiteController::class, 'store'])->name('store');
+        Route::put('/update/{id}', [SiteController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [SiteController::class, 'destroy'])->name('destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

@@ -31,4 +31,16 @@ class Customer extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    // Relasi ke akun login (User)
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // Relasi ke modem GenieACS (Device)
+    public function device()
+    {
+        return $this->hasOne(Device::class);
+    }
 }
