@@ -23,25 +23,35 @@ class SystemController extends Controller
 
         try {
             chdir(base_path());
-            $currentBranch = trim(shell_exec('git branch --show-current') ?? 'main');
-            $localCommit = trim(shell_exec('git rev-parse --short HEAD') ?? 'N/A');
+            
+            // Perbaikan deteksi: Gunakan ?: untuk menangkap string kosong
+            $currentBranch = trim(shell_exec('git branch --show-current')) ?: 'main';
+            if (!$currentBranch) $currentBranch = 'main';
+
+            $localCommit = trim(shell_exec('git rev-parse --short HEAD')) ?: 'N/A';
 
             // Cek update di GitHub API
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->withHeaders([
                 'User-Agent' => 'Parameter-Fintech-App'
             ])->get("https://api.github.com/repos/18wisnu/parameter-fintech/commits/{$currentBranch}");
 
             if ($response->successful()) {
                 $data = $response->json();
-                $remoteCommit = substr($data['sha'], 0, 7);
-                $remoteMessage = $data['commit']['message'];
-                $lastUpdateAt = \Carbon\Carbon::parse($data['commit']['committer']['date'])->timezone('Asia/Jakarta')->format('d M Y H:i');
+                $remoteCommit = isset($data['sha']) ? substr($data['sha'], 0, 7) : 'N/A';
+                $remoteMessage = $data['commit']['message'] ?? '';
+                $lastUpdateAt = isset($data['commit']['committer']['date']) 
+                    ? \Carbon\Carbon::parse($data['commit']['committer']['date'])->timezone('Asia/Jakarta')->format('d M Y H:i')
+                    : 'N/A';
                 
                 // Bandingkan commit hash pendek
-                $hasUpdate = ($localCommit !== $remoteCommit);
+                $hasUpdate = ($localCommit !== $remoteCommit && $remoteCommit !== 'N/A');
+                
+                // Log untuk debugging jika perlu
+                Log::debug("System Check: Local=$localCommit, Remote=$remoteCommit, Update=" . ($hasUpdate ? 'YES' : 'NO'));
             }
         } catch (\Exception $e) {
             Log::error("Github Check Error: " . $e->getMessage());
+            $currentBranch = 'main (Local)';
         }
 
         return view('admin.system.index', compact('currentBranch', 'localCommit', 'remoteCommit', 'hasUpdate', 'remoteMessage', 'lastUpdateAt'));
