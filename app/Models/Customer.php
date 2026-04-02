@@ -37,10 +37,4 @@ class Customer extends Model
     {
         return $this->belongsTo(User::class);
     }
-
-    // Relasi ke modem GenieACS (Device)
-    public function device()
-    {
-        return $this->hasOne(Device::class);
-    }
 }

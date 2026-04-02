@@ -18,8 +18,6 @@ use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\TransactionController; 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SalaryController as AdminSalaryController;
-use App\Http\Controllers\HelpdeskController;
-use App\Http\Controllers\SiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +52,7 @@ Route::middleware(['auth'])->prefix('mobile')->group(function () {
         return view('mobile.home', compact('totalHariIni', 'riwayatHariIni'));
     })->name('mobile.home');
 
+    Route::get('/deposits', [DepositController::class, 'index'])->name('mobile.deposits.index');
     Route::get('/deposits/create', [DepositController::class, 'create'])->name('mobile.deposits.create');
     Route::post('/deposits', [DepositController::class, 'store'])->name('mobile.deposits.store');
     Route::get('/salary', [MobileSalaryController::class, 'show'])->name('mobile.salary.show');
@@ -117,6 +116,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- SISTEM & UPDATE ---
     Route::get('/system', [\App\Http\Controllers\Admin\SystemController::class, 'index'])->name('admin.system.index');
     Route::post('/system/update', [\App\Http\Controllers\Admin\SystemController::class, 'updateVersion'])->name('admin.system.update');
+    Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
 
     // --- PROFILE ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -129,25 +129,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('notifications.readAll');
 
-    // --- FITUR HELPDESK & GENIEACS ---
-    Route::prefix('helpdesk')->name('helpdesk.')->group(function () {
-        Route::get('/', [HelpdeskController::class, 'index'])->name('index');
-        Route::post('/sync-devices', [HelpdeskController::class, 'syncDevices'])->name('sync');
-        Route::post('/update-wifi', [HelpdeskController::class, 'updateWifi'])->name('update-wifi');
-        Route::post('/update-pppoe', [HelpdeskController::class, 'updatePppoe'])->name('update-pppoe');
-        Route::post('/register-customer', [HelpdeskController::class, 'registerCustomer'])->name('register-customer');
-        Route::get('/device/{id}', [HelpdeskController::class, 'show'])->name('detail');
-        Route::post('/device/{id}/reboot', [HelpdeskController::class, 'reboot'])->name('reboot');
-        Route::post('/update-site', [HelpdeskController::class, 'updateSite'])->name('update-site');
-    });
-
-    // --- FITUR MANAJEMEN SITE (OLT/LOKASI) ---
-    Route::prefix('sites')->name('sites.')->group(function () {
-        Route::get('/', [SiteController::class, 'index'])->name('index');
-        Route::post('/store', [SiteController::class, 'store'])->name('store');
-        Route::put('/update/{id}', [SiteController::class, 'update'])->name('update');
-        Route::delete('/destroy/{id}', [SiteController::class, 'destroy'])->name('destroy');
-    });
 });
 
 require __DIR__.'/auth.php';

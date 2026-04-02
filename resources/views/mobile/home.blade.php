@@ -47,6 +47,12 @@
             </div>
             <span class="font-bold text-slate-700 text-sm">Slip Gaji</span>
         </a>
+        <a href="{{ route('mobile.deposits.index') }}" class="group bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center justify-center h-40 active:scale-95 transition-all hover:shadow-lg hover:border-sky-100">
+            <div class="bg-sky-50 p-4 rounded-2xl mb-3 group-hover:bg-sky-100 transition-colors">
+                <svg class="w-8 h-8 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <span class="font-bold text-slate-700 text-sm">Riwayat</span>
+        </a>
     </div>
 
     <div class="flex items-center justify-between mb-5 px-1">

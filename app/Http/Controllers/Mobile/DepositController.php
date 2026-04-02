@@ -10,6 +10,15 @@ use Illuminate\Support\Facades\Auth;
 
 class DepositController extends Controller
 {
+    // 0. Riwayat Lengkap (Semua Hari)
+    public function index()
+    {
+        $riwayat = Deposit::where('user_id', Auth::id())
+            ->latest()
+            ->paginate(20);
+        return view('mobile.deposits.index', compact('riwayat'));
+    }
+
     // 1. Tampilkan Form dengan Daftar Pelanggan
     public function create()
     {

@@ -59,4 +59,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(Customer::class);
     }
+
+    public function isOnline()
+    {
+        return \Illuminate\Support\Facades\DB::table('sessions')
+            ->where('user_id', $this->id)
+            ->where('last_activity', '>', now()->subMinutes(5)->getTimestamp())
+            ->exists();
+    }
 }

@@ -15,13 +15,36 @@ class SystemController extends Controller
         }
 
         $currentBranch = 'N/A';
+        $localCommit = 'N/A';
+        $remoteCommit = 'N/A';
+        $hasUpdate = false;
+        $remoteMessage = '';
+        $lastUpdateAt = 'N/A';
+
         try {
             chdir(base_path());
-            $branch = shell_exec('git branch --show-current');
-            $currentBranch = trim($branch);
-        } catch (\Exception $e) {}
+            $currentBranch = trim(shell_exec('git branch --show-current') ?? 'main');
+            $localCommit = trim(shell_exec('git rev-parse --short HEAD') ?? 'N/A');
 
-        return view('admin.system.index', compact('currentBranch'));
+            // Cek update di GitHub API
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'User-Agent' => 'Parameter-Fintech-App'
+            ])->get("https://api.github.com/repos/18wisnu/parameter-fintech/commits/{$currentBranch}");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $remoteCommit = substr($data['sha'], 0, 7);
+                $remoteMessage = $data['commit']['message'];
+                $lastUpdateAt = \Carbon\Carbon::parse($data['commit']['committer']['date'])->timezone('Asia/Jakarta')->format('d M Y H:i');
+                
+                // Bandingkan commit hash pendek
+                $hasUpdate = ($localCommit !== $remoteCommit);
+            }
+        } catch (\Exception $e) {
+            Log::error("Github Check Error: " . $e->getMessage());
+        }
+
+        return view('admin.system.index', compact('currentBranch', 'localCommit', 'remoteCommit', 'hasUpdate', 'remoteMessage', 'lastUpdateAt'));
     }
 
     public function updateVersion(Request $request)

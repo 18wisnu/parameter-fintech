@@ -32,6 +32,12 @@ class SocialiteController extends Controller
                 ]);
 
                 Auth::login($user);
+                
+                \App\Models\ActivityLog::create([
+                    'user_id' => $user->id,
+                    'activity' => 'Login via Google',
+                    'ip_address' => request()->ip(),
+                ]);
 
                 // Panggil "Satpam" untuk mengarahkan halaman berdasarkan role
                 return $this->redirectByRole($user);

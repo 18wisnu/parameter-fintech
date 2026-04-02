@@ -11,8 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-    // Tambahkan baris ini agar Laravel percaya semua Proxy/Tunnel
-    $middleware->trustProxies(at: '*');
+        $middleware->web(append: [
+            \App\Http\Middleware\LogActivity::class,
+        ]);
+        // Tambahkan baris ini agar Laravel percaya semua Proxy/Tunnel
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

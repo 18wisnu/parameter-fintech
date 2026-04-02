@@ -109,20 +109,6 @@
                 Data Pelanggan
             </a>
 
-            <a href="{{ route('sites.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('sites.*') ? 'bg-white/10 text-white font-semibold' : 'text-sky-100 hover:bg-white/5 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
-                </svg>
-                Monitor Jaringan
-            </a>
-
-            <a href="{{ route('helpdesk.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('helpdesk.*') ? 'bg-white/10 text-white font-semibold' : 'text-sky-100 hover:bg-white/5 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
-                </svg>
-                Data Modem (GenieACS)
-            </a>
-
             <a href="{{ route('invoices.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('invoices.*') ? 'bg-white text-sky-800 shadow-md font-bold' : 'text-sky-100 hover:bg-sky-600/50 hover:text-white' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                 Tagihan / Invoice
@@ -172,6 +158,11 @@
             </a>
 
             @if(auth()->user()->role == 'owner')
+                <a href="{{ route('admin.logs.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.logs.*') ? 'bg-white text-sky-800 shadow-md font-bold' : 'text-sky-100 hover:bg-sky-600/50 hover:text-white' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Log Sistem
+                </a>
+
                 <a href="{{ route('admin.system.index') }}" class="flex items-center px-4 py-3 rounded-xl mt-4 bg-sky-800/50 border border-sky-400/20 transition-all {{ request()->routeIs('admin.system.*') ? 'bg-white text-sky-800 shadow-md font-bold border-none' : 'text-sky-200 hover:bg-sky-600/50 hover:text-white' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     Update Sistem

@@ -23,6 +23,12 @@ class TransactionController extends Controller
             $transaction->delete();
         }
 
+        \App\Models\ActivityLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'Mengahapus data history keuangan ID: ' . $id,
+            'ip_address' => request()->ip(),
+        ]);
+
         return redirect()->route('reports.history')->with('success', 'Data bersih total, Bos!');
     }
 }

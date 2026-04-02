@@ -48,8 +48,8 @@
             <span class="text-[9px] font-bold mt-1 uppercase tracking-widest">Dashboard</span>
         </a>
         @endif
-        <a href="#" class="flex flex-col items-center text-slate-400 hover:text-sky-500 transition-all">
-            <div class="p-1">
+        <a href="{{ route('mobile.deposits.index') }}" class="flex flex-col items-center transition-all {{ request()->routeIs('mobile.deposits.index') ? 'text-sky-600 scale-110' : 'text-slate-400 hover:text-sky-500' }}">
+            <div class="p-1 rounded-lg {{ request()->routeIs('mobile.deposits.index') ? 'bg-sky-50' : '' }}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
             </div>
             <span class="text-[9px] font-bold mt-1 uppercase tracking-widest">Riwayat</span>
