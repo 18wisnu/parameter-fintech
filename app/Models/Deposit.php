@@ -12,6 +12,8 @@ class Deposit extends Model
     // Daftar kolom yang boleh diisi oleh Form Controller
     protected $fillable = [
         'user_id',
+        'customer_id',
+        'invoice_id',
         'amount',
         'description',
         'proof_image',

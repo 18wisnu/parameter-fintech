@@ -87,16 +87,44 @@ class DashboardController extends Controller
         $deposit->approved_at = now();
         $deposit->save();
 
-        // Ambil akun Kas (1001) dan akun Pendapatan (4001)
         $kasAkun = ChartOfAccount::where('code', '1001')->first(); 
         $pendapatanAkun = ChartOfAccount::where('code', '4001')->first(); 
 
-        // Otomatis catat ke Jurnal Transaksi
+        // JIKA SETORAN TERHUBUNG KE TAGIHAN (INVOICE)
+        if ($deposit->invoice_id) {
+            $invoice = \App\Models\Invoice::with('customer')->find($deposit->invoice_id);
+            
+            if ($invoice && $invoice->status == 'unpaid') {
+                // 1. Update status tagihan jadi Paid
+                $invoice->update(['status' => 'paid']);
+
+                // 2. Jika isolir, aktifkan kembali
+                if ($invoice->customer->is_isolated == 1) {
+                    $invoice->customer->update(['is_isolated' => 0]);
+                }
+
+                // 3. Catat di Jurnal (Cukup Sekali di sini)
+                Transaction::create([
+                    'date' => now(),
+                    'account_id' => $pendapatanAkun->id,
+                    'source_account_id' => $kasAkun->id,
+                    'customer_id' => $invoice->customer_id,
+                    'description' => 'Pembayaran PPPoE via Setoran: ' . $invoice->customer->name . ' (' . $invoice->invoice_number . ')',
+                    'amount' => $deposit->amount,
+                    'type' => 'income',
+                    'is_locked' => true,
+                ]);
+
+                return redirect()->back()->with('success', 'Setoran disetujui & Tagihan ' . $invoice->invoice_number . ' otomatis LUNAS!');
+            }
+        }
+
+        // JIKA SETORAN UMUM (NON-TAGIHAN)
         Transaction::create([
             'date' => now(),
             'account_id' => $pendapatanAkun->id,
             'source_account_id' => $kasAkun->id,
-            'description' => 'Setoran dari ' . $deposit->user->name . ' (' . strtoupper($deposit->type ?? 'UMUM') . ')',
+            'description' => 'Setoran dari ' . $deposit->user->name . ' (' . $deposit->description . ')',
             'amount' => $deposit->amount,
             'type' => 'income',
             'is_locked' => true,

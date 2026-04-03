@@ -48,8 +48,12 @@ class DepositController extends Controller
         $customer = Customer::find($request->customer_id);
         $customerName = $customer ? $customer->name : 'Tanpa Nama';
 
+        // Cari Tagihan (Invoice) yang belum lunas (UNPAID) untuk pelanggan ini
+        $invoice = \App\Models\Invoice::where('customer_id', $request->customer_id)
+            ->where('status', 'unpaid')
+            ->first();
+
         // Gabungkan Nama + Catatan untuk kolom Description
-        // Contoh hasil: "Yudi Voucher (Bayar Bulan Maret)"
         $description = $customerName;
         if($request->notes) {
             $description .= ' (' . $request->notes . ')';
@@ -57,8 +61,10 @@ class DepositController extends Controller
 
         Deposit::create([
             'user_id' => Auth::id(),
+            'customer_id' => $request->customer_id, // Link Formal
+            'invoice_id' => $invoice ? $invoice->id : null, // Link Invoice
             'amount' => $request->amount,
-            'description' => $description, // <--- Ini yang kita ubah otomatis
+            'description' => $description,
             'proof_image' => $path,
             'status' => 'pending',
         ]);
