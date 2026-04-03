@@ -24,13 +24,29 @@ class SystemController extends Controller
         try {
             chdir(base_path());
             
-            // Perbaikan deteksi: Gunakan ?: untuk menangkap string kosong
+            // 1. Deteksi Branch (Fallback ke 'main')
             $currentBranch = trim(shell_exec('git branch --show-current')) ?: 'main';
-            if (!$currentBranch) $currentBranch = 'main';
+            
+            // 2. Deteksi Local Commit (Gunakan PHP Fallback jika shell_exec gagal)
+            $localCommit = trim(shell_exec('git rev-parse --short HEAD'));
+            if (!$localCommit || strlen($localCommit) > 10) {
+                // Mencoba baca langsung dari file .git
+                $headPath = base_path('.git/HEAD');
+                if (file_exists($headPath)) {
+                    $headContent = explode(' ', file_get_contents($headPath));
+                    if (isset($headContent[1])) {
+                        $refPath = base_path('.git/' . trim($headContent[1]));
+                        if (file_exists($refPath)) {
+                            $localCommit = substr(trim(file_get_contents($refPath)), 0, 7);
+                        }
+                    } else {
+                        $localCommit = substr(trim($headContent[0]), 0, 7);
+                    }
+                }
+            }
+            $localCommit = $localCommit ?: 'N/A';
 
-            $localCommit = trim(shell_exec('git rev-parse --short HEAD')) ?: 'N/A';
-
-            // Cek update di GitHub API
+            // 3. Cek ke GitHub API
             $response = \Illuminate\Support\Facades\Http::timeout(10)->withHeaders([
                 'User-Agent' => 'Parameter-Fintech-App'
             ])->get("https://api.github.com/repos/18wisnu/parameter-fintech/commits/{$currentBranch}");
@@ -45,13 +61,10 @@ class SystemController extends Controller
                 
                 // Bandingkan commit hash pendek
                 $hasUpdate = ($localCommit !== $remoteCommit && $remoteCommit !== 'N/A');
-                
-                // Log untuk debugging jika perlu
-                Log::debug("System Check: Local=$localCommit, Remote=$remoteCommit, Update=" . ($hasUpdate ? 'YES' : 'NO'));
             }
         } catch (\Exception $e) {
             Log::error("Github Check Error: " . $e->getMessage());
-            $currentBranch = 'main (Local)';
+            $currentBranch = 'main (fallback)';
         }
 
         return view('admin.system.index', compact('currentBranch', 'localCommit', 'remoteCommit', 'hasUpdate', 'remoteMessage', 'lastUpdateAt'));
