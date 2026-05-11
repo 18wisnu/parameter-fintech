@@ -31,21 +31,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // --- LOGIKA PENGARAH BERDASARKAN ROLE ---
-        $user = Auth::user();
+        // Reset active business so user must select again each login session
+        Auth::user()->update(['current_business_id' => null]);
 
-        // Jika Owner atau Admin, lempar ke Dashboard Utama
-        if (in_array($user->role, ['owner', 'admin'])) {
-            return redirect()->intended(route('dashboard', absolute: false));
-        } 
-        
-        // Jika Teknisi atau Kolektor, lempar ke Dashboard Mobile
-        if (in_array($user->role, ['teknisi', 'kolektor'])) {
-            return redirect()->intended(route('mobile.home', absolute: false));
-        }
-
-        // Default jika role tidak terdaftar
-        return redirect()->intended('/');
+        // Always redirect to business selection first
+        return redirect()->route('admin.business.index');
     }
 
     /**
@@ -53,6 +43,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Clear active business so next login forces selection
+        if (Auth::check()) {
+            Auth::user()->update(['current_business_id' => null]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

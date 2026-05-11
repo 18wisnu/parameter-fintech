@@ -1,16 +1,28 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="mb-8">
-    <div class="flex items-center gap-3 mb-2">
-        <div class="bg-sky-100 p-2 rounded-xl text-sky-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
-            </svg>
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div>
+        <div class="flex items-center gap-3 mb-2">
+            <div class="bg-sky-100 p-2 rounded-xl text-sky-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-black text-slate-800 tracking-tight">Analisa Voucher</h2>
         </div>
-        <h2 class="text-3xl font-black text-slate-800 tracking-tight">Analisa Voucher</h2>
+        <p class="text-slate-500 font-medium">Melihat trend penjualan voucher dan reseller paling aktif.</p>
     </div>
-    <p class="text-slate-500 font-medium">Melihat trend penjualan voucher dan reseller paling aktif.</p>
+
+    <!-- Timeframe Selector -->
+    <div class="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 flex overflow-hidden">
+        @foreach(['weekly' => 'Mingguan', 'monthly' => 'Bulanan', 'six_monthly' => 'Per 6 Bulan'] as $key => $label)
+            <a href="{{ route('reports.vouchers', ['timeframe' => $key]) }}" 
+               class="px-6 py-2.5 rounded-xl text-xs font-black transition-all {{ $timeframe === $key ? 'bg-sky-600 text-white shadow-lg shadow-sky-200' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50' }}">
+                {{ $label }}
+            </a>
+        @endforeach
+    </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -18,7 +30,7 @@
     <div class="lg:col-span-2">
         <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-bold text-slate-700">Trend Penjualan (6 Bulan Terakhir)</h3>
+                <h3 class="font-bold text-slate-700">Trend Penjualan ({{ $timeframe === 'weekly' ? '12 Minggu Terakhir' : ($timeframe === 'six_monthly' ? 'Daftar Per Semester' : '8 Bulan Terakhir') }})</h3>
                 <span class="text-[10px] font-black text-sky-600 uppercase tracking-widest bg-sky-50 px-2 py-1 rounded-md">Voucher Revenue</span>
             </div>
             <div class="p-8">
@@ -36,7 +48,15 @@
                                 <!-- Bar -->
                                 <div class="w-full bg-sky-500 rounded-t-xl transition-all group-hover:bg-sky-600 group-hover:shadow-lg group-hover:shadow-sky-200" style="height: {{ ($trend->total_amount / $maxAmount) * 200 }}px"></div>
                             </div>
-                            <span class="text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-tight">{{ date('M Y', strtotime($trend->month . '-01')) }}</span>
+                            <span class="text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-tight">
+                                @if($timeframe === 'weekly')
+                                    W{{ explode('-', $trend->label)[0] }}
+                                @elseif($timeframe === 'six_monthly')
+                                    {{ $trend->label }}
+                                @else
+                                    {{ date('M Y', strtotime($trend->label . '-01')) }}
+                                @endif
+                            </span>
                             <span class="text-[9px] font-black text-slate-500">{{ $trend->transaction_count }} trx</span>
                         </div>
                     @empty
@@ -48,12 +68,12 @@
         
         <div class="mt-8 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-6 border-b border-slate-50 bg-slate-50/50">
-                <h3 class="font-bold text-slate-700">Detail Bulanan</h3>
+                <h3 class="font-bold text-slate-700">Detail Per Periode ({{ ucfirst($timeframe) }})</h3>
             </div>
             <table class="w-full text-left">
                 <thead class="bg-slate-50/30 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     <tr>
-                        <th class="px-8 py-4">Bulan</th>
+                        <th class="px-8 py-4">Periode</th>
                         <th class="px-8 py-4">Total Transaksi</th>
                         <th class="px-8 py-4 text-right">Total Pendapatan</th>
                     </tr>
@@ -61,7 +81,15 @@
                 <tbody class="divide-y divide-slate-50">
                     @foreach($voucherTrend->reverse() as $trend)
                     <tr class="hover:bg-slate-50/50 transition">
-                        <td class="px-8 py-4 font-bold text-slate-700">{{ date('F Y', strtotime($trend->month . '-01')) }}</td>
+                        <td class="px-8 py-4 font-bold text-slate-700">
+                            @if($timeframe === 'weekly')
+                                Minggu ke-{{ explode('-', $trend->label)[0] }} Thn {{ explode('-', $trend->label)[1] }}
+                            @elseif($timeframe === 'six_monthly')
+                                Semester {{ $trend->label }}
+                            @else
+                                {{ date('F Y', strtotime($trend->label . '-01')) }}
+                            @endif
+                        </td>
                         <td class="px-8 py-4">
                             <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold">{{ $trend->transaction_count }} Transaksi</span>
                         </td>
@@ -69,7 +97,6 @@
                     </tr>
                     @endforeach
                 </tbody>
-            </tbody>
             </table>
         </div>
     </div>

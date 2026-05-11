@@ -21,10 +21,22 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'password',
         'role',
         'google_id',
         'base_salary',
+        'current_business_id',
     ];
+
+    public function businesses()
+    {
+        return $this->belongsToMany(Business::class)->withPivot('role')->withTimestamps();
+    }
+
+    public function currentBusiness()
+    {
+        return $this->belongsTo(Business::class, 'current_business_id');
+    }
 
     public function salaries()
     {

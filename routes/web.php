@@ -2,7 +2,168 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Deposit; 
+use App\Models\Deposit;
+
+// Diagnostic + Auto-Fix route (TEMPORARY)
+Route::get('/diag-fix', function() {
+    $users = \Illuminate\Support\Facades\DB::table('users')->select('id','name','email','role')->get();
+    $businesses = \Illuminate\Support\Facades\DB::table('businesses')->select('id','name','owner_id')->get();
+    $pivots = \Illuminate\Support\Facades\DB::table('business_user')->get();
+
+    // Auto-fix: link all business owners to their businesses via pivot
+    $fixed = [];
+    foreach ($businesses as $b) {
+        if ($b->owner_id) {
+            $exists = \Illuminate\Support\Facades\DB::table('business_user')
+                ->where('business_id', $b->id)
+                ->where('user_id', $b->owner_id)
+                ->exists();
+            if (!$exists) {
+                \Illuminate\Support\Facades\DB::table('business_user')->insert([
+                    'business_id' => $b->id,
+                    'user_id'     => $b->owner_id,
+                    'role'        => 'owner',
+                    'created_at'  => now(),
+                    'updated_at'  => now(),
+                ]);
+                $fixed[] = "Linked business {$b->id} ({$b->name}) → user {$b->owner_id}";
+            }
+        }
+    }
+
+    return response()->json([
+        'users'     => $users,
+        'businesses'=> $businesses,
+        'pivots'    => $pivots,
+        'fixed'     => $fixed,
+    ]);
+});
+
+// Transfer all businesses to admin@admin.com (user ID 1)
+Route::get('/fix-owner', function() {
+    $adminId = 1; // admin@admin.com
+    $fixed = [];
+
+    $businesses = \Illuminate\Support\Facades\DB::table('businesses')->get();
+    foreach ($businesses as $b) {
+        // Update owner_id to admin
+        \Illuminate\Support\Facades\DB::table('businesses')
+            ->where('id', $b->id)
+            ->update(['owner_id' => $adminId]);
+
+        // Remove old pivot entries for this business
+        \Illuminate\Support\Facades\DB::table('business_user')
+            ->where('business_id', $b->id)
+            ->delete();
+
+        // Insert correct pivot for admin
+        \Illuminate\Support\Facades\DB::table('business_user')->insert([
+            'business_id' => $b->id,
+            'user_id'     => $adminId,
+            'role'        => 'owner',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        // Reset current_business_id for all users to avoid stale references
+        \Illuminate\Support\Facades\DB::table('users')
+            ->where('current_business_id', $b->id)
+            ->where('id', '!=', $adminId)
+            ->update(['current_business_id' => null]);
+
+        $fixed[] = "Business '{$b->name}' (ID:{$b->id}) transferred to admin (ID:{$adminId})";
+    }
+
+    return response()->json(['status' => 'OK', 'actions' => $fixed]);
+});
+
+// SETUP: Create default business for admin and link ALL legacy data
+Route::get('/setup-bisnis', function() {
+    $adminId = 1;
+    $log = [];
+
+    // 1. Ambil pengaturan lama (nama usaha dari profit_sharing_settings jika ada)
+    $namaUsaha = \Illuminate\Support\Facades\DB::table('profit_sharing_settings')
+        ->where('key', 'business_name')
+        ->value('value');
+    if (empty($namaUsaha)) $namaUsaha = 'Usaha Saya';
+
+    // 2. Cek apakah bisnis untuk admin sudah ada
+    $existingBusiness = \Illuminate\Support\Facades\DB::table('businesses')
+        ->where('owner_id', $adminId)
+        ->first();
+
+    if ($existingBusiness) {
+        $businessId = $existingBusiness->id;
+        $log[] = "Bisnis sudah ada: '{$existingBusiness->name}' (ID:{$businessId})";
+    } else {
+        // 3. Buat bisnis baru berdasarkan nama dari settings
+        $businessId = \Illuminate\Support\Facades\DB::table('businesses')->insertGetId([
+            'name'             => $namaUsaha,
+            'owner_id'         => $adminId,
+            'theme_color'      => '#0369a1',
+            'enabled_features' => json_encode([
+                'profit_sharing'   => true,
+                'reserve_fund'     => true,
+                'salary_management'=> true,
+                'voucher_analysis' => true,
+                'customer_data'    => true,
+                'invoices'         => true,
+                'transactions'     => true,
+                'staff_data'       => true,
+            ]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $log[] = "Bisnis baru dibuat: '{$namaUsaha}' (ID:{$businessId})";
+    }
+
+    // 4. Link admin ke bisnis via pivot (jika belum)
+    $pivotExists = \Illuminate\Support\Facades\DB::table('business_user')
+        ->where('business_id', $businessId)
+        ->where('user_id', $adminId)
+        ->exists();
+    if (!$pivotExists) {
+        \Illuminate\Support\Facades\DB::table('business_user')->insert([
+            'business_id' => $businessId,
+            'user_id'     => $adminId,
+            'role'        => 'owner',
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+        $log[] = "Pivot owner dibuat.";
+    }
+
+    // 5. Set current_business_id untuk admin
+    \Illuminate\Support\Facades\DB::table('users')
+        ->where('id', $adminId)
+        ->update(['current_business_id' => $businessId]);
+    $log[] = "current_business_id admin diset ke {$businessId}.";
+
+    // 6. Hubungkan semua data lama (business_id = null) ke bisnis ini
+    $tables = ['customers', 'transactions', 'deposits', 'profit_distributions',
+               'salaries', 'incomes', 'expenses', 'profit_sharing_stakeholders'];
+
+    foreach ($tables as $table) {
+        try {
+            // Cek apakah kolom business_id ada
+            $columns = \Illuminate\Support\Facades\Schema::getColumnListing($table);
+            if (in_array('business_id', $columns)) {
+                $affected = \Illuminate\Support\Facades\DB::table($table)
+                    ->whereNull('business_id')
+                    ->update(['business_id' => $businessId]);
+                $log[] = "Tabel '{$table}': {$affected} baris diupdate.";
+            } else {
+                $log[] = "Tabel '{$table}': kolom business_id belum ada, dilewati.";
+            }
+        } catch (\Exception $e) {
+            $log[] = "Tabel '{$table}': ERROR - " . $e->getMessage();
+        }
+    }
+
+    return response()->json(['status' => 'SELESAI', 'log' => $log]);
+});
+
 
 // Controller Imports
 use App\Http\Controllers\ProfileController;
@@ -116,6 +277,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- SISTEM & UPDATE ---
     Route::get('/system', [\App\Http\Controllers\Admin\SystemController::class, 'index'])->name('admin.system.index');
     Route::post('/system/update', [\App\Http\Controllers\Admin\SystemController::class, 'updateVersion'])->name('admin.system.update');
+    
+    // --- PENGATURAN BAGI HASIL ---
+    Route::get('/profit-sharing/settings', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'index'])->name('admin.profit_sharing.index');
+    Route::post('/profit-sharing/settings/update', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'updateSettings'])->name('admin.profit_sharing.update_settings');
+    Route::post('/profit-sharing/stakeholders', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'storeStakeholder'])->name('admin.profit_sharing.stakeholder.store');
+    Route::delete('/profit-sharing/stakeholders/{id}', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'destroyStakeholder'])->name('admin.profit_sharing.stakeholder.destroy');
+
+    // --- MULTI TENANCY / BISNIS ---
+    Route::get('/business/select', [\App\Http\Controllers\Admin\BusinessController::class, 'index'])->name('admin.business.index');
+    Route::post('/business/create', [\App\Http\Controllers\Admin\BusinessController::class, 'store'])->name('admin.business.store');
+    Route::post('/business/{business}/select', [\App\Http\Controllers\Admin\BusinessController::class, 'select'])->name('admin.business.select');
+
     Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
 
     // --- PROFILE ---

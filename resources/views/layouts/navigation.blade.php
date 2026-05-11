@@ -26,9 +26,6 @@
                 </div>
             </div>
 
-            <x-nav-link :href="route('sites.index')" :active="request()->routeIs('sites.*')">
-                {{ __('Monitor Jaringan (OLT)') }}
-            </x-nav-link>
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">

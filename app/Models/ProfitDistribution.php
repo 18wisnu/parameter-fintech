@@ -20,10 +20,12 @@ class ProfitDistribution extends Model
         'reserve_fund_amount', 
         'distributable_profit', 
         'share_group_a', 
-        'share_group_b'
+        'share_group_b',
+        'shares_details'
     ];
 
     protected $casts = [
         'period' => 'date',
+        'shares_details' => 'array'
     ];
 }
