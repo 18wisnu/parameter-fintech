@@ -71,8 +71,10 @@ class AppServiceProvider extends ServiceProvider
                         $appSettings['theme_color'] = $business->theme_color;
                         
                         // Features from business table
-                        if ($business->enabled_features) {
-                            $appSettings['features'] = array_merge($appSettings['features'], $business->enabled_features);
+                        if ($business->enabled_features && is_array($business->enabled_features)) {
+                            foreach ($business->enabled_features as $fK => $fV) {
+                                $appSettings['features'][$fK] = filter_var($fV, FILTER_VALIDATE_BOOLEAN);
+                            }
                         }
 
                         // Role ALWAYS comes from pivot table (per-business), NEVER from users.role

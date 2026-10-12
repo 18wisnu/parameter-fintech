@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToTenant;
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
-    // Tambahkan 'customer_id', 'due_date', 'is_isolated' ke sini
+    // Tambahkan 'customer_id', 'due_date', 'is_isolated', 'business_id' ke sini
     protected $fillable = [
+        'business_id',
         'customer_id', // <--- PENTING! Ini yang bikin ID bisa tersimpan
         'name',
         'type',

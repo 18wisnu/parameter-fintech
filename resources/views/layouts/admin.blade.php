@@ -88,9 +88,11 @@
             </a>
             @endif
 
+            @if(($appSettings['features']['reserve_fund'] ?? true) || ($appSettings['features']['transactions'] ?? true) || ($appSettings['features']['voucher_analysis'] ?? true))
             <div class="mt-6 mb-2">
                 <p class="px-4 text-[10px] font-black text-white/50 uppercase tracking-widest">Laporan & Keuangan</p>
             </div>
+            @endif
 
             @if($appSettings['features']['reserve_fund'] ?? true)
             <a href="{{ route('reports.reserve') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('reports.reserve') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">

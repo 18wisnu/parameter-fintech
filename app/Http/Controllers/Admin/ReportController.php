@@ -10,6 +10,8 @@ use App\Models\ChartOfAccount;
 use App\Models\ProfitDistribution;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ProfitSharingFinancialExport;
 use Carbon\Carbon;
 
 class ReportController extends Controller
@@ -18,42 +20,83 @@ class ReportController extends Controller
     // 1. FITUR BAGI HASIL (DIVIDEN)
     // ----------------------------------------------------------------------
 
-    public function index(Request $request)
+    private function calculateProfitSharingData($month, $year)
     {
-        // 1. Filter Waktu (Default bulan & tahun berjalan)
-        $month = $request->month ?? date('n');
-        $year  = $request->year ?? date('Y');
+        $business = auth()->user()->currentBusiness;
+        $businessName = $business ? $business->name : 'Parameter Fintech';
 
         // Identifikasi Akun Dana Cadangan agar tidak tercampur ke operasional
         $akunCadangan = ChartOfAccount::where('name', 'like', '%Cadangan%')->first();
         $idCadangan = $akunCadangan ? $akunCadangan->id : 0;
 
-        // 2. Hitung Pemasukan (Semua Income kecuali transaksi internal cadangan)
-        $revenue = Transaction::where('type', 'income')
-                                ->where('account_id', '!=', $idCadangan)
-                                ->whereYear('date', $year)
-                                ->whereMonth('date', $month)
-                                ->sum('amount');
+        // Ambil transaksi Pemasukan
+        $incomeTransactions = Transaction::where('type', 'income')
+            ->where('account_id', '!=', $idCadangan)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->with('account')
+            ->get();
 
-        // 3. Hitung Pengeluaran Operasional
-        $expense = Transaction::where('type', 'expense')
-                                 ->where('account_id', '!=', $idCadangan)
-                                 ->whereYear('date', $year)
-                                 ->whereMonth('date', $month)
-                                 ->sum('amount');
+        // Rincian Pendapatan
+        $voucherIncome = 0;
+        $pppoeIncome = 0;
+        $pasangBaruIncome = 0;
+        $otherIncome = 0;
 
-        // 1. Ambil Pengaturan dari Database
-        $config = \App\Models\ProfitSharingSetting::where('key', 'reserve_percentage')->first();
-        $reservePercentage = $config ? (float)$config->value : 10;
+        foreach ($incomeTransactions as $t) {
+            $desc = strtolower($t->description ?? '');
+            $code = $t->account->code ?? '';
+
+            if ($code == '4002' || str_contains($desc, 'voucher') || str_contains($desc, 'hotspot')) {
+                $voucherIncome += $t->amount;
+            } elseif ($code == '4001' || str_contains($desc, 'pppoe') || str_contains($desc, 'tagihan')) {
+                $pppoeIncome += $t->amount;
+            } elseif (in_array($code, ['4003', '4004']) || str_contains($desc, 'pasang') || str_contains($desc, 'instalasi') || str_contains($desc, 'registrasi')) {
+                $pasangBaruIncome += $t->amount;
+            } else {
+                $otherIncome += $t->amount;
+            }
+        }
+        $revenue = $voucherIncome + $pppoeIncome + $pasangBaruIncome + $otherIncome;
+
+        // Ambil transaksi Pengeluaran
+        $expenseTransactions = Transaction::where('type', 'expense')
+            ->where('account_id', '!=', $idCadangan)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->with('account')
+            ->get();
+
+        // Rincian Pengeluaran
+        $tagihanExpense = 0;
+        $gajiExpense = 0;
+        $otherExpense = 0;
+
+        foreach ($expenseTransactions as $t) {
+            $desc = strtolower($t->description ?? '');
+            $code = $t->account->code ?? '';
+
+            if ($code == '5003' || str_contains($desc, 'gaji') || str_contains($desc, 'salary')) {
+                $gajiExpense += $t->amount;
+            } elseif (in_array($code, ['5001', '5002', '5004']) || str_contains($desc, 'bandwidth') || str_contains($desc, 'listrik') || str_contains($desc, 'tagihan') || str_contains($desc, 'operasional')) {
+                $tagihanExpense += $t->amount;
+            } else {
+                $otherExpense += $t->amount;
+            }
+        }
+        $expense = $tagihanExpense + $gajiExpense + $otherExpense;
+
+        // Persentase simpanan dari Bisnis aktif
+        $reservePercentage = $business ? (float)$business->reserve_percentage : 10.0;
         $stakeholders = \App\Models\ProfitSharingStakeholder::all();
 
-        // 4. Kalkulasi Pembagian Laba
+        // Kalkulasi Pembagian Laba
         $netProfit = $revenue - $expense;
 
         $shares = [];
         if ($netProfit > 0) {
             $reserveFund   = $netProfit * ($reservePercentage / 100);
-            $distributable = $netProfit - $reserveFund; // Sisa yang siap dibagi
+            $distributable = $netProfit - $reserveFund;
             
             foreach ($stakeholders as $stakeholder) {
                 $shares[] = [
@@ -62,9 +105,6 @@ class ReportController extends Controller
                     'percentage' => $stakeholder->percentage
                 ];
             }
-
-            // Untuk kompatibilitas dengan form store (yang mungkin masih pakai share_a/b)
-            // Kita ambil 2 pertama jika ada
             $shareA = isset($shares[0]) ? $shares[0]['amount'] : 0;
             $shareB = isset($shares[1]) ? $shares[1]['amount'] : 0;
         } else {
@@ -74,14 +114,60 @@ class ReportController extends Controller
             $shareB = 0;
         }
 
-        // 5. Ambil History Laporan yang sudah disimpan
-        $history = ProfitDistribution::latest('period')->get();
+        $monthName = Carbon::createFromDate($year, $month, 1)->format('F Y');
 
-        return view('admin.reports.index', compact(
-            'month', 'year', 'revenue', 'expense', 'netProfit',
-            'reserveFund', 'distributable', 'shareA', 'shareB', 'history',
-            'reservePercentage', 'stakeholders', 'shares'
-        ));
+        return compact(
+            'businessName', 'month', 'year', 'monthName',
+            'revenue', 'expense', 'netProfit',
+            'voucherIncome', 'pppoeIncome', 'pasangBaruIncome', 'otherIncome',
+            'tagihanExpense', 'gajiExpense', 'otherExpense',
+            'reservePercentage', 'reserveFund', 'distributable',
+            'stakeholders', 'shares', 'shareA', 'shareB'
+        );
+    }
+
+    public function index(Request $request)
+    {
+        $month = $request->month ?? date('n');
+        $year  = $request->year ?? date('Y');
+
+        $data = $this->calculateProfitSharingData($month, $year);
+        $data['history'] = ProfitDistribution::latest('period')->get();
+
+        return view('admin.reports.index', $data);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $month = $request->month ?? date('n');
+        $year  = $request->year ?? date('Y');
+
+        $calc = $this->calculateProfitSharingData($month, $year);
+        
+        $exportData = [
+            'businessName' => $calc['businessName'],
+            'periodLabel'  => $calc['monthName'],
+            'printedAt'    => now()->timezone('Asia/Jakarta')->format('d M Y H:i'),
+            'voucherIncome' => $calc['voucherIncome'],
+            'pppoeIncome'   => $calc['pppoeIncome'],
+            'pasangBaruIncome' => $calc['pasangBaruIncome'],
+            'otherIncome'   => $calc['otherIncome'],
+            'totalIncome'   => $calc['revenue'],
+            'tagihanExpense' => $calc['tagihanExpense'],
+            'gajiExpense'   => $calc['gajiExpense'],
+            'otherExpense'  => $calc['otherExpense'],
+            'totalExpense'  => $calc['expense'],
+            'netProfit'     => $calc['netProfit'],
+            'reservePercentage' => $calc['reservePercentage'],
+            'reserveFund'   => $calc['reserveFund'],
+            'distributable' => $calc['distributable'],
+            'shares'        => $calc['shares'],
+        ];
+
+        $safeName = \Illuminate\Support\Str::slug($calc['businessName']) ?: 'parameter-fintech';
+        $filename = "Laporan-Bagi-Hasil-{$safeName}-{$month}-{$year}.xlsx";
+
+        return Excel::download(new ProfitSharingFinancialExport($exportData), $filename);
     }
 
     public function store(Request $request)
@@ -215,6 +301,20 @@ class ReportController extends Controller
         
         $pdf = Pdf::loadView('admin.reports.pdf_history', compact('transactions'));
         return $pdf->download('laporan-riwayat-transaksi.pdf');
+    }
+
+    public function exportHistoryExcel(Request $request)
+    {
+        $query = Transaction::query()->with(['account', 'sourceAccount', 'customer', 'user']);
+
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        }
+
+        $transactions = $query->orderBy('date', 'desc')->get();
+        
+        $fileName = 'riwayat-transaksi-' . now()->format('Ymd-His') . '.xlsx';
+        return Excel::download(new \App\Exports\TransactionsExport($transactions), $fileName);
     }
 
     // ----------------------------------------------------------------------

@@ -33,12 +33,12 @@ class CustomersExport implements FromCollection, WithHeadings, WithMapping
         return [
             $customer->id,
             $customer->customer_id ?? '-',
-            $customer->name,
-            strtoupper($customer->type),
-            $customer->phone,
-            $customer->address,
+            $customer->name ?? '-',
+            strtoupper($customer->type ?? 'pppoe'),
+            $customer->phone ?? '-',
+            $customer->address ?? '-',
             $customer->is_isolated ? 'ISOLIR' : 'AKTIF',
-            $customer->created_at->format('d-m-Y'),
+            $customer->created_at ? $customer->created_at->format('d-m-Y') : '-',
         ];
     }
 }

@@ -45,8 +45,6 @@ class ProfitSharingController extends Controller
             return redirect()->route('admin.business.index');
         }
 
-        \Log::info('ProfitSharing Update Request:', $request->all());
-
         // Update main business attributes
         $business->update([
             'reserve_percentage' => $request->input('reserve_percentage', $business->reserve_percentage),
@@ -62,12 +60,36 @@ class ProfitSharingController extends Controller
 
         $features = $business->enabled_features ?: [];
         foreach ($featureKeys as $key) {
-            $features[$key] = $request->input('feature_' . $key) == '1';
+            if ($request->has('feature_' . $key)) {
+                $features[$key] = filter_var($request->input('feature_' . $key), FILTER_VALIDATE_BOOLEAN);
+            }
         }
         
         $business->update(['enabled_features' => $features]);
 
         return redirect()->back()->with('success', 'Pengaturan bisnis berhasil diperbarui.');
+    }
+
+    public function toggleFeature(Request $request)
+    {
+        $business = auth()->user()->currentBusiness;
+        if (!$business) {
+            return response()->json(['success' => false, 'message' => 'Bisnis tidak aktif'], 403);
+        }
+
+        $key = $request->input('key');
+        $value = filter_var($request->input('value'), FILTER_VALIDATE_BOOLEAN);
+
+        $features = $business->enabled_features ?: [];
+        $features[$key] = $value;
+        $business->update(['enabled_features' => $features]);
+
+        return response()->json([
+            'success' => true,
+            'key' => $key,
+            'value' => $value,
+            'message' => "Fitur $key berhasil " . ($value ? 'diaktifkan' : 'dinonaktifkan')
+        ]);
     }
 
     public function storeStakeholder(Request $request)

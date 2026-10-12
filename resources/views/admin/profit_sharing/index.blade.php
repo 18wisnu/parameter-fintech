@@ -15,9 +15,42 @@
 
     <form action="{{ route('admin.profit_sharing.update_settings') }}" method="POST" x-data="{ 
         features: {{ json_encode($enabledFeatures) }},
-        toggle(key) { this.features[key] = !this.features[key] } 
+        saving: false,
+        toastMessage: '',
+        showToast: false,
+        toggle(key) { 
+            this.features[key] = !this.features[key];
+            this.saving = true;
+            fetch('{{ route('admin.profit_sharing.toggle_feature') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ key: key, value: this.features[key] })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.saving = false;
+                this.toastMessage = data.message || 'Perubahan fitur disimpan.';
+                this.showToast = true;
+                setTimeout(() => { this.showToast = false; }, 3000);
+            })
+            .catch(err => {
+                this.saving = false;
+                this.toastMessage = 'Gagal menyimpan toggle.';
+                this.showToast = true;
+                setTimeout(() => { this.showToast = false; }, 3000);
+            });
+        } 
     }">
         @csrf
+        
+        <!-- Toast Notification -->
+        <div x-show="showToast" x-transition.opacity.scale.90 class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700" x-cloak>
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></div>
+            <span class="text-sm font-bold" x-text="toastMessage"></span>
+        </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
             <!-- 1. Identitas Bisnis & Tema -->
@@ -75,12 +108,11 @@
                         'staff_data' => ['Data Pegawai', 'Manajemen SDM']
                     ] as $key => $info)
                     <div 
-                        @click="features['{{ $key }}'] = !features['{{ $key }}']"
+                        @click="toggle('{{ $key }}')"
                         class="flex items-center p-4 rounded-3xl border transition-all cursor-pointer hover:shadow-md active:scale-[0.98]"
                         :class="features['{{ $key }}'] ? 'border-sky-300 bg-sky-50 shadow-sm' : 'border-slate-100 bg-slate-50 opacity-60'">
                         
-                        <input type="hidden" name="feature_{{ $key }}" value="0">
-                        <input type="checkbox" name="feature_{{ $key }}" value="1" class="hidden" :checked="features['{{ $key }}']">
+                        <input type="hidden" name="feature_{{ $key }}" :value="features['{{ $key }}'] ? '1' : '0'">
                         
                         <div class="relative inline-flex items-center mr-4 pointer-events-none">
                             <div class="w-12 h-6 rounded-full transition-colors relative duration-300"

@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToTenant;
 
 class Deposit extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     // Daftar kolom yang boleh diisi oleh Form Controller
     protected $fillable = [
+        'business_id',
         'user_id',
         'customer_id',
         'invoice_id',

@@ -230,10 +230,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/deposit/{id}/approve', [DashboardController::class, 'approveDeposit'])->name('admin.deposit.approve');
 
-    // --- MANAJEMEN PEGAWAI & ROLE (PERBAIKAN UTAMA DI SINI) ---
+    // --- MANAJEMEN PEGAWAI & ROLE ---
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
-    // Ini Rute Ganti Role yang Benar (Method PUT):
+    Route::post('/users', [UserController::class, 'store'])->name('admin.users.store');
+    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
     Route::put('/admin/users/{user}/update-role', [UserController::class, 'updateRole'])->name('admin.users.updateRole');
+    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     
     // --- MANAJEMEN GAJI (Payroll) ---
     Route::get('/salaries', [AdminSalaryController::class, 'index'])->name('admin.salaries.index');
@@ -261,6 +263,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- LAPORAN & DANA CADANGAN ---
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::post('/reports', [ReportController::class, 'store'])->name('reports.store');
+    Route::get('/reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
     
     Route::get('reports/reserve', [ReportController::class, 'reserve'])->name('reports.reserve');
     Route::post('reports/reserve', [ReportController::class, 'storeUsage'])->name('reports.reserve.store');
@@ -269,6 +272,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('reports/history', [ReportController::class, 'history'])->name('reports.history');
     Route::get('reports/history/pdf', [ReportController::class, 'exportHistoryPdf'])->name('reports.history.pdf');
+    Route::get('reports/history/excel', [ReportController::class, 'exportHistoryExcel'])->name('reports.history.excel');
     Route::get('reports/vouchers', [ReportController::class, 'vouchers'])->name('reports.vouchers');
     
     // Hapus Transaksi
@@ -281,6 +285,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- PENGATURAN BAGI HASIL ---
     Route::get('/profit-sharing/settings', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'index'])->name('admin.profit_sharing.index');
     Route::post('/profit-sharing/settings/update', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'updateSettings'])->name('admin.profit_sharing.update_settings');
+    Route::post('/profit-sharing/toggle-feature', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'toggleFeature'])->name('admin.profit_sharing.toggle_feature');
     Route::post('/profit-sharing/stakeholders', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'storeStakeholder'])->name('admin.profit_sharing.stakeholder.store');
     Route::delete('/profit-sharing/stakeholders/{id}', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'destroyStakeholder'])->name('admin.profit_sharing.stakeholder.destroy');
 

@@ -31,10 +31,41 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Reset active business so user must select again each login session
-        Auth::user()->update(['current_business_id' => null]);
+        // Auto-select business if user has only one or already has active business
+        $user = Auth::user();
+        if (!$user->current_business_id) {
+            // Check if user has associated businesses or owns one
+            $firstBusiness = $user->businesses()->first();
+            if (!$firstBusiness) {
+                $firstBusiness = \App\Models\Business::where('owner_id', $user->id)->first();
+                if ($firstBusiness) {
+                    $user->businesses()->syncWithoutDetaching([$firstBusiness->id => ['role' => 'owner']]);
+                }
+            }
 
-        // Always redirect to business selection first
+            if ($firstBusiness) {
+                $user->update(['current_business_id' => $firstBusiness->id]);
+            }
+        }
+
+        // If user already has a current_business_id, redirect based on their role/dashboard
+        if ($user->current_business_id) {
+            $pivotRole = \Illuminate\Support\Facades\DB::table('business_user')
+                ->where('business_id', $user->current_business_id)
+                ->where('user_id', $user->id)
+                ->value('role') ?? $user->role;
+
+            if (in_array($pivotRole, ['teknisi', 'kolektor'])) {
+                return redirect()->intended(route('mobile.home'));
+            }
+            return redirect()->intended(route('dashboard'));
+        }
+
+        // If no business exists yet, redirect to business index or dashboard
+        if (\App\Models\Business::count() === 0) {
+            return redirect()->intended(route('dashboard'));
+        }
+
         return redirect()->route('admin.business.index');
     }
 
@@ -43,11 +74,6 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        // Clear active business so next login forces selection
-        if (Auth::check()) {
-            Auth::user()->update(['current_business_id' => null]);
-        }
-
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

@@ -5,42 +5,103 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto">
             
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-slate-800">Laporan Bagi Hasil</h2>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Laporan Bagi Hasil & Keuangan</h2>
+                    <p class="text-xs text-slate-500 mt-1 font-medium">Rincian pendapatan, pengeluaran, dana cadangan dan dividen.</p>
+                </div>
                 
-                <div class="bg-white p-2 rounded-lg shadow-sm border border-slate-200">
-                    <form action="{{ route('reports.index') }}" method="GET" class="flex items-center space-x-2">
-                        <label class="font-bold text-slate-600 text-sm ml-2">Periode:</label>
-                        <select name="month" class="text-sm border-none focus:ring-0 font-bold text-slate-700 cursor-pointer">
-                            @for($i=1; $i<=12; $i++)
-                                <option value="{{ $i }}" {{ $month == $i ? 'selected' : '' }}>
-                                    {{ \DateTime::createFromFormat('!m', $i)->format('F') }}
-                                </option>
-                            @endfor
-                        </select>
-                        <select name="year" class="text-sm border-none focus:ring-0 font-bold text-slate-700 cursor-pointer">
-                            <option value="2025" {{ $year == 2025 ? 'selected' : '' }}>2025</option>
-                            <option value="2026" {{ $year == 2026 ? 'selected' : '' }}>2026</option>
-                        </select>
-                        <button type="submit" class="bg-sky-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-sky-700 font-bold">Lihat</button>
-                    </form>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+                        <form action="{{ route('reports.index') }}" method="GET" class="flex items-center space-x-2">
+                            <label class="font-bold text-slate-600 text-xs ml-2">Periode:</label>
+                            <select name="month" class="text-sm border-none focus:ring-0 font-bold text-slate-700 cursor-pointer">
+                                @for($i=1; $i<=12; $i++)
+                                    <option value="{{ $i }}" {{ $month == $i ? 'selected' : '' }}>
+                                        {{ \DateTime::createFromFormat('!m', $i)->format('F') }}
+                                    </option>
+                                @endfor
+                            </select>
+                            <select name="year" class="text-sm border-none focus:ring-0 font-bold text-slate-700 cursor-pointer">
+                                <option value="2025" {{ $year == 2025 ? 'selected' : '' }}>2025</option>
+                                <option value="2026" {{ $year == 2026 ? 'selected' : '' }}>2026</option>
+                            </select>
+                            <button type="submit" class="bg-sky-600 text-white px-4 py-1.5 rounded-xl text-sm hover:bg-sky-700 font-bold">Lihat</button>
+                        </form>
+                    </div>
+
+                    <a href="{{ route('reports.export-excel', ['month' => $month, 'year' => $year]) }}" 
+                        class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-md shadow-emerald-100 transition-all active:scale-95">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Cetak ke XLS (Excel)
+                    </a>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 
                 <div class="space-y-4">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-emerald-500">
-                        <p class="text-slate-500 text-xs font-bold uppercase">Total Pendapatan</p>
-                        <h3 class="text-2xl font-bold text-emerald-600">+ Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
+                    <!-- Card Pendapatan -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-slate-400 text-xs font-black uppercase tracking-wider">Total Pendapatan</p>
+                            <span class="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold">Revenue</span>
+                        </div>
+                        <h3 class="text-3xl font-black text-emerald-600 mb-4">+ Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
+                        
+                        <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                            <div class="flex justify-between items-center text-slate-600">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-sky-500"></span> Pendapatan Voucher Hotspot:</span>
+                                <span class="font-bold text-slate-800">Rp {{ number_format($voucherIncome, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-slate-600">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Pendapatan PPPoE (Langganan):</span>
+                                <span class="font-bold text-slate-800">Rp {{ number_format($pppoeIncome, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-slate-600">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Pemasangan Baru (Registrasi):</span>
+                                <span class="font-bold text-slate-800">Rp {{ number_format($pasangBaruIncome, 0, ',', '.') }}</span>
+                            </div>
+                            @if($otherIncome > 0)
+                            <div class="flex justify-between items-center text-slate-600">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Pendapatan Lain-lain:</span>
+                                <span class="font-bold text-slate-800">Rp {{ number_format($otherIncome, 0, ',', '.') }}</span>
+                            </div>
+                            @endif
+                        </div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-rose-500">
-                        <p class="text-slate-500 text-xs font-bold uppercase">Total Pengeluaran</p>
-                        <h3 class="text-2xl font-bold text-rose-600">- Rp {{ number_format($expense, 0, ',', '.') }}</h3>
+
+                    <!-- Card Pengeluaran -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-slate-400 text-xs font-black uppercase tracking-wider">Total Pengeluaran</p>
+                            <span class="text-xs px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg font-bold">Expense</span>
+                        </div>
+                        <h3 class="text-3xl font-black text-rose-600 mb-4">- Rp {{ number_format($expense, 0, ',', '.') }}</h3>
+                        
+                        <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                            <div class="flex justify-between items-center text-slate-600">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Tagihan (Bandwidth / Listrik / Ops):</span>
+                                <span class="font-bold text-slate-800">Rp {{ number_format($tagihanExpense, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-slate-600">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span> Gaji Pegawai & Teknisi:</span>
+                                <span class="font-bold text-slate-800">Rp {{ number_format($gajiExpense, 0, ',', '.') }}</span>
+                            </div>
+                            @if($otherExpense > 0)
+                            <div class="flex justify-between items-center text-slate-600">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Pengeluaran Lain-lain:</span>
+                                <span class="font-bold text-slate-800">Rp {{ number_format($otherExpense, 0, ',', '.') }}</span>
+                            </div>
+                            @endif
+                        </div>
                     </div>
-                    <div class="bg-slate-800 p-6 rounded-2xl shadow-lg text-white">
-                        <p class="opacity-75 text-xs font-bold uppercase">Laba Bersih (Net Profit)</p>
-                        <h3 class="text-3xl font-bold mt-1">Rp {{ number_format($netProfit, 0, ',', '.') }}</h3>
+
+                    <!-- Card Laba Bersih -->
+                    <div class="bg-slate-900 p-6 rounded-2xl shadow-xl text-white border border-slate-800">
+                        <p class="text-slate-400 text-xs font-black uppercase tracking-wider">Laba Bersih Operasional (Net Profit)</p>
+                        <h3 class="text-3xl font-black text-sky-400 mt-2">Rp {{ number_format($netProfit, 0, ',', '.') }}</h3>
+                        <p class="text-[11px] text-slate-400 mt-2">Dihitung dari Total Pendapatan dikurangi Total Pengeluaran riil.</p>
                     </div>
                 </div>
 

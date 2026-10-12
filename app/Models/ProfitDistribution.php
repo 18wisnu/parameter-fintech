@@ -4,15 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToTenant;
 
 class ProfitDistribution extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     // Sesuaikan dengan nama tabel di Migrasi Anda
     protected $table = 'profit_distributions';
 
     protected $fillable = [
+        'business_id',
         'period', 
         'total_revenue', 
         'total_expense', 
