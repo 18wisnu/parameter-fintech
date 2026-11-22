@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
+    @include('partials.flash')
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
@@ -100,6 +101,13 @@
                     <td class="px-6 py-4 text-center whitespace-nowrap">
                         @if($inv->status == 'paid')
                             <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Lunas</span>
+                            @if($inv->renewal_status === 'success')
+                                <div class="mt-1 text-[10px] font-bold text-emerald-600">Internet aktif{{ $inv->renewal_new_expiry ? ' s/d ' . $inv->renewal_new_expiry->format('d M Y') : '' }}</div>
+                            @elseif($inv->renewal_status === 'pending')
+                                <div class="mt-1 text-[10px] font-bold text-amber-600">Mengaktifkan internet…</div>
+                            @elseif($inv->renewal_status === 'failed')
+                                <div class="mt-1 text-[10px] font-bold text-rose-600" title="{{ $inv->renewal_error }}">Aktivasi internet gagal</div>
+                            @endif
                         @else
                             <span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Belum Bayar</span>
                         @endif
@@ -110,6 +118,17 @@
                                 @csrf
                                 <button class="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded font-bold" onclick="return confirm('Tandai Lunas?')">Bayar</button>
                             </form>
+                        @elseif($inv->renewal_status === 'failed')
+                            <div class="flex flex-col items-end gap-1">
+                                <form action="{{ route('invoices.renewal.retry', $inv->id) }}" method="POST">
+                                    @csrf
+                                    <button class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded font-bold">Aktifkan Ulang</button>
+                                </form>
+                                <form action="{{ route('invoices.renewal.resolve', $inv->id) }}" method="POST">
+                                    @csrf
+                                    <button class="text-[10px] text-slate-500 hover:text-slate-700 underline font-bold" onclick="return confirm('Pastikan layanan pelanggan ini sudah aktif. Tandai selesai?')">Tandai Aktif</button>
+                                </form>
+                            </div>
                         @else
                             <span class="text-slate-300 text-xs font-bold">Selesai</span>
                         @endif

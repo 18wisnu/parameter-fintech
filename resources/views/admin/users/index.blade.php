@@ -23,6 +23,14 @@
     </div>
     @endif
 
+    @if($errors->any())
+    <div class="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-800 rounded-xl text-xs font-bold">
+        @foreach($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
+    </div>
+    @endif
+
     @if(session('error'))
     <div class="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-800 rounded-xl flex items-center gap-3 text-xs font-bold">
         <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -82,28 +90,31 @@
                     </td>
                     <td class="px-4 py-4">
                         <div class="flex items-center justify-center gap-2">
-                            <!-- Quick Role Change -->
+                            <!-- Quick Role Change (pemilik tenant tidak bisa diubah) -->
+                            @if($user->id !== $ownerId)
                             <form action="{{ route('admin.users.updateRole', $user->id) }}" method="POST" class="flex items-center gap-1.5">
                                 @csrf
                                 @method('PUT')
                                 <select name="role" class="text-xs border-slate-200 rounded-xl focus:ring-sky-500 focus:border-sky-500 py-1.5 px-2 bg-slate-50">
-                                    <option value="owner" {{ $user->role == 'owner' ? 'selected' : '' }}>Owner</option>
-                                    <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
-                                    <option value="teknisi" {{ $user->role == 'teknisi' ? 'selected' : '' }}>Teknisi</option>
-                                    <option value="kolektor" {{ $user->role == 'kolektor' ? 'selected' : '' }}>Kolektor</option>
+                                    @foreach($assignableRoles as $r)
+                                    <option value="{{ $r }}" {{ $user->role == $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
+                                    @endforeach
                                 </select>
                                 <button type="submit" class="bg-slate-900 text-white px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sky-600 transition-colors shadow-sm">Save</button>
                             </form>
+                            @else
+                            <span class="text-[10px] font-black uppercase tracking-widest text-purple-500">Pemilik Tenant</span>
+                            @endif
 
                             <!-- Edit Detail Button -->
-                            <button onclick="openEditModal({{ json_encode(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'base_salary' => $user->base_salary ?? 0]) }})" 
+                            <button onclick="openEditModal({{ json_encode(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'base_salary' => (float) ($user->base_salary ?? 0), 'is_owner' => $user->id === $ownerId]) }})"
                                 class="p-1.5 text-sky-600 hover:bg-sky-50 rounded-xl transition" title="Edit Profil & Password">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
 
                             <!-- Delete Button -->
-                            @if(auth()->id() !== $user->id)
-                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai {{ $user->name }}?')">
+                            @if(auth()->id() !== $user->id && $user->id !== $ownerId)
+                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Keluarkan {{ $user->name }} dari unit bisnis ini?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition" title="Hapus Pegawai">
@@ -151,15 +162,17 @@
                     </div>
                     
                     <div class="flex items-center gap-2">
-                        <button onclick="openEditModal({{ json_encode(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'base_salary' => $user->base_salary ?? 0]) }})" 
+                        <button onclick="openEditModal({{ json_encode(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'base_salary' => (float) ($user->base_salary ?? 0), 'is_owner' => $user->id === $ownerId]) }})"
                             class="bg-white border border-slate-200 text-sky-600 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all">
                             Edit
                         </button>
+                        @if($user->id !== $ownerId)
                         <button onclick="document.getElementById('mobile-role-{{ $user->id }}').classList.toggle('hidden')" class="bg-white border border-slate-200 text-slate-600 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all">
                             Role
                         </button>
-                        @if(auth()->id() !== $user->id)
-                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai {{ $user->name }}?')">
+                        @endif
+                        @if(auth()->id() !== $user->id && $user->id !== $ownerId)
+                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Keluarkan {{ $user->name }} dari unit bisnis ini?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="bg-rose-50 border border-rose-200 text-rose-600 p-2 rounded-xl shadow-sm active:scale-95 transition-all" title="Hapus">
@@ -177,10 +190,9 @@
                         @method('PUT')
                         <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Pilih Jabatan Baru</label>
                         <select name="role" class="w-full text-sm border-slate-200 rounded-xl focus:ring-sky-500 mb-4 bg-slate-50">
-                            <option value="owner" {{ $user->role == 'owner' ? 'selected' : '' }}>Owner</option>
-                            <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="teknisi" {{ $user->role == 'teknisi' ? 'selected' : '' }}>Teknisi</option>
-                            <option value="kolektor" {{ $user->role == 'kolektor' ? 'selected' : '' }}>Kolektor</option>
+                            @foreach($assignableRoles as $r)
+                            <option value="{{ $r }}" {{ $user->role == $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
+                            @endforeach
                         </select>
                         <button type="submit" class="w-full bg-sky-600 text-white font-black py-3 rounded-xl shadow-lg shadow-sky-100 text-[10px] uppercase tracking-widest">Update Jabatan</button>
                     </form>
@@ -218,8 +230,8 @@
             </div>
 
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Password</label>
-                <input type="password" name="password" required placeholder="Minimal 6 karakter" minlength="6"
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Password <span class="text-slate-300 font-normal normal-case">(Kosongkan jika email sudah punya akun)</span></label>
+                <input type="password" name="password" placeholder="Minimal 6 karakter" minlength="6"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
@@ -227,15 +239,14 @@
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan / Role</label>
                     <select name="role" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
-                        <option value="teknisi">Teknisi</option>
-                        <option value="kolektor">Kolektor</option>
-                        <option value="admin">Admin</option>
-                        <option value="owner">Owner</option>
+                        @foreach($assignableRoles as $r)
+                        <option value="{{ $r }}">{{ ucfirst($r) }}</option>
+                        @endforeach
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok (Rp)</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok di Unit Ini (Rp)</label>
                     <input type="number" name="base_salary" min="0" placeholder="0"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
                 </div>
@@ -292,16 +303,16 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan / Role</label>
-                    <select id="edit_role" name="role" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
-                        <option value="teknisi">Teknisi</option>
-                        <option value="kolektor">Kolektor</option>
-                        <option value="admin">Admin</option>
-                        <option value="owner">Owner</option>
+                    <select id="edit_role" name="role" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all disabled:opacity-60">
+                        @foreach($assignableRoles as $r)
+                        <option value="{{ $r }}">{{ ucfirst($r) }}</option>
+                        @endforeach
+                        <option value="owner" disabled>Owner (pemilik tenant)</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok (Rp)</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok di Unit Ini (Rp)</label>
                     <input type="number" id="edit_base_salary" name="base_salary" min="0" placeholder="0"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
                 </div>
@@ -325,7 +336,10 @@
     function openEditModal(user) {
         document.getElementById('edit_name').value = user.name;
         document.getElementById('edit_email').value = user.email;
-        document.getElementById('edit_role').value = user.role;
+        const roleSelect = document.getElementById('edit_role');
+        roleSelect.value = user.role;
+        // Jabatan pemilik tenant tidak bisa diubah; select disabled tidak ikut terkirim
+        roleSelect.disabled = !!user.is_owner;
         document.getElementById('edit_base_salary').value = user.base_salary;
         document.getElementById('edit_password').value = '';
 

@@ -38,7 +38,8 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        // Server produksi memakai GOOGLE_REDIRECT; keduanya didukung
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('GOOGLE_REDIRECT')),
     ],
     
 ];

@@ -59,7 +59,7 @@ class IncomeController extends Controller
                 ]);
 
                 // 3. Kirim Notif Lonceng khusus Owner & Admin saja
-                $admins = User::whereIn('role', ['admin', 'owner'])->get();
+                $admins = User::inCurrentBusiness(['admin', 'owner'])->get();
                 Notification::send($admins, new NewIncomeNotification($income));
             });
 

@@ -17,6 +17,11 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
+    // Sudah punya akun: daftarkan tenant baru dengan login email + password
+    Route::post('register/tenant', [RegisteredUserController::class, 'storeTenant'])
+        ->middleware('throttle:6,1')
+        ->name('register.tenant');
+
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 

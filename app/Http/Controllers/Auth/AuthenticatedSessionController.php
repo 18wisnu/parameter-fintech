@@ -31,29 +31,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Auto-select business if user has only one or already has active business
+        // Pakai tenant terakhir (jika masih terdaftar), atau tenant pertama tempat email ini terdaftar
         $user = Auth::user();
-        if (!$user->current_business_id) {
-            // Check if user has associated businesses or owns one
-            $firstBusiness = $user->businesses()->first();
-            if (!$firstBusiness) {
-                $firstBusiness = \App\Models\Business::where('owner_id', $user->id)->first();
-                if ($firstBusiness) {
-                    $user->businesses()->syncWithoutDetaching([$firstBusiness->id => ['role' => 'owner']]);
-                }
-            }
 
-            if ($firstBusiness) {
-                $user->update(['current_business_id' => $firstBusiness->id]);
-            }
-        }
-
-        // If user already has a current_business_id, redirect based on their role/dashboard
-        if ($user->current_business_id) {
-            $pivotRole = \Illuminate\Support\Facades\DB::table('business_user')
-                ->where('business_id', $user->current_business_id)
-                ->where('user_id', $user->id)
-                ->value('role') ?? $user->role;
+        if ($user->ensureCurrentBusiness()) {
+            $pivotRole = $user->roleIn($user->current_business_id) ?? $user->role;
 
             if (in_array($pivotRole, ['teknisi', 'kolektor'])) {
                 return redirect()->intended(route('mobile.home'));

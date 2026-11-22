@@ -17,6 +17,21 @@ class Invoice extends Model
         'period_date',    // Periode (2026-02-01)
         'amount',
         'status',         // unpaid, paid
+        'renewal_status', // null, pending, success, failed (perpanjangan layanan internet)
+        'renewal_error',
+        'renewal_attempts',
+        'renewal_expiry_before',
+        'renewal_new_expiry',
+        'renewal_remote_invoice',
+        'renewal_payment_method',
+        'renewal_note',
+        'renewed_at',
+    ];
+
+    protected $casts = [
+        'renewal_expiry_before' => 'date',
+        'renewal_new_expiry' => 'date',
+        'renewed_at' => 'datetime',
     ];
 
     public function customer()

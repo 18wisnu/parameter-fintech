@@ -13,7 +13,8 @@ class SalaryController extends Controller
 {
     public function index()
     {
-        $users = User::whereIn('role', ['teknisi', 'kolektor'])->get();
+        // role & base_salary diambil dari data tenant aktif
+        $users = User::membersOfCurrentBusiness(['teknisi', 'kolektor'])->get();
         $salaries = Salary::with('user')->latest()->paginate(10);
         
         return view('admin.salaries.index', compact('users', 'salaries'));
@@ -25,8 +26,15 @@ class SalaryController extends Controller
             'base_salary' => 'required|numeric|min:0',
         ]);
 
+        $businessId = auth()->user()->current_business_id;
         $user = User::findOrFail($userId);
-        $user->update(['base_salary' => $request->base_salary]);
+
+        if (!$user->belongsToBusiness($businessId)) {
+            abort(403, 'Pegawai ini tidak terdaftar di unit bisnis yang aktif.');
+        }
+
+        // Gaji pokok berlaku hanya untuk tenant aktif
+        $user->businesses()->updateExistingPivot($businessId, ['base_salary' => $request->base_salary]);
 
         return redirect()->back()->with('success', 'Gaji pokok berhasil diupdate untuk ' . $user->name);
     }
@@ -38,7 +46,8 @@ class SalaryController extends Controller
         ]);
 
         $month = $request->month;
-        $users = User::whereIn('role', ['teknisi', 'kolektor'])->get();
+        // base_salary di sini adalah gaji pokok di tenant aktif (dari pivot)
+        $users = User::membersOfCurrentBusiness(['teknisi', 'kolektor'])->get();
         $bonusPerActivation = 50000; // Contoh: 50rb per aktivasi PPPoE
 
         foreach ($users as $user) {

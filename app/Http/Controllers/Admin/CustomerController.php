@@ -42,7 +42,7 @@ class CustomerController extends Controller
 
     public function create()
     {
-        $staff = User::whereIn('role', ['teknisi', 'kolektor'])->get();
+        $staff = User::inCurrentBusiness(['teknisi', 'kolektor'])->get();
         return view('admin.customers.create', compact('staff'));
     }
 
@@ -58,7 +58,7 @@ class CustomerController extends Controller
         $data = $request->all();
         $customer = Customer::create($data);
 
-        $admins = User::whereIn('role', ['admin', 'owner'])->get();
+        $admins = User::inCurrentBusiness(['admin', 'owner'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new NewCustomerNotification($customer));
         }
@@ -70,7 +70,7 @@ class CustomerController extends Controller
     public function edit($id)
     {
         $customer = Customer::findOrFail($id);
-        $staff = User::whereIn('role', ['teknisi', 'kolektor'])->get();
+        $staff = User::inCurrentBusiness(['teknisi', 'kolektor'])->get();
         return view('admin.customers.edit', compact('customer', 'staff'));
     }
 

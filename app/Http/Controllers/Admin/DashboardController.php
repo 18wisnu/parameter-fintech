@@ -115,7 +115,20 @@ class DashboardController extends Controller
                     'is_locked' => true,
                 ]);
 
-                return redirect()->back()->with('success', 'Setoran disetujui & Tagihan ' . $invoice->invoice_number . ' otomatis LUNAS!');
+                // 4. Perpanjang layanan internet pelanggan di server
+                $invoice = \App\Services\Mixradius\ServiceRenewal::afterPaid(
+                    $invoice->fresh(), 'cash', 'Setoran kolektor: ' . ($deposit->user->name ?? '-')
+                );
+
+                $base = 'Setoran disetujui & Tagihan ' . $invoice->invoice_number . ' otomatis LUNAS!';
+
+                return match ($invoice->renewal_status) {
+                    'success' => redirect()->back()->with('success', $base . ' Layanan internet aktif'
+                        . ($invoice->renewal_new_expiry ? ' s/d ' . $invoice->renewal_new_expiry->format('d M Y') : '') . '.'),
+                    'failed' => redirect()->back()->with('warning', $base . ' TETAPI layanan internet belum berhasil diperpanjang: '
+                        . $invoice->renewal_error . ' Sistem akan mencoba ulang otomatis.'),
+                    default => redirect()->back()->with('success', $base),
+                };
             }
         }
 

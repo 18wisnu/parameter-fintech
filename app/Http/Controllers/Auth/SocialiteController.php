@@ -56,6 +56,11 @@ class SocialiteController extends Controller
      */
     protected function redirectByRole($user)
     {
+        // Role mengikuti tenant aktif (users.role disinkronkan dari pivot)
+        if (!$user->ensureCurrentBusiness() && \App\Models\Business::count() > 0) {
+            return redirect()->route('admin.business.index');
+        }
+
         // Jalur Utama (Owner & Admin)
         if (in_array($user->role, ['owner', 'admin'])) {
             return redirect()->intended('/dashboard');

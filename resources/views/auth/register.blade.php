@@ -69,23 +69,91 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
                     </div>
-                    <h2 class="text-2xl font-bold text-slate-800">Buat Akun Baru</h2>
-                    <p class="text-slate-500">Daftar ke Parameter Fintech</p>
+                    <h2 class="text-2xl font-bold text-slate-800">Daftarkan Unit Bisnis</h2>
+                    <p class="text-slate-500">Yang mendaftarkan menjadi pemilik (owner)</p>
                 </div>
 
                 <div class="hidden lg:block mb-8">
-                    <h2 class="text-3xl font-bold text-slate-800">Buat Akun Baru</h2>
-                    <p class="text-slate-500 mt-2">Isi formulir di bawah untuk mendaftar.</p>
+                    <h2 class="text-3xl font-bold text-slate-800">Daftarkan Unit Bisnis</h2>
+                    <p class="text-slate-500 mt-2">Anda akan menjadi pemilik (owner) unit bisnis yang didaftarkan.</p>
                 </div>
 
+                @php $isTenantMode = request('mode') === 'tenant'; @endphp
+
+                {{-- Pilihan: Daftar Baru / Tambah Tenant --}}
+                <div class="grid grid-cols-2 gap-2 p-1 mb-6 bg-slate-100 rounded-xl">
+                    <a href="{{ route('register') }}"
+                        class="text-center py-2.5 rounded-lg text-sm font-bold transition {{ $isTenantMode ? 'text-slate-500 hover:text-slate-700' : 'bg-white text-sky-700 shadow-sm' }}">
+                        Daftar Baru
+                    </a>
+                    <a href="{{ route('register', ['mode' => 'tenant']) }}"
+                        class="text-center py-2.5 rounded-lg text-sm font-bold transition {{ $isTenantMode ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+                        Tambah Tenant
+                    </a>
+                </div>
+
+                @if($isTenantMode)
+                <div class="bg-white rounded-2xl lg:shadow-xl lg:border lg:border-slate-100 lg:p-8">
+                    <p class="text-sm text-slate-500 mb-6">Sudah punya akun? Masukkan email &amp; password akun Anda, lalu nama unit bisnis baru. Unit bisnis ini akan terhubung ke akun yang sama.</p>
+
+                    <form method="POST" action="{{ route('register.tenant') }}">
+                        @csrf
+
+                        <div class="mb-5">
+                            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Nama Unit Bisnis Baru</label>
+                            <input type="text" name="business_name" value="{{ old('business_name') }}" required autofocus
+                                class="w-full px-5 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all font-medium outline-none"
+                                placeholder="Contoh: RTRW Net Cabang Timur">
+                            <x-input-error :messages="$errors->get('business_name')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-5">
+                            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Email Akun</label>
+                            <input type="email" name="email" value="{{ old('email') }}" required autocomplete="username"
+                                class="w-full px-5 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all font-medium outline-none"
+                                placeholder="email@contoh.com">
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Kata Sandi Akun</label>
+                            <input type="password" name="password" required autocomplete="current-password"
+                                class="w-full px-5 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all font-medium outline-none"
+                                placeholder="Kata sandi akun Anda">
+                            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                        </div>
+
+                        <button type="submit"
+                            class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-sky-200 transition-transform transform active:scale-95 text-lg">
+                            Tambah Tenant
+                        </button>
+
+                        <div class="mt-6 text-center">
+                            <span class="text-slate-500 text-sm">Belum punya akun? </span>
+                            <a href="{{ route('register') }}" class="text-sky-600 font-bold text-sm hover:text-sky-700 hover:underline">
+                                Daftar baru
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                @else
                 <div class="bg-white rounded-2xl lg:shadow-xl lg:border lg:border-slate-100 lg:p-8">
                     <form method="POST" action="{{ route('register') }}">
                         @csrf
 
+                        {{-- Business Name --}}
+                        <div class="mb-5">
+                            <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Nama Unit Bisnis</label>
+                            <input type="text" name="business_name" value="{{ old('business_name') }}" required
+                                class="w-full px-5 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all font-medium outline-none"
+                                placeholder="Contoh: RTRW Net Parameter">
+                            <x-input-error :messages="$errors->get('business_name')" class="mt-2" />
+                        </div>
+
                         {{-- Name --}}
                         <div class="mb-5">
                             <label class="block text-sm font-bold text-slate-700 mb-2 ml-1">Nama Lengkap</label>
-                            <input type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name"
+                            <input type="text" name="name" value="{{ old('name') }}" required autocomplete="name"
                                 class="w-full px-5 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all font-medium outline-none"
                                 placeholder="Nama lengkap Anda">
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
@@ -131,6 +199,7 @@
                         </div>
                     </form>
                 </div>
+                @endif
 
                 <p class="mt-8 text-center text-xs text-slate-400">
                     &copy; {{ date('Y') }} Parameter Fintech System v1.0

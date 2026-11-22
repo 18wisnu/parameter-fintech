@@ -30,6 +30,7 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-6 border-b border-slate-50 bg-slate-50/50">
                 <h3 class="font-bold text-slate-800">Set Gaji Pokok Staff</h3>
+                <p class="text-xs text-slate-400 mt-1">Berlaku hanya untuk unit bisnis ini.</p>
             </div>
             <div class="p-6">
                 <div class="space-y-6">

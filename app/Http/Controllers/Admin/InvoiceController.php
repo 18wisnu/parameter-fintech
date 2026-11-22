@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Invoice;
 use App\Models\Customer;
+use App\Services\Mixradius\ServiceRenewal;
 use Carbon\Carbon;
 
 class InvoiceController extends Controller
@@ -49,7 +50,9 @@ class InvoiceController extends Controller
     public function generate()
     {
         $bulanIni = Carbon::now()->format('Y-m-01'); // Tanggal 1 bulan ini
-        $pelangganAktif = Customer::where('is_isolated', 0)->get();
+        // Pelanggan isolir tetap ditagih: membayar tagihan inilah yang membuka isolirnya.
+        // Hanya pelanggan nonaktif (berhenti langganan) yang tidak ditagih.
+        $pelangganAktif = Customer::where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'inactive'))->get();
         $jumlahTerbuat = 0;
 
         foreach ($pelangganAktif as $pelanggan) {
@@ -110,7 +113,48 @@ class InvoiceController extends Controller
             ]);
         });
 
-        return redirect()->back()->with('success', 'Tagihan lunas! Status Pelanggan kembali AKTIF dan transaksi tercatat.');
+        // 4. Perpanjang layanan internet pelanggan di server (setelah pembayaran tersimpan)
+        $invoice = ServiceRenewal::afterPaid($invoice->fresh(), 'cash', 'Dibayar via admin: ' . auth()->user()->name);
+
+        return redirect()->back()->with(...$this->paidMessage($invoice, 'Tagihan lunas! Transaksi tercatat.'));
+    }
+
+    /** Pesan setelah lunas, termasuk hasil perpanjangan layanan. */
+    private function paidMessage(Invoice $invoice, string $base): array
+    {
+        return match ($invoice->renewal_status) {
+            'success' => ['success', $base . ' Layanan internet aktif' . ($invoice->renewal_new_expiry ? ' s/d ' . $invoice->renewal_new_expiry->format('d M Y') : '') . '.'],
+            'failed' => ['warning', $base . ' TETAPI layanan internet belum berhasil diperpanjang: ' . $invoice->renewal_error . ' Sistem akan mencoba ulang otomatis.'],
+            default => ['success', $base . ' Status pelanggan kembali AKTIF.'],
+        };
+    }
+
+    // 5. COBA ULANG PERPANJANGAN LAYANAN
+    public function retryRenewal($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        if ($invoice->status !== 'paid' || $invoice->renewal_status !== 'failed') {
+            return redirect()->back()->with('info', 'Tidak ada perpanjangan yang perlu diulang untuk tagihan ini.');
+        }
+
+        $invoice = (new ServiceRenewal())->attempt($invoice);
+
+        return redirect()->back()->with(...$this->paidMessage($invoice, "Tagihan {$invoice->invoice_number}:"));
+    }
+
+    // 6. TANDAI LAYANAN SUDAH AKTIF (setelah dicek manual)
+    public function resolveRenewal($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        if ($invoice->renewal_status !== 'failed') {
+            return redirect()->back();
+        }
+
+        ServiceRenewal::markResolvedManually($invoice);
+
+        return redirect()->back()->with('success', "Layanan untuk tagihan {$invoice->invoice_number} ditandai sudah aktif.");
     }
 
     // 4. CEK ISOLIR OTOMATIS (Berdasarkan Tanggal Jatuh Tempo)

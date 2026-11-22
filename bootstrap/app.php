@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\LogActivity::class,
             \App\Http\Middleware\CheckActiveBusiness::class,
         ]);
+        $middleware->alias([
+            'tenant.role' => \App\Http\Middleware\EnsureTenantRole::class,
+        ]);
         // Tambahkan baris ini agar Laravel percaya semua Proxy/Tunnel
         $middleware->trustProxies(at: '*');
     })

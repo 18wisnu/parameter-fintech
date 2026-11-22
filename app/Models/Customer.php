@@ -22,6 +22,16 @@ class Customer extends Model
         'due_date',
         'is_isolated',
         'activated_by_id',
+        'code',
+        'status',
+        'mixradius_id',
+        'mixradius_service_id',
+        'mixradius_username',
+        'mixradius_synced_at',
+    ];
+
+    protected $casts = [
+        'mixradius_synced_at' => 'datetime',
     ];
 
     public function activatedBy()

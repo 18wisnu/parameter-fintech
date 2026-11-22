@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Deposit;
 
+// Rute maintenance sekali pakai (diag-fix, fix-owner, setup-bisnis).
+// HANYA aktif saat APP_ENV=local: /fix-owner memindahkan SEMUA tenant ke user ID 1
+// dan /diag-fix menampilkan semua email user, jadi jangan pernah terbuka di produksi.
+if (app()->isLocal()) {
 // Diagnostic + Auto-Fix route (TEMPORARY)
 Route::get('/diag-fix', function() {
     $users = \Illuminate\Support\Facades\DB::table('users')->select('id','name','email','role')->get();
@@ -163,6 +167,7 @@ Route::get('/setup-bisnis', function() {
 
     return response()->json(['status' => 'SELESAI', 'log' => $log]);
 });
+} // end app()->isLocal()
 
 
 // Controller Imports
@@ -225,7 +230,41 @@ Route::middleware(['auth'])->prefix('mobile')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    
+
+    // --- MULTI TENANCY / BISNIS (semua anggota tenant) ---
+    Route::get('/business/select', [\App\Http\Controllers\Admin\BusinessController::class, 'index'])->name('admin.business.index');
+    Route::post('/business/create', [\App\Http\Controllers\Admin\BusinessController::class, 'store'])->name('admin.business.store');
+    Route::post('/business/{business}/select', [\App\Http\Controllers\Admin\BusinessController::class, 'select'])->name('admin.business.select');
+
+    // --- PROFILE ---
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // --- NOTIFIKASI ---
+    Route::get('/notifications/read-all', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return redirect()->back();
+    })->name('notifications.readAll');
+
+    // --- KHUSUS OWNER TENANT AKTIF ---
+    Route::middleware('tenant.role:owner')->group(function () {
+        // Sistem & Update
+        Route::get('/system', [\App\Http\Controllers\Admin\SystemController::class, 'index'])->name('admin.system.index');
+        Route::post('/system/update', [\App\Http\Controllers\Admin\SystemController::class, 'updateVersion'])->name('admin.system.update');
+
+        Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
+
+        // Integrasi Mixradius Evo (per tenant)
+        Route::get('/integrations/mixradius', [\App\Http\Controllers\Admin\MixradiusController::class, 'edit'])->name('admin.mixradius.edit');
+        Route::put('/integrations/mixradius', [\App\Http\Controllers\Admin\MixradiusController::class, 'update'])->name('admin.mixradius.update');
+        Route::post('/integrations/mixradius/test', [\App\Http\Controllers\Admin\MixradiusController::class, 'test'])->name('admin.mixradius.test');
+        Route::post('/integrations/mixradius/sync', [\App\Http\Controllers\Admin\MixradiusController::class, 'sync'])->name('admin.mixradius.sync');
+    });
+
+    // --- OWNER & ADMIN TENANT AKTIF ---
+    Route::middleware('tenant.role:owner,admin')->group(function () {
+
     // --- DASHBOARD UTAMA ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/deposit/{id}/approve', [DashboardController::class, 'approveDeposit'])->name('admin.deposit.approve');
@@ -259,6 +298,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('invoices/generate', [InvoiceController::class, 'generate'])->name('invoices.generate');
     Route::post('invoices/{id}/paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.paid');
     Route::post('invoices/check-isolir', [InvoiceController::class, 'checkIsolir'])->name('invoices.checkIsolir');
+    Route::post('invoices/{id}/renewal/retry', [InvoiceController::class, 'retryRenewal'])->name('invoices.renewal.retry');
+    Route::post('invoices/{id}/renewal/resolve', [InvoiceController::class, 'resolveRenewal'])->name('invoices.renewal.resolve');
 
     // --- LAPORAN & DANA CADANGAN ---
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
@@ -278,34 +319,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Hapus Transaksi
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
 
-    // --- SISTEM & UPDATE ---
-    Route::get('/system', [\App\Http\Controllers\Admin\SystemController::class, 'index'])->name('admin.system.index');
-    Route::post('/system/update', [\App\Http\Controllers\Admin\SystemController::class, 'updateVersion'])->name('admin.system.update');
-    
-    // --- PENGATURAN BAGI HASIL ---
+    // --- PENGATURAN BAGI HASIL (Master Setting) ---
     Route::get('/profit-sharing/settings', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'index'])->name('admin.profit_sharing.index');
     Route::post('/profit-sharing/settings/update', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'updateSettings'])->name('admin.profit_sharing.update_settings');
     Route::post('/profit-sharing/toggle-feature', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'toggleFeature'])->name('admin.profit_sharing.toggle_feature');
     Route::post('/profit-sharing/stakeholders', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'storeStakeholder'])->name('admin.profit_sharing.stakeholder.store');
     Route::delete('/profit-sharing/stakeholders/{id}', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'destroyStakeholder'])->name('admin.profit_sharing.stakeholder.destroy');
 
-    // --- MULTI TENANCY / BISNIS ---
-    Route::get('/business/select', [\App\Http\Controllers\Admin\BusinessController::class, 'index'])->name('admin.business.index');
-    Route::post('/business/create', [\App\Http\Controllers\Admin\BusinessController::class, 'store'])->name('admin.business.store');
-    Route::post('/business/{business}/select', [\App\Http\Controllers\Admin\BusinessController::class, 'select'])->name('admin.business.select');
-
-    Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
-
-    // --- PROFILE ---
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // --- NOTIFIKASI ---
-    Route::get('/notifications/read-all', function () {
-        auth()->user()->unreadNotifications->markAsRead();
-        return redirect()->back();
-    })->name('notifications.readAll');
+    }); // end tenant.role:owner,admin
 
 });
 
