@@ -32,10 +32,10 @@ class MixradiusClient
     public static function forBusiness(Business $business): self
     {
         if (!$business->mixradius_base_url) {
-            throw new MixradiusException('URL panel Mixradius belum diisi untuk unit bisnis ini.');
+            throw new MixradiusException('URL server jaringan belum diisi untuk unit bisnis ini.');
         }
         if (!$business->mixradius_api_key || !$business->mixradius_api_secret) {
-            throw new MixradiusException('API key dan API secret Mixradius belum diisi untuk unit bisnis ini.');
+            throw new MixradiusException('Kunci API server jaringan belum diisi untuk unit bisnis ini.');
         }
 
         return new self(
@@ -66,6 +66,16 @@ class MixradiusClient
         $data = $this->get('/v1/products/catalog', ['per_page' => 1]);
 
         return ['products_total' => $data['total'] ?? null];
+    }
+
+    /** Katalog paket untuk tenant (cache 10 menit). type: ppp, hotspot, dhcp, static, atau null = semua. */
+    public static function cachedCatalog(Business $business, ?string $type = null): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember(
+            "network:{$business->id}:products:" . ($type ?? 'all'),
+            600,
+            fn () => iterator_to_array(self::forBusiness($business)->paginate('/v1/products/catalog', array_filter(['type' => $type])), false)
+        );
     }
 
     /** PUT /v1/customers/{id}/status — active, inactive, suspended, terminated (butuh customers.write) */
@@ -129,7 +139,7 @@ class MixradiusClient
         try {
             $response = $this->request()->{$method}($url, $payload);
         } catch (ConnectionException $e) {
-            throw new MixradiusException('Tidak bisa terhubung ke panel Mixradius: ' . $e->getMessage(), 0, $e);
+            throw new MixradiusException('Tidak bisa terhubung ke server jaringan: ' . $e->getMessage(), 0, $e);
         }
 
         if ($response->successful()) {
@@ -139,12 +149,13 @@ class MixradiusClient
         $message = $response->json('message') ?: mb_strimwidth((string) $response->body(), 0, 200, '…');
 
         throw new MixradiusException(match ($response->status()) {
-            401 => 'API key/secret Mixradius tidak valid (401).',
-            403 => "API key tidak punya izin untuk {$path} (403). Tambahkan izinnya di Mixradius: Settings → API Integration. {$message}",
-            404 => "Data/endpoint tidak ditemukan di Mixradius (404): {$path}",
-            422 => "Mixradius menolak data (422): {$message}",
-            429 => 'Batas request Mixradius tercapai (429). Coba lagi sebentar lagi.',
-            default => "Mixradius error HTTP {$response->status()}: {$message}",
+            401 => 'Kunci API server jaringan tidak valid (401). Periksa menu Integrasi.',
+            402 => "Saldo tidak cukup (402): {$message}",
+            403 => "Kunci API tidak punya izin untuk {$path} (403). Tambahkan izinnya di pengaturan API server jaringan. {$message}",
+            404 => "Data tidak ditemukan di server jaringan (404). {$message}",
+            422 => "Server jaringan menolak data (422): {$message}",
+            429 => 'Terlalu banyak permintaan ke server jaringan (429). Coba lagi sebentar lagi.',
+            default => "Server jaringan error HTTP {$response->status()}: {$message}",
         }, $response->status());
     }
 
@@ -171,10 +182,10 @@ class MixradiusClient
         $json = $response->json();
 
         if (!is_array($json)) {
-            throw new MixradiusException('Respons Mixradius bukan JSON yang valid. Pastikan URL panel benar.');
+            throw new MixradiusException('Respons server jaringan tidak valid. Pastikan URL server benar.');
         }
         if (($json['success'] ?? true) === false) {
-            throw new MixradiusException('Mixradius: ' . ($json['message'] ?? 'permintaan gagal.'));
+            throw new MixradiusException('Server jaringan: ' . ($json['message'] ?? 'permintaan gagal.'));
         }
 
         return is_array($json['data'] ?? null) ? $json['data'] : $json;

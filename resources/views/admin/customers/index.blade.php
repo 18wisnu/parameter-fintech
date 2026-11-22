@@ -1,160 +1,117 @@
 @extends('layouts.admin')
 
 @section('content')
+@include('partials.flash')
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-            <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Data Pelanggan</h2>
-            <p class="text-slate-500 text-sm">Kelola daftar pelanggan, status isolir, dan aktivasi.</p>
-        </div>
-
-        <div class="flex flex-wrap gap-2 w-full md:w-auto">
-            <a href="{{ route('customers.export') }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-4 py-2.5 rounded-xl border border-emerald-200 font-bold flex items-center transition-all">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Export
-            </a>
-
-            <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 font-bold flex items-center transition-all">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Import
-            </button>
-
-            <a href="{{ route('customers.create') }}" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 font-bold flex items-center transition-all ml-auto md:ml-0">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Pelanggan Baru
-            </a>
-        </div>
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Pelanggan</h2>
+        <p class="text-sm text-slate-500">{{ number_format($counts['all']) }} pelanggan terdaftar</p>
     </div>
 
-    <!-- Filter & Search Bar -->
-    <div class="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-            <a href="{{ route('customers.index') }}" class="px-4 py-2 rounded-lg text-sm font-bold transition-all {{ !request('status') ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-50' }}">Semua</a>
-            <a href="{{ route('customers.index', ['status' => 'active', 'search' => request('search')]) }}" class="px-4 py-2 rounded-lg text-sm font-bold transition-all {{ request('status') == 'active' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-500 hover:bg-slate-50' }}">Aktif</a>
-            <a href="{{ route('customers.index', ['status' => 'isolated', 'search' => request('search')]) }}" class="px-4 py-2 rounded-lg text-sm font-bold transition-all {{ request('status') == 'isolated' ? 'bg-rose-100 text-rose-700' : 'text-slate-500 hover:bg-slate-50' }}">Terisolir</a>
-        </div>
-
-        <div class="relative w-full md:w-80">
-            <form action="{{ route('customers.index') }}" method="GET">
-                @if(request('status'))
-                    <input type="hidden" name="status" value="{{ request('status') }}">
+    <div class="flex items-center gap-2">
+        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+            <button @click="open = !open" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50">Lainnya ▾</button>
+            <div x-show="open" x-cloak x-transition class="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-xl shadow-lg py-1 z-20 text-sm">
+                <a href="{{ route('customers.export') }}" class="block px-4 py-2 hover:bg-slate-50">Export ke Excel</a>
+                <button type="button" @click="open = false; $refs.importModal.showModal()" class="w-full text-left px-4 py-2 hover:bg-slate-50">Import dari Excel</button>
+                @if($network && ($userRole ?? null) === 'owner')
+                <form method="POST" action="{{ route('admin.mixradius.sync') }}">
+                    @csrf
+                    <button class="w-full text-left px-4 py-2 hover:bg-slate-50">Sinkronkan dari server</button>
+                </form>
                 @endif
-                <input type="text" name="search" value="{{ request('search') }}" 
-                    placeholder="Cari nama, HP atau ID..." 
-                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm">
-                <div class="absolute left-3 top-3 text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50/50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider">
-                    <tr>
-                        <th class="px-6 py-4 font-semibold w-32">ID / KODE</th>
-                        <th class="px-6 py-4 font-semibold">NAMA PELANGGAN</th>
-                        <th class="px-6 py-4 font-semibold text-center">STATUS</th> <th class="px-6 py-4 font-semibold">TIPE</th>
-                        <th class="px-6 py-4 font-semibold">KONTAK</th>
-                        <th class="px-6 py-4 font-semibold">ALAMAT</th>
-                        <th class="px-6 py-4 font-semibold text-right">OPSI</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    @foreach($customers as $customer)
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        
-                        <td class="px-6 py-4">
-                            @if(!empty($customer->customer_id))
-                                <span class="font-mono text-xs font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200">
-                                    #{{ $customer->customer_id }}
-                                </span>
-                            @else
-                                <span class="text-slate-300 font-bold">-</span>
-                            @endif
-                        </td>
-
-                        <td class="px-6 py-4 font-bold text-slate-700">{{ $customer->name }}</td>
-
-                        <td class="px-6 py-4 text-center">
-                            @if($customer->is_isolated)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600 mr-1.5"></span>
-                                    ISOLIR
-                                </span>
-                            @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 mr-1.5"></span>
-                                    AKTIF
-                                </span>
-                            @endif
-                        </td>
-                        
-                        <td class="px-6 py-4">
-                            @if($customer->type == 'reseller')
-                                <span class="text-xs font-bold text-purple-600 uppercase">Reseller</span>
-                            @elseif($customer->type == 'hotspot')
-                                <span class="text-xs font-bold text-orange-600 uppercase">Hotspot</span>
-                            @else
-                                <span class="text-xs font-bold text-blue-600 uppercase">PPPoE</span>
-                            @endif
-                        </td>
-
-                        <td class="px-6 py-4 text-slate-600">{{ $customer->phone ?? '-' }}</td>
-
-                        <td class="px-6 py-4 text-slate-500 text-sm truncate max-w-xs">{{ $customer->address ?? '-' }}</td>
-                        
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <a href="{{ route('customers.edit', $customer->id) }}" class="text-sm font-bold text-sky-600 hover:text-sky-800">Edit</a>
-                            <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-sm font-bold text-rose-500 hover:text-rose-700" onclick="return confirm('Hapus pelanggan ini?')">Hapus</button>
-                            </form>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        
-        @if($customers->isEmpty())
-            <div class="p-8 text-center text-slate-400">
-                Belum ada data pelanggan. Silakan Import atau Tambah Baru.
             </div>
-        @endif
-        
-        <div class="p-4">
-            {{ $customers->links() }}
-        </div>
-    </div>
 
-    <div id="importModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Import Data Pelanggan</h3>
-                <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            <p class="text-sm text-slate-500 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                Upload file Excel <b>(.xlsx)</b>. <br>
-                Header: <code class="text-rose-500 font-bold">nama, tipe, hp, alamat, id_pelanggan</code>
-            </p>
-            <form action="{{ route('customers.import') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-bold text-slate-700 mb-2">Pilih File</label>
-                    <input type="file" name="file" required class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 border border-slate-200 rounded-xl cursor-pointer"/>
-                </div>
-                <div class="flex justify-end gap-2 mt-6">
-                    <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">Batal</button>
-                    <button type="submit" class="px-5 py-2.5 bg-sky-600 text-white font-bold rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-200 transition">Upload & Proses</button>
-                </div>
-            </form>
+            <dialog x-ref="importModal" class="rounded-2xl p-0 w-full max-w-md backdrop:bg-slate-900/50">
+                <form action="{{ route('customers.import') }}" method="POST" enctype="multipart/form-data" class="p-6">
+                    @csrf
+                    <h3 class="text-lg font-bold text-slate-800 mb-1">Import Pelanggan</h3>
+                    <p class="text-sm text-slate-500 mb-4">File Excel (.xlsx) dengan kolom: <code class="text-slate-700">nama, tipe, hp, alamat, id_pelanggan</code></p>
+                    <input type="file" name="file" required accept=".xlsx,.xls,.csv" class="block w-full text-sm border border-slate-200 rounded-xl file:mr-3 file:py-2 file:px-4 file:border-0 file:bg-slate-100 file:font-semibold">
+                    <div class="flex justify-end gap-2 mt-6">
+                        <button type="button" onclick="this.closest('dialog').close()" class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600">Batal</button>
+                        <button class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">Upload</button>
+                    </div>
+                </form>
+            </dialog>
         </div>
-    </div>
 
+        <a href="{{ route('customers.create') }}" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold">+ Pelanggan</a>
+    </div>
+</div>
+
+{{-- Filter --}}
+<form method="GET" class="flex flex-wrap items-center gap-2 mb-4">
+    @php $statusTabs = ['' => ['Semua', $counts['all']], 'active' => ['Aktif', $counts['active']], 'isolated' => ['Isolir', $counts['isolated']], 'inactive' => ['Nonaktif', $counts['inactive']]]; @endphp
+    <div class="flex bg-white border border-slate-200 rounded-xl p-1 overflow-x-auto">
+        @foreach($statusTabs as $key => [$label, $n])
+            <a href="{{ route('customers.index', array_filter(['status' => $key, 'search' => request('search'), 'type' => request('type')])) }}"
+               class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap {{ (string) request('status') === (string) $key ? 'bg-slate-800 text-white font-semibold' : 'text-slate-500 hover:text-slate-800' }}">
+                {{ $label }} <span class="opacity-60">{{ $n }}</span>
+            </a>
+        @endforeach
+    </div>
+    <input type="hidden" name="status" value="{{ request('status') }}">
+    <select name="type" onchange="this.form.submit()" class="py-2 rounded-xl border-slate-200 text-sm text-slate-600">
+        <option value="">Semua layanan</option>
+        @foreach(\App\Models\Customer::TYPES as $k => $v)<option value="{{ $k }}" @selected(request('type') === $k)>{{ $v }}</option>@endforeach
+    </select>
+    <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari nama, kode, HP, username…" class="flex-1 min-w-[200px] py-2 px-3 rounded-xl border-slate-200 text-sm">
+</form>
+
+@php
+    $statusTone = ['active' => 'bg-emerald-50 text-emerald-700', 'isolated' => 'bg-amber-50 text-amber-700', 'inactive' => 'bg-slate-100 text-slate-500'];
+@endphp
+
+<div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="text-left text-xs text-slate-400 border-b border-slate-100">
+                <tr>
+                    <th class="px-4 py-3 font-semibold">Pelanggan</th>
+                    <th class="px-4 py-3 font-semibold">Kontak</th>
+                    <th class="px-4 py-3 font-semibold">Layanan</th>
+                    <th class="px-4 py-3 font-semibold">Paket</th>
+                    <th class="px-4 py-3 font-semibold">Jatuh Tempo</th>
+                    <th class="px-4 py-3 font-semibold">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                @forelse($customers as $c)
+                @php $st = $c->displayStatus(); $due = $c->due_date ? \Carbon\Carbon::parse($c->due_date) : null; @endphp
+                <tr class="hover:bg-slate-50 cursor-pointer" onclick="window.location='{{ route('customers.show', $c) }}'">
+                    <td class="px-4 py-3">
+                        <a href="{{ route('customers.show', $c) }}" class="font-semibold text-slate-800 hover:text-sky-700">{{ $c->name }}</a>
+                        <div class="text-xs text-slate-400 font-mono">{{ $c->displayCode() ?? '—' }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-slate-600">
+                        {{ $c->phone ?: '—' }}
+                        @if($c->email)<div class="text-xs text-slate-400">{{ $c->email }}</div>@endif
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-slate-700">{{ \App\Models\Customer::TYPES[$c->type] ?? strtoupper((string) $c->type) }}</span>
+                        @if($c->mixradius_username)<div class="text-xs text-slate-400 font-mono">{{ $c->mixradius_username }}</div>@endif
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="text-slate-700">{{ $c->product_name ?: '—' }}</span>
+                        <div class="text-xs text-slate-400">{{ $c->bandwidth ? $c->bandwidth . ' · ' : '' }}Rp {{ number_format($c->package_fee, 0, ',', '.') }}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap {{ $due && $due->isPast() && $st !== 'inactive' ? 'text-rose-600 font-semibold' : 'text-slate-600' }}">
+                        {{ $due ? $due->locale('id')->translatedFormat('d M Y') : '—' }}
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-0.5 rounded-md text-xs font-semibold {{ $statusTone[$st] }}">{{ \App\Models\Customer::STATUSES[$st] }}</span>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="6" class="px-4 py-14 text-center text-slate-400">
+                    {{ request()->hasAny(['search', 'status', 'type']) ? 'Tidak ada pelanggan yang cocok dengan filter.' : 'Belum ada pelanggan.' }}
+                </td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    @if($customers->hasPages())<div class="p-4 border-t border-slate-50">{{ $customers->links() }}</div>@endif
+</div>
 @endsection

@@ -69,7 +69,9 @@ class AppServiceProvider extends ServiceProvider
                     if ($business) {
                         $appSettings['business_name'] = $business->name;
                         $appSettings['theme_color'] = $business->theme_color;
-                        
+                        // Menu "Jaringan" hanya muncul jika tenant terhubung ke server jaringan
+                        $appSettings['network_enabled'] = $business->hasMixradius();
+
                         // Features from business table
                         if ($business->enabled_features && is_array($business->enabled_features)) {
                             foreach ($business->enabled_features as $fK => $fV) {

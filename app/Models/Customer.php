@@ -10,15 +10,28 @@ class Customer extends Model
 {
     use HasFactory, BelongsToTenant;
 
-    // Tambahkan 'customer_id', 'due_date', 'is_isolated', 'business_id' ke sini
+    public const TYPES = ['pppoe' => 'PPPoE', 'hotspot' => 'Hotspot', 'general' => 'DHCP / Static', 'reseller' => 'Reseller'];
+    public const STATUSES = ['active' => 'Aktif', 'isolated' => 'Isolir', 'inactive' => 'Nonaktif'];
+    public const BILLING_TYPES = ['prepaid' => 'Prabayar', 'postpaid' => 'Pascabayar'];
+    public const BILLING_CYCLES = ['monthly' => 'Bulanan', 'quarterly' => '3 Bulan', 'semi_annually' => '6 Bulan', 'annually' => 'Tahunan'];
+
     protected $fillable = [
         'business_id',
-        'customer_id', // <--- PENTING! Ini yang bikin ID bisa tersimpan
+        'customer_id',
         'name',
         'type',
-        'package_fee', 
+        'package_fee',
+        'product_name',
+        'bandwidth',
+        'billing_type',
+        'billing_cycle',
         'phone',
+        'email',
         'address',
+        'latitude',
+        'longitude',
+        'notes',
+        'entity_name',
         'due_date',
         'is_isolated',
         'activated_by_id',
@@ -32,6 +45,9 @@ class Customer extends Model
 
     protected $casts = [
         'mixradius_synced_at' => 'datetime',
+        'is_isolated' => 'boolean',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     public function activatedBy()
@@ -48,5 +64,34 @@ class Customer extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Terhubung ke server jaringan (hasil sinkron / dibuat dari aplikasi). */
+    public function isLinked(): bool
+    {
+        return !empty($this->mixradius_id);
+    }
+
+    /** Kode yang ditampilkan: kode jaringan, lalu ID pelanggan lokal. */
+    public function displayCode(): ?string
+    {
+        return $this->code ?: $this->customer_id;
+    }
+
+    /** Status efektif: flag isolir lama tetap dihormati. */
+    public function displayStatus(): string
+    {
+        if ($this->status === 'inactive') {
+            return 'inactive';
+        }
+
+        return ($this->is_isolated || $this->status === 'isolated') ? 'isolated' : 'active';
+    }
+
+    public function mapUrl(): ?string
+    {
+        return ($this->latitude && $this->longitude)
+            ? "https://www.google.com/maps?q={$this->latitude},{$this->longitude}"
+            : null;
     }
 }

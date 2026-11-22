@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Business;
 use App\Models\Invoice;
 use App\Models\Customer;
 use App\Services\Mixradius\ServiceRenewal;
@@ -14,35 +15,60 @@ class InvoiceController extends Controller
     // 1. LIHAT DAFTAR TAGIHAN
     public function index(Request $request)
     {
-        // Filter & Search
-        $query = Invoice::with('customer')->latest();
-        
-        // 1. Filter Status (unpaid/paid)
-        if ($request->status) {
+        $invoices = $this->filtered($request)->paginate(20)->withQueryString();
+
+        $summary = $this->filtered($request)->reorder()
+            ->selectRaw("SUM(CASE WHEN status = 'unpaid' THEN 1 ELSE 0 END) as unpaid_count")
+            ->selectRaw("SUM(CASE WHEN status = 'unpaid' THEN amount ELSE 0 END) as unpaid_total")
+            ->selectRaw("SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) as paid_total")
+            ->first();
+
+        return view('admin.invoices.index', compact('invoices', 'summary'));
+    }
+
+    /** Cetak satu invoice (nota). Invoice hanya dicetak dari aplikasi ini. */
+    public function print($id)
+    {
+        return $this->printView(collect([Invoice::with('customer')->findOrFail($id)]));
+    }
+
+    /** Cetak semua invoice sesuai filter yang sedang dipakai (maks. 200). */
+    public function printList(Request $request)
+    {
+        return $this->printView($this->filtered($request)->limit(200)->get());
+    }
+
+    private function printView($invoices)
+    {
+        $business = Business::findOrFail(auth()->user()->current_business_id);
+
+        return view('admin.invoices.print', compact('invoices', 'business'));
+    }
+
+    /** Filter status, periode (bulan/tahun) & pencarian nama / no. invoice / kode pelanggan. */
+    private function filtered(Request $request)
+    {
+        $query = Invoice::with('customer')->latest('period_date')->latest('id');
+
+        if (in_array($request->status, ['paid', 'unpaid'], true)) {
             $query->where('status', $request->status);
         }
-
-        // 2. Filter Periode (Bulan & Tahun)
         if ($request->month) {
-            $query->whereMonth('period_date', $request->month);
+            $query->whereMonth('period_date', (int) $request->month);
         }
         if ($request->year) {
-            $query->whereYear('period_date', $request->year);
+            $query->whereYear('period_date', (int) $request->year);
         }
-
-        // 3. Search (By Name or Invoice Number)
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
+        if ($search = trim((string) $request->search)) {
+            $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function($sq) use ($search) {
-                      $sq->where('name', 'like', "%{$search}%");
-                  });
+                  ->orWhereHas('customer', fn ($sq) => $sq->where('name', 'like', "%{$search}%")
+                      ->orWhere('code', 'like', "%{$search}%")
+                      ->orWhere('customer_id', 'like', "%{$search}%"));
             });
         }
 
-        $invoices = $query->paginate(20)->withQueryString(); // Keep filters in pagination links
-        return view('admin.invoices.index', compact('invoices'));
+        return $query;
     }
 
     // 2. GENERATE TAGIHAN (AUTO)

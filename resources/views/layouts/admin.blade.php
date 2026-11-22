@@ -6,179 +6,142 @@
     <title>Admin {{ $appSettings['business_name'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    <style> 
-        body { font-family: 'Outfit', sans-serif; } 
-        [x-cloak] { display: none !important; } 
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        [x-cloak] { display: none !important; }
         .bg-theme { background-color: {{ $appSettings['theme_color'] }}; }
         .text-theme { color: {{ $appSettings['theme_color'] }}; }
         .border-theme { border-color: {{ $appSettings['theme_color'] }}; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased" x-data="{ sidebarOpen: false }">
 
-    <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-40 flex items-center justify-between px-4 md:hidden">
-        <div class="flex items-center gap-3">
-            <button @click="sidebarOpen = true" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
-            <div class="flex flex-col">
-                <span class="font-extrabold text-xl text-theme tracking-tight leading-none">{{ $appSettings['business_name'] }}</span>
-            </div>
-        </div>
+@php
+    $f = fn (string $key) => $appSettings['features'][$key] ?? true;
+    $isOwner = $userRole === 'owner';
+    $isManager = in_array($userRole, ['owner', 'admin'], true);
+
+    // [route, pola aktif, label, ikon, tampil?]
+    $icons = [
+        'home' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+        'users' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+        'bill' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
+        'money' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+        'wifi' => 'M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0',
+        'cog' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+        'phone' => 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z',
+    ];
+
+    $main = [
+        ['dashboard', 'dashboard', 'Dashboard', 'home', true],
+        ['customers.index', 'customers.*', 'Pelanggan', 'users', $f('customer_data')],
+        ['invoices.index', 'invoices.*', 'Tagihan', 'bill', $f('invoices')],
+    ];
+
+    $groups = [
+        ['Keuangan', 'money', [
+            ['reports.index', 'reports.index', 'Bagi Hasil', $f('profit_sharing')],
+            ['admin.salaries.index', 'admin.salaries.*', 'Gaji Pegawai', $f('salary_management')],
+            ['reports.reserve', 'reports.reserve', 'Dana Cadangan', $f('reserve_fund')],
+            ['reports.history', 'reports.history', 'Riwayat Transaksi', $f('transactions')],
+            ['reports.vouchers', 'reports.vouchers', 'Analisa Voucher', $f('voucher_analysis')],
+        ]],
+        ['Jaringan', 'wifi', ($appSettings['network_enabled'] ?? false) && $isManager ? [
+            ['network.vouchers.index', 'network.vouchers.*', 'Voucher Hotspot', true],
+            ['network.services.index', 'network.services.*', 'Layanan Internet', true],
+            ['network.online.index', 'network.online.*', 'Pengguna Online', true],
+            ['network.tickets.index', 'network.tickets.*', 'Tiket Gangguan', true],
+            ['network.installations.index', 'network.installations.*', 'Pemasangan Baru', true],
+            ['network.entities.index', 'network.entities.*', 'Reseller & Outlet', true],
+            ['network.reports.index', 'network.reports.*', 'Laporan Jaringan', true],
+        ] : []],
+        ['Pengaturan', 'cog', [
+            ['admin.profit_sharing.index', 'admin.profit_sharing.*', 'Master Setting', $isManager],
+            ['admin.users.index', 'admin.users.*', 'Data Pegawai', $f('staff_data')],
+            ['admin.mixradius.edit', 'admin.mixradius.*', 'Server Jaringan', $isOwner],
+            ['admin.logs.index', 'admin.logs.*', 'Log Sistem', $isOwner],
+            ['admin.system.index', 'admin.system.*', 'Update Sistem', $isOwner],
+        ]],
+    ];
+
+    $linkBase = 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors';
+    $linkOn = 'bg-white text-slate-800 font-semibold shadow-sm';
+    $linkOff = 'text-white/80 hover:bg-white/10 hover:text-white';
+@endphp
+
+    <header class="fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-100 z-40 flex items-center gap-3 px-4 md:hidden">
+        <button @click="sidebarOpen = true" class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg" aria-label="Menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <span class="font-bold text-lg text-theme truncate">{{ $appSettings['business_name'] }}</span>
     </header>
 
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 md:hidden" x-cloak></div>
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity class="fixed inset-0 bg-slate-900/50 z-50 md:hidden" x-cloak></div>
 
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-50 w-64 h-full bg-theme text-white transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none flex flex-col" style="background-color: {{ $appSettings['theme_color'] }}">
-        
-        <div class="h-24 hidden md:flex items-center justify-center border-b border-white/10 bg-black/10">
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-6 hover:scale-105 transition-transform duration-300">
-                <div class="bg-gradient-to-br from-white/20 to-white/5 p-2 rounded-xl backdrop-blur-sm border border-white/10 shadow-sm">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-xl font-black text-white tracking-tight leading-none">{{ $appSettings['business_name'] }}</span>
-                    <span class="text-[10px] font-bold text-white/60 tracking-[0.25em] uppercase mt-1">Management</span>
-                </div>
-            </a>
-        </div>
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-50 w-60 h-full text-white transition-transform duration-300 md:translate-x-0 flex flex-col" style="background-color: {{ $appSettings['theme_color'] }}">
 
-
-        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar">
-            
-            <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('dashboard') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                Dashboard
-            </a>
-
-            @if($appSettings['features']['customer_data'] ?? true)
-            <a href="{{ route('customers.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('customers.*') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                Data Pelanggan
-            </a>
-            @endif
-
-            @if($appSettings['features']['invoices'] ?? true)
-            <a href="{{ route('invoices.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('invoices.*') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                Tagihan / Invoice
-            </a>
-            @endif
-
-            @if($appSettings['features']['profit_sharing'] ?? true)
-            <a href="{{ route('reports.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('reports.index') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                Bagi Hasil
-            </a>
-            @endif
-
-            @if($userRole == 'owner' || $userRole == 'admin')
-            <a href="{{ route('admin.profit_sharing.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.profit_sharing.*') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Master Setting
-            </a>
-            @endif
-
-            @if($appSettings['features']['salary_management'] ?? true)
-            <a href="{{ route('admin.salaries.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.salaries.*') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                Manajemen Gaji
-            </a>
-            @endif
-
-            @if(($appSettings['features']['reserve_fund'] ?? true) || ($appSettings['features']['transactions'] ?? true) || ($appSettings['features']['voucher_analysis'] ?? true))
-            <div class="mt-6 mb-2">
-                <p class="px-4 text-[10px] font-black text-white/50 uppercase tracking-widest">Laporan & Keuangan</p>
+        {{-- Unit bisnis aktif --}}
+        <a href="{{ route('admin.business.index') }}" class="block px-4 py-4 border-b border-white/10 hover:bg-black/10" title="Ganti unit bisnis">
+            <div class="font-bold text-base leading-tight truncate">{{ $appSettings['business_name'] }}</div>
+            <div class="text-xs text-white/60 mt-0.5 flex items-center gap-1">
+                {{ ['owner' => 'Pemilik', 'admin' => 'Admin', 'teknisi' => 'Teknisi', 'kolektor' => 'Kolektor'][$userRole] ?? 'Anggota' }}
+                <span>· Ganti ⇄</span>
             </div>
-            @endif
+        </a>
 
-            @if($appSettings['features']['reserve_fund'] ?? true)
-            <a href="{{ route('reports.reserve') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('reports.reserve') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Dana Cadangan
-            </a>
-            @endif
-
-            @if($appSettings['features']['transactions'] ?? true)
-            <a href="{{ route('reports.history') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('reports.history') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Riwayat Transaksi
-            </a>
-            @endif
-
-            @if($appSettings['features']['voucher_analysis'] ?? true)
-            <a href="{{ route('reports.vouchers') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('reports.vouchers') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
-                Analisa Voucher
-            </a>
-            @endif
-
-            <div class="mt-6 mb-2">
-                <p class="px-4 text-[10px] font-black text-white/50 uppercase tracking-widest">Sistem</p>
-            </div>
-
-            <a href="{{ route('mobile.home') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('mobile.*') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                Menu Setoran
-            </a>
-
-            @if($appSettings['features']['staff_data'] ?? true)
-            <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.users.*') ? 'bg-white text-slate-800 shadow-md font-bold' : 'text-white/80 hover:bg-black/10 hover:text-white' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                Data Pegawai
-            </a>
-            @endif
-
-            @if($userRole == 'owner')
-                <a href="{{ route('admin.mixradius.edit') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.mixradius.*') ? 'bg-white text-sky-800 shadow-md font-bold' : 'text-sky-100 hover:bg-sky-600/50 hover:text-white' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                    Integrasi Mixradius
+        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+            @foreach($main as [$route, $pattern, $label, $icon, $show])
+                @if($show)
+                <a href="{{ route($route) }}" class="{{ $linkBase }} {{ request()->routeIs($pattern) ? $linkOn : $linkOff }}">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icons[$icon] }}"></path></svg>
+                    {{ $label }}
                 </a>
+                @endif
+            @endforeach
 
-                <a href="{{ route('admin.logs.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.logs.*') ? 'bg-white text-sky-800 shadow-md font-bold' : 'text-sky-100 hover:bg-sky-600/50 hover:text-white' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Log Sistem
-                </a>
+            @foreach($groups as [$groupLabel, $groupIcon, $items])
+                @php
+                    $visible = array_values(array_filter($items, fn ($i) => $i[3]));
+                    $active = collect($visible)->contains(fn ($i) => request()->routeIs($i[1]));
+                @endphp
+                @continue(empty($visible))
+                <div x-data="{ open: {{ $active ? 'true' : 'false' }} }" class="pt-1">
+                    <button type="button" @click="open = !open" class="{{ $linkBase }} w-full {{ $active ? 'text-white font-semibold' : $linkOff }}">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icons[$groupIcon] }}"></path></svg>
+                        <span class="flex-1 text-left">{{ $groupLabel }}</span>
+                        <svg class="w-4 h-4 transition-transform" :class="open && 'rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <div x-show="open" x-cloak x-transition.opacity class="mt-1 ml-5 pl-3 border-l border-white/15 space-y-0.5">
+                        @foreach($visible as [$route, $pattern, $label])
+                            <a href="{{ route($route) }}" class="block px-3 py-1.5 rounded-lg text-sm {{ request()->routeIs($pattern) ? $linkOn : $linkOff }}">{{ $label }}</a>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
 
-                <a href="{{ route('admin.system.index') }}" class="flex items-center px-4 py-3 rounded-xl mt-4 bg-sky-800/50 border border-sky-400/20 transition-all {{ request()->routeIs('admin.system.*') ? 'bg-white text-sky-800 shadow-md font-bold border-none' : 'text-sky-200 hover:bg-sky-600/50 hover:text-white' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Update Sistem
-                </a>
-            @endif
-
-            <div class="pt-6 mt-6 border-t border-white/10">
-                <a href="{{ route('admin.business.index') }}" class="flex items-center px-4 py-3 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-all">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                    Ganti Bisnis
+            <div class="pt-3 mt-3 border-t border-white/10">
+                <a href="{{ route('mobile.home') }}" class="{{ $linkBase }} {{ request()->routeIs('mobile.*') ? $linkOn : $linkOff }}">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icons['phone'] }}"></path></svg>
+                    Menu Setoran
                 </a>
             </div>
         </nav>
 
-        <div class="p-5 bg-sky-800/80 border-t border-sky-600/50 mt-auto">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="flex items-center justify-center bg-rose-500 hover:bg-rose-600 text-white w-full py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Keluar Aplikasi
-                </button>
-            </form>
-        </div>
+        <form method="POST" action="{{ route('logout') }}" class="p-3 border-t border-white/10">
+            @csrf
+            <button class="{{ $linkBase }} w-full {{ $linkOff }}">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Keluar
+            </button>
+        </form>
     </aside>
 
-    <main class="min-h-screen bg-slate-50 transition-all pt-16 md:pt-0 md:ml-64">
+    <main class="min-h-screen pt-14 md:pt-0 md:ml-60">
         <div class="p-4 md:p-8 max-w-7xl mx-auto">
             @yield('content')
         </div>
     </main>
-
-    <style>
-        /* Mempercantik Scrollbar di Sidebar */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.4); }
-    </style>
 </body>
 </html>
