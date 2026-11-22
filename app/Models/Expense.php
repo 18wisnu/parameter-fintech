@@ -15,7 +15,11 @@ class Expense extends Model
         'transaction_date',
         'amount',
         'description',
-        // Tambahkan field lain jika ada, misal 'category_id'
+        'category',
+        'account_id',
+        'source_account_id',
+        'user_id',
+        'proof_image',
     ];
 
     protected $casts = [

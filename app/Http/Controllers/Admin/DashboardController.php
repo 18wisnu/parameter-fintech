@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Transaction; 
 use App\Models\ChartOfAccount; 
 use App\Models\ProfitDistribution;
+use App\Services\Finance\DepositProcessor;
 
 class DashboardController extends Controller
 {
@@ -62,8 +63,13 @@ class DashboardController extends Controller
                                      ->whereMonth('date', now()->month)
                                      ->sum('amount');
 
+        $depositsToday = Deposit::where('status', 'approved')->whereDate('created_at', now()->toDateString())->sum('amount');
+        $recentTransactions = Transaction::with(['account', 'user'])->latest('id')->limit(8)->get();
+
         return view('dashboard', compact(
-            'pendingDeposits', 
+            'depositsToday',
+            'recentTransactions',
+            'pendingDeposits',
             'totalPending', 
             'saldoReal', 
             'totalCadangan', 
@@ -76,73 +82,25 @@ class DashboardController extends Controller
 
     public function approveDeposit($id)
     {
-        $deposit = Deposit::findOrFail($id);
-        
-        if ($deposit->status == 'approved') {
-            return redirect()->back();
-        }
+        [$type, $message] = DepositProcessor::approve(Deposit::findOrFail($id), auth()->user());
 
-        $deposit->status = 'approved';
-        $deposit->approved_by = auth()->id();
-        $deposit->approved_at = now();
-        $deposit->save();
+        return redirect()->back()->with($type, $message);
+    }
 
-        $kasAkun = ChartOfAccount::where('code', '1001')->first(); 
-        $pendapatanAkun = ChartOfAccount::where('code', '4001')->first(); 
-
-        // JIKA SETORAN TERHUBUNG KE TAGIHAN (INVOICE)
-        if ($deposit->invoice_id) {
-            $invoice = \App\Models\Invoice::with('customer')->find($deposit->invoice_id);
-            
-            if ($invoice && $invoice->status == 'unpaid') {
-                // 1. Update status tagihan jadi Paid
-                $invoice->update(['status' => 'paid']);
-
-                // 2. Jika isolir, aktifkan kembali
-                if ($invoice->customer->is_isolated == 1) {
-                    $invoice->customer->update(['is_isolated' => 0]);
-                }
-
-                // 3. Catat di Jurnal (Cukup Sekali di sini)
-                Transaction::create([
-                    'date' => now(),
-                    'account_id' => $pendapatanAkun->id,
-                    'source_account_id' => $kasAkun->id,
-                    'customer_id' => $invoice->customer_id,
-                    'description' => 'Pembayaran PPPoE via Setoran: ' . $invoice->customer->name . ' (' . $invoice->invoice_number . ')',
-                    'amount' => $deposit->amount,
-                    'type' => 'income',
-                    'is_locked' => true,
-                ]);
-
-                // 4. Perpanjang layanan internet pelanggan di server
-                $invoice = \App\Services\Mixradius\ServiceRenewal::afterPaid(
-                    $invoice->fresh(), 'cash', 'Setoran kolektor: ' . ($deposit->user->name ?? '-')
-                );
-
-                $base = 'Setoran disetujui & Tagihan ' . $invoice->invoice_number . ' otomatis LUNAS!';
-
-                return match ($invoice->renewal_status) {
-                    'success' => redirect()->back()->with('success', $base . ' Layanan internet aktif'
-                        . ($invoice->renewal_new_expiry ? ' s/d ' . $invoice->renewal_new_expiry->format('d M Y') : '') . '.'),
-                    'failed' => redirect()->back()->with('warning', $base . ' TETAPI layanan internet belum berhasil diperpanjang: '
-                        . $invoice->renewal_error . ' Sistem akan mencoba ulang otomatis.'),
-                    default => redirect()->back()->with('success', $base),
-                };
+    /** Terima semua setoran yang masih menunggu (sisa dari saat konfirmasi masih aktif). */
+    public function approveAllDeposits()
+    {
+        $pending = Deposit::where('status', 'pending')->oldest()->get();
+        $warnings = [];
+        foreach ($pending as $deposit) {
+            [$type, $message] = DepositProcessor::approve($deposit, auth()->user());
+            if ($type === 'warning') {
+                $warnings[] = $message;
             }
         }
 
-        // JIKA SETORAN UMUM (NON-TAGIHAN)
-        Transaction::create([
-            'date' => now(),
-            'account_id' => $pendapatanAkun->id,
-            'source_account_id' => $kasAkun->id,
-            'description' => 'Setoran dari ' . $deposit->user->name . ' (' . $deposit->description . ')',
-            'amount' => $deposit->amount,
-            'type' => 'income',
-            'is_locked' => true,
-        ]);
+        $msg = $pending->count() . ' setoran diterima dan tercatat di buku kas.';
 
-        return redirect()->back()->with('success', 'Setoran berhasil disetujui dan saldo diperbarui!');
+        return redirect()->back()->with($warnings ? 'warning' : 'success', $msg . ($warnings ? ' ' . implode(' ', $warnings) : ''));
     }
 }

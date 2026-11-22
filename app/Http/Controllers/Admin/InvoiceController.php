@@ -21,28 +21,38 @@ class InvoiceController extends Controller
             ->selectRaw("SUM(CASE WHEN status = 'unpaid' THEN 1 ELSE 0 END) as unpaid_count")
             ->selectRaw("SUM(CASE WHEN status = 'unpaid' THEN amount ELSE 0 END) as unpaid_total")
             ->selectRaw("SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) as paid_total")
+            ->selectRaw("SUM(CASE WHEN status = 'void' THEN 1 ELSE 0 END) as void_count")
             ->first();
 
-        return view('admin.invoices.index', compact('invoices', 'summary'));
+        return view('admin.invoices.index', compact('invoices', 'summary') + ['methods' => \App\Models\Transaction::PAYMENT_METHODS]);
     }
 
-    /** Cetak satu invoice (nota). Invoice hanya dicetak dari aplikasi ini. */
-    public function print($id)
+    /** Cetak satu invoice. format=a4 (default) atau pos (struk thermal 58/80 mm). */
+    public function print(Request $request, $id)
     {
-        return $this->printView(collect([Invoice::with('customer')->findOrFail($id)]));
+        return $this->printView($request, collect([Invoice::with('customer')->findOrFail($id)]));
     }
 
     /** Cetak semua invoice sesuai filter yang sedang dipakai (maks. 200). */
     public function printList(Request $request)
     {
-        return $this->printView($this->filtered($request)->limit(200)->get());
+        return $this->printView($request, $this->filtered($request)->limit(200)->get());
     }
 
-    private function printView($invoices)
+    private function printView(Request $request, $invoices)
     {
         $business = Business::findOrFail(auth()->user()->current_business_id);
+        $format = $request->query('format') === 'pos' ? 'pos' : 'a4';
+        $paper = in_array($request->query('paper'), ['58', '80'], true) ? $request->query('paper') : '58';
 
-        return view('admin.invoices.print', compact('invoices', 'business'));
+        // Untuk struk lunas: siapa & kapan dibayar (dari buku kas)
+        $payments = \App\Models\Transaction::with('user')
+            ->whereIn('invoice_id', $invoices->pluck('id'))
+            ->where('type', 'income')
+            ->get()->keyBy('invoice_id');
+
+        return view($format === 'pos' ? 'admin.invoices.print_pos' : 'admin.invoices.print',
+            compact('invoices', 'business', 'format', 'paper', 'payments'));
     }
 
     /** Filter status, periode (bulan/tahun) & pencarian nama / no. invoice / kode pelanggan. */
@@ -50,7 +60,7 @@ class InvoiceController extends Controller
     {
         $query = Invoice::with('customer')->latest('period_date')->latest('id');
 
-        if (in_array($request->status, ['paid', 'unpaid'], true)) {
+        if (in_array($request->status, ['paid', 'unpaid', 'void'], true)) {
             $query->where('status', $request->status);
         }
         if ($request->month) {
@@ -71,78 +81,47 @@ class InvoiceController extends Controller
         return $query;
     }
 
-    // 2. GENERATE TAGIHAN (AUTO)
-    // Fungsi ini akan dipanggil tombol "Buat Tagihan Bulan Ini"
+    // 2. BUAT TAGIHAN BULAN INI (manual — normalnya otomatis tiap tanggal 1)
     public function generate()
     {
-        $bulanIni = Carbon::now()->format('Y-m-01'); // Tanggal 1 bulan ini
-        // Pelanggan isolir tetap ditagih: membayar tagihan inilah yang membuka isolirnya.
-        // Hanya pelanggan nonaktif (berhenti langganan) yang tidak ditagih.
-        $pelangganAktif = Customer::where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'inactive'))->get();
-        $jumlahTerbuat = 0;
+        $business = Business::findOrFail(auth()->user()->current_business_id);
 
-        foreach ($pelangganAktif as $pelanggan) {
-            // Cek apakah invoice bulan ini sudah ada?
-            $cek = Invoice::where('customer_id', $pelanggan->id)
-                          ->where('period_date', $bulanIni)
-                          ->exists();
-
-            if (!$cek && $pelanggan->package_fee > 0) {
-                // Buat Invoice Baru
-                Invoice::create([
-                    'customer_id' => $pelanggan->id,
-                    'invoice_number' => 'INV-' . date('Ym') . '-' . str_pad($pelanggan->id, 4, '0', STR_PAD_LEFT),
-                    'period_date' => $bulanIni,
-                    'amount' => $pelanggan->package_fee,
-                    'status' => 'unpaid',
-                ]);
-                $jumlahTerbuat++;
-            }
+        try {
+            $s = (new \App\Services\Billing\InvoiceGenerator($business))->generate();
+        } catch (\App\Services\Mixradius\MixradiusException $e) {
+            return redirect()->back()->with('error', 'Tagihan tidak dibuat karena data masa aktif dari server jaringan tidak bisa diambil: ' . $e->getMessage());
         }
 
-        return redirect()->back()->with('success', "Berhasil membuat $jumlahTerbuat tagihan baru untuk periode ini.");
+        $msg = "{$s['created']} tagihan baru dibuat untuk " . now()->locale('id')->translatedFormat('F Y') . '.';
+        if ($s['covered']) {
+            $msg .= " {$s['covered']} pelanggan tidak ditagih karena sudah bayar di server.";
+        }
+        if ($s['voided']) {
+            $msg .= " {$s['voided']} tagihan lama ternyata sudah dibayar di server dan ditandai lunas di server.";
+        }
+
+        return redirect()->back()->with('success', $msg);
     }
 
-    // 3. BAYAR TAGIHAN (LUNAS & AUTO AKTIF)
-    public function markAsPaid($id)
+    // 3. BAYAR TAGIHAN (LUNAS, CATAT BUKU KAS & AKTIFKAN INTERNET)
+    public function markAsPaid(Request $request, $id)
     {
+        $data = $request->validate([
+            'payment_method' => 'nullable|in:' . implode(',', array_keys(\App\Models\Transaction::PAYMENT_METHODS)),
+            'notes' => 'nullable|string|max:255',
+        ]);
+
         $invoice = Invoice::with('customer')->findOrFail($id);
-        
-        if ($invoice->status == 'paid') {
+
+        if ($invoice->status !== 'unpaid') {
             return redirect()->back()->with('info', 'Tagihan ini sudah lunas.');
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function() use ($invoice) {
-            // 1. Update status invoice jadi PAID
-            $invoice->update(['status' => 'paid']);
-            
-            // 2. LOGIKA AUTO AKTIF:
-            // Jika pelanggan statusnya ISOLIR, kita kembalikan jadi AKTIF (0)
-            if ($invoice->customer->is_isolated == 1) {
-                $invoice->customer->update(['is_isolated' => 0]);
-            }
+        $invoice = \App\Services\Finance\Ledger::payInvoice(
+            $invoice, $data['payment_method'] ?? 'cash', auth()->user(), null, $data['notes'] ?? null
+        );
 
-            // 3. OTOMATIS CATAT KE KEUANGAN (TRANSAKSI)
-            // Ambil akun Kas (1001) dan akun Pendapatan PPPoE (4001)
-            $kasAkun = \App\Models\ChartOfAccount::where('code', '1001')->first(); 
-            $pendapatanAkun = \App\Models\ChartOfAccount::where('code', '4001')->first(); 
-
-            \App\Models\Transaction::create([
-                'date' => now(),
-                'account_id' => $pendapatanAkun->id,
-                'source_account_id' => $kasAkun->id,
-                'customer_id' => $invoice->customer_id,
-                'description' => 'Pembayaran PPPoE: ' . $invoice->customer->name . ' (' . $invoice->invoice_number . ')',
-                'amount' => $invoice->amount,
-                'type' => 'income',
-                'is_locked' => true,
-            ]);
-        });
-
-        // 4. Perpanjang layanan internet pelanggan di server (setelah pembayaran tersimpan)
-        $invoice = ServiceRenewal::afterPaid($invoice->fresh(), 'cash', 'Dibayar via admin: ' . auth()->user()->name);
-
-        return redirect()->back()->with(...$this->paidMessage($invoice, 'Tagihan lunas! Transaksi tercatat.'));
+        return redirect()->back()->with(...$this->paidMessage($invoice, 'Tagihan lunas dan tercatat di buku kas.'));
     }
 
     /** Pesan setelah lunas, termasuk hasil perpanjangan layanan. */

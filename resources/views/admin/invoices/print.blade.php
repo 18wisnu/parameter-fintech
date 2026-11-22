@@ -42,7 +42,12 @@
 <div class="toolbar">
     <span>{{ $invoices->count() }} invoice siap dicetak</span>
     <div style="display:flex;gap:8px">
-        <a href="{{ url()->previous() }}">Kembali</a>
+        @php
+            $route = request()->route('id') ? route('invoices.print', ['id' => request()->route('id')] + request()->except(['format', 'paper'])) : route('invoices.printList', request()->except(['format', 'paper']));
+            $sep = str_contains($route, '?') ? '&' : '?';
+        @endphp
+        <a href="{{ $route . $sep }}format=pos&paper=58">Struk POS 58mm</a>
+        <a href="{{ $route . $sep }}format=pos&paper=80">POS 80mm</a>
         <button onclick="window.print()">Cetak</button>
     </div>
 </div>
@@ -101,11 +106,14 @@
             </tbody>
         </table>
 
-        <div class="stamp {{ $inv->status === 'paid' ? 'paid' : 'unpaid' }}">{{ $inv->status === 'paid' ? 'LUNAS' : 'BELUM BAYAR' }}</div>
+        <div class="stamp {{ $inv->status === 'unpaid' ? 'unpaid' : 'paid' }}">{{ $inv->status === 'unpaid' ? 'BELUM BAYAR' : 'LUNAS' }}</div>
 
         <div class="foot">
-            @if($inv->status === 'paid')
-                Dibayar {{ $inv->updated_at?->locale('id')->translatedFormat('d F Y') }}. Terima kasih atas pembayaran Anda.
+            @if($inv->status === 'void')
+                {{ $inv->void_reason }}. Terima kasih.
+            @elseif($inv->status === 'paid')
+                @php $pay = $payments[$inv->id] ?? null; @endphp
+                Dibayar {{ ($pay?->created_at ?? $inv->updated_at)?->locale('id')->translatedFormat('d F Y H:i') }}{{ $pay ? ' · ' . (\App\Models\Transaction::PAYMENT_METHODS[$pay->payment_method] ?? '') . ($pay->user ? ' · ' . $pay->user->name : '') : '' }}. Terima kasih atas pembayaran Anda.
             @else
                 Mohon lakukan pembayaran sebelum jatuh tempo agar layanan internet tidak terputus.
             @endif

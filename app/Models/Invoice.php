@@ -16,7 +16,8 @@ class Invoice extends Model
         'invoice_number', // Format: INV-202602-001
         'period_date',    // Periode (2026-02-01)
         'amount',
-        'status',         // unpaid, paid
+        'status',         // unpaid, paid, void (sudah dibayar di server jaringan)
+        'void_reason',
         'renewal_status', // null, pending, success, failed (perpanjangan layanan internet)
         'renewal_error',
         'renewal_attempts',
