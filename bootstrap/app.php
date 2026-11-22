@@ -17,11 +17,22 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'tenant.role' => \App\Http\Middleware\EnsureTenantRole::class,
+            'network' => \App\Http\Middleware\EnsureNetworkEnabled::class,
         ]);
         // Tambahkan baris ini agar Laravel percaya semua Proxy/Tunnel
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Error dari server jaringan: halaman GET tampilkan pesan, aksi POST/PUT kembali dengan pesan
+        $exceptions->render(function (\App\Services\Mixradius\MixradiusException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 502);
+            }
+            if ($request->isMethod('GET')) {
+                return response()->view('network.error', ['message' => $e->getMessage()], 502);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        });
     })->create();
     

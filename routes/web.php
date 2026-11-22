@@ -256,10 +256,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
 
         // Integrasi Mixradius Evo (per tenant)
-        Route::get('/integrations/mixradius', [\App\Http\Controllers\Admin\MixradiusController::class, 'edit'])->name('admin.mixradius.edit');
-        Route::put('/integrations/mixradius', [\App\Http\Controllers\Admin\MixradiusController::class, 'update'])->name('admin.mixradius.update');
-        Route::post('/integrations/mixradius/test', [\App\Http\Controllers\Admin\MixradiusController::class, 'test'])->name('admin.mixradius.test');
-        Route::post('/integrations/mixradius/sync', [\App\Http\Controllers\Admin\MixradiusController::class, 'sync'])->name('admin.mixradius.sync');
+        Route::get('/integrations/server', [\App\Http\Controllers\Admin\MixradiusController::class, 'edit'])->name('admin.mixradius.edit');
+        Route::put('/integrations/server', [\App\Http\Controllers\Admin\MixradiusController::class, 'update'])->name('admin.mixradius.update');
+        Route::post('/integrations/server/test', [\App\Http\Controllers\Admin\MixradiusController::class, 'test'])->name('admin.mixradius.test');
+        Route::post('/integrations/server/sync', [\App\Http\Controllers\Admin\MixradiusController::class, 'sync'])->name('admin.mixradius.sync');
     });
 
     // --- OWNER & ADMIN TENANT AKTIF ---
@@ -295,6 +295,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- TAGIHAN (Invoice) ---
     Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('invoices/print', [InvoiceController::class, 'printList'])->name('invoices.printList');
+    Route::get('invoices/{id}/print', [InvoiceController::class, 'print'])->name('invoices.print');
     Route::post('invoices/generate', [InvoiceController::class, 'generate'])->name('invoices.generate');
     Route::post('invoices/{id}/paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.paid');
     Route::post('invoices/check-isolir', [InvoiceController::class, 'checkIsolir'])->name('invoices.checkIsolir');
@@ -325,6 +327,46 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profit-sharing/toggle-feature', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'toggleFeature'])->name('admin.profit_sharing.toggle_feature');
     Route::post('/profit-sharing/stakeholders', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'storeStakeholder'])->name('admin.profit_sharing.stakeholder.store');
     Route::delete('/profit-sharing/stakeholders/{id}', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'destroyStakeholder'])->name('admin.profit_sharing.stakeholder.destroy');
+
+    // --- JARINGAN (data langsung dari server jaringan tenant) ---
+    Route::middleware('network')->prefix('network')->name('network.')->group(function () {
+        $n = 'App\\Http\\Controllers\\Network\\';
+
+        // Voucher
+        Route::get('vouchers', [$n . 'VoucherController', 'index'])->name('vouchers.index');
+        Route::get('vouchers/create', [$n . 'VoucherController', 'create'])->name('vouchers.create');
+        Route::post('vouchers', [$n . 'VoucherController', 'store'])->name('vouchers.store');
+        Route::get('vouchers/batches', [$n . 'VoucherController', 'batches'])->name('vouchers.batches');
+        Route::get('vouchers/batches/{batch}', [$n . 'VoucherController', 'showBatch'])->name('vouchers.batches.show');
+        Route::get('vouchers/batches/{batch}/print', [$n . 'VoucherController', 'printBatch'])->name('vouchers.batches.print');
+        Route::get('vouchers/{code}', [$n . 'VoucherController', 'show'])->name('vouchers.show');
+        Route::put('vouchers/{code}/status', [$n . 'VoucherController', 'updateStatus'])->name('vouchers.status');
+
+        // Layanan & pengguna online
+        Route::get('services', [$n . 'ServiceController', 'index'])->name('services.index');
+        Route::get('online', [$n . 'ServiceController', 'online'])->name('online.index');
+        Route::post('online/{username}/disconnect', [$n . 'ServiceController', 'disconnect'])->name('online.disconnect');
+
+        // Tiket
+        Route::get('tickets', [$n . 'TicketController', 'index'])->name('tickets.index');
+        Route::get('tickets/create', [$n . 'TicketController', 'create'])->name('tickets.create');
+        Route::post('tickets', [$n . 'TicketController', 'store'])->name('tickets.store');
+        Route::get('tickets/{id}', [$n . 'TicketController', 'show'])->whereNumber('id')->name('tickets.show');
+        Route::post('tickets/{id}/reply', [$n . 'TicketController', 'reply'])->whereNumber('id')->name('tickets.reply');
+
+        // Instalasi
+        Route::get('installations', [$n . 'InstallationController', 'index'])->name('installations.index');
+        Route::get('installations/create', [$n . 'InstallationController', 'create'])->name('installations.create');
+        Route::post('installations', [$n . 'InstallationController', 'store'])->name('installations.store');
+        Route::get('installations/{id}', [$n . 'InstallationController', 'show'])->whereNumber('id')->name('installations.show');
+
+        // Reseller / Outlet
+        Route::get('partners', [$n . 'EntityController', 'index'])->name('entities.index');
+        Route::get('partners/{id}', [$n . 'EntityController', 'show'])->whereNumber('id')->name('entities.show');
+
+        // Laporan jaringan
+        Route::get('reports', [$n . 'ReportController', 'index'])->name('reports.index');
+    });
 
     }); // end tenant.role:owner,admin
 
