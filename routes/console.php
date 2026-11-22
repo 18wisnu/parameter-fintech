@@ -15,3 +15,10 @@ if (config('mixradius.auto_sync')) {
 
 // Coba ulang perpanjangan layanan yang gagal setelah tagihan lunas
 \Illuminate\Support\Facades\Schedule::command('mixradius:retry-renewals')->everyTenMinutes()->withoutOverlapping();
+
+// Tagihan bulanan dibuat otomatis setiap tanggal 1 (setelah sinkron masa aktif dari server).
+// Jika gagal (server tidak bisa dihubungi) dicoba lagi tiap jam sampai jam 23 di tanggal 1.
+\Illuminate\Support\Facades\Schedule::command('billing:generate-invoices')
+    ->monthlyOn(1, '00:15')->withoutOverlapping();
+\Illuminate\Support\Facades\Schedule::command('billing:generate-invoices')
+    ->hourly()->when(fn () => now()->day === 1 && now()->hour > 0)->withoutOverlapping();

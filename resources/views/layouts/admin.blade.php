@@ -34,32 +34,36 @@
         'phone' => 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z',
     ];
 
+    $isField = in_array($userRole, ['owner', 'admin', 'teknisi'], true);
+    $net = (bool) ($appSettings['network_enabled'] ?? false);
+
     $main = [
-        ['dashboard', 'dashboard', 'Dashboard', 'home', true],
-        ['customers.index', 'customers.*', 'Pelanggan', 'users', $f('customer_data')],
-        ['invoices.index', 'invoices.*', 'Tagihan', 'bill', $f('invoices')],
+        ['dashboard', 'dashboard', 'Dashboard', 'home', $isManager],
+        ['customers.index', 'customers.*', 'Pelanggan', 'users', $isManager && $f('customer_data')],
+        ['invoices.index', 'invoices.*', 'Tagihan', 'bill', $isManager && $f('invoices')],
     ];
 
     $groups = [
-        ['Keuangan', 'money', [
+        ['Keuangan', 'money', $isManager ? [
+            ['reports.history', 'reports.history', 'Buku Kas', $f('transactions')],
             ['reports.index', 'reports.index', 'Bagi Hasil', $f('profit_sharing')],
             ['admin.salaries.index', 'admin.salaries.*', 'Gaji Pegawai', $f('salary_management')],
             ['reports.reserve', 'reports.reserve', 'Dana Cadangan', $f('reserve_fund')],
-            ['reports.history', 'reports.history', 'Riwayat Transaksi', $f('transactions')],
             ['reports.vouchers', 'reports.vouchers', 'Analisa Voucher', $f('voucher_analysis')],
-        ]],
-        ['Jaringan', 'wifi', ($appSettings['network_enabled'] ?? false) && $isManager ? [
-            ['network.vouchers.index', 'network.vouchers.*', 'Voucher Hotspot', true],
+        ] : []],
+        // Akses menu jaringan menyesuaikan peran (lihat routes/web.php)
+        ['Jaringan', 'wifi', $net ? [
+            ['network.vouchers.index', 'network.vouchers.*', 'Voucher Hotspot', $isManager],
             ['network.services.index', 'network.services.*', 'Layanan Internet', true],
-            ['network.online.index', 'network.online.*', 'Pengguna Online', true],
-            ['network.tickets.index', 'network.tickets.*', 'Tiket Gangguan', true],
-            ['network.installations.index', 'network.installations.*', 'Pemasangan Baru', true],
-            ['network.entities.index', 'network.entities.*', 'Reseller & Outlet', true],
-            ['network.reports.index', 'network.reports.*', 'Laporan Jaringan', true],
+            ['network.online.index', 'network.online.*', 'Pengguna Online', $isField],
+            ['network.tickets.index', 'network.tickets.*', 'Tiket Gangguan', $isField],
+            ['network.installations.index', 'network.installations.*', 'Pemasangan Baru', $isField],
+            ['network.entities.index', 'network.entities.*', 'Reseller & Outlet', $isOwner],
+            ['network.reports.index', 'network.reports.*', 'Laporan Jaringan', $isOwner],
         ] : []],
         ['Pengaturan', 'cog', [
             ['admin.profit_sharing.index', 'admin.profit_sharing.*', 'Master Setting', $isManager],
-            ['admin.users.index', 'admin.users.*', 'Data Pegawai', $f('staff_data')],
+            ['admin.users.index', 'admin.users.*', 'Data Pegawai', $isManager && $f('staff_data')],
             ['admin.mixradius.edit', 'admin.mixradius.*', 'Server Jaringan', $isOwner],
             ['admin.logs.index', 'admin.logs.*', 'Log Sistem', $isOwner],
             ['admin.system.index', 'admin.system.*', 'Update Sistem', $isOwner],

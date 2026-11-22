@@ -18,6 +18,7 @@ class Business extends Model
         'invoices' => true,
         'transactions' => true,
         'staff_data' => true,
+        'deposit_approval' => false, // setoran kolektor perlu dikonfirmasi admin dulu
     ];
 
     protected $fillable = [
@@ -72,6 +73,14 @@ class Business extends Model
     public function users()
     {
         return $this->belongsToMany(User::class)->withPivot('role', 'base_salary')->withTimestamps();
+    }
+
+    /** Fitur aktif? Kunci yang belum pernah diatur memakai nilai default. */
+    public function feature(string $key): bool
+    {
+        $features = $this->enabled_features ?: [];
+
+        return filter_var($features[$key] ?? (self::DEFAULT_FEATURES[$key] ?? true), FILTER_VALIDATE_BOOLEAN);
     }
 
     public function hasMixradius(): bool

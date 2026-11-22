@@ -10,7 +10,6 @@ class Deposit extends Model
 {
     use HasFactory, BelongsToTenant;
 
-    // Daftar kolom yang boleh diisi oleh Form Controller
     protected $fillable = [
         'business_id',
         'user_id',
@@ -21,12 +20,31 @@ class Deposit extends Model
         'proof_image',
         'status',
         'approved_by',
-        'approved_at'
+        'approved_at',
     ];
 
-    // Relasi: Setiap Deposit pasti milik satu User (Teknisi)
+    protected $casts = [
+        'approved_at' => 'datetime',
+    ];
+
+    /** Kolektor / teknisi penyetor. */
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class)->withoutGlobalScopes();
+    }
+
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class)->withoutGlobalScopes();
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

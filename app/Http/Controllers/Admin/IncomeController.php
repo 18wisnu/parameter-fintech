@@ -54,7 +54,9 @@ class IncomeController extends Controller
                     'description'       => $request->description,
                     'account_id'        => $request->account_id,        
                     'source_account_id' => $request->target_account_id, 
-                    'type'              => 'income', 
+                    'type'              => 'income',
+                    'user_id'           => auth()->id(),
+                    'notes'             => 'Dicatat oleh ' . auth()->user()->name,
                     'is_locked'         => false,
                 ]);
 

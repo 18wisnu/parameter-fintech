@@ -104,8 +104,9 @@
                         'voucher_analysis' => ['Analisa Voucher', 'Trend Penjualan Voucher'],
                         'customer_data' => ['Data Pelanggan', 'Manajemen Client/User'],
                         'invoices' => ['Tagihan / Invoice', 'Sistem Billing & Nota'],
-                        'transactions' => ['Riwayat Kas', 'Log Pemasukan & Pengeluaran'],
-                        'staff_data' => ['Data Pegawai', 'Manajemen SDM']
+                        'transactions' => ['Buku Kas', 'Pemasukan, setoran & pengeluaran'],
+                        'staff_data' => ['Data Pegawai', 'Manajemen SDM'],
+                        'deposit_approval' => ['Konfirmasi Setoran', 'Setoran kolektor dicek admin dulu sebelum masuk buku kas'],
                     ] as $key => $info)
                     <div 
                         @click="toggle('{{ $key }}')"

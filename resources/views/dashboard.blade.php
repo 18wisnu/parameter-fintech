@@ -40,12 +40,14 @@
         </div>
 
         <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-100">
-            <p class="text-slate-500 font-medium mb-2">Setoran Menunggu</p>
-            <h3 class="text-3xl font-bold text-orange-600">Rp {{ number_format($totalPending, 0, ',', '.') }}</h3>
             @if($totalPending > 0)
-                <p class="text-orange-500 text-sm mt-2 font-bold animate-pulse">Segera verifikasi</p>
+                <p class="text-slate-500 font-medium mb-2">Setoran Menunggu</p>
+                <h3 class="text-3xl font-bold text-orange-600">Rp {{ number_format($totalPending, 0, ',', '.') }}</h3>
+                <p class="text-orange-500 text-sm mt-2 font-bold">Perlu dikonfirmasi</p>
             @else
-                <p class="text-slate-400 text-sm mt-2">Aman terkendali</p>
+                <p class="text-slate-500 font-medium mb-2">Setoran Kolektor Hari Ini</p>
+                <h3 class="text-3xl font-bold text-emerald-700">Rp {{ number_format($depositsToday, 0, ',', '.') }}</h3>
+                <p class="text-slate-400 text-sm mt-2">Langsung tercatat di buku kas</p>
             @endif
         </div>
 
@@ -76,70 +78,60 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-slate-100 overflow-hidden">
-        <div class="p-6 border-b border-slate-100">
-            <h3 class="font-bold text-lg text-slate-800">Setoran Masuk (Butuh Approval)</h3>
-        </div>
-
-        @if($pendingDeposits->isEmpty())
-            <div class="text-center py-10 text-slate-400">Tidak ada setoran baru.</div>
-        @else
-            <div class="hidden md:block overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-slate-50 text-slate-500 text-sm">
-                        <tr>
-                            <th class="px-6 py-4 font-semibold">TANGGAL</th>
-                            <th class="px-6 py-4 font-semibold">TEKNISI</th>
-                            <th class="px-6 py-4 font-semibold">KETERANGAN</th>
-                            <th class="px-6 py-4 font-semibold">NOMINAL</th>
-                            <th class="px-6 py-4 font-semibold text-right">AKSI</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach($pendingDeposits as $deposit)
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 text-slate-500 text-sm">{{ $deposit->created_at->format('d M H:i') }}</td>
-                            <td class="px-6 py-4 font-bold">{{ $deposit->user->name }}</td>
-                            <td class="px-6 py-4 text-slate-600">{{ $deposit->description }}</td>
-                            <td class="px-6 py-4 font-bold text-emerald-600">Rp {{ number_format($deposit->amount, 0, ',', '.') }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <form action="{{ route('admin.deposit.approve', $deposit->id) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="bg-emerald-500 text-white px-4 py-2 rounded text-sm font-bold hover:bg-emerald-600" onclick="return confirm('Terima?')">
-                                        TERIMA UANG
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+    @if($pendingDeposits->isNotEmpty())
+    <div class="bg-white rounded-2xl border border-amber-200 overflow-hidden mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-4 border-b border-amber-100 bg-amber-50">
+            <div>
+                <h3 class="font-semibold text-slate-800">Setoran menunggu konfirmasi ({{ $pendingDeposits->count() }})</h3>
+                <p class="text-xs text-slate-500">Setoran baru sekarang langsung masuk buku kas. Ini sisa setoran lama.</p>
             </div>
-
-            <div class="md:hidden p-4 space-y-4">
-                @foreach($pendingDeposits as $deposit)
-                <div class="border border-slate-200 rounded-lg p-4 shadow-sm">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <span class="text-xs text-slate-400 font-bold">{{ $deposit->created_at->format('d M H:i') }}</span>
-                            <h4 class="font-bold text-slate-800">{{ $deposit->user->name }}</h4>
-                        </div>
-                        <span class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded font-bold">Pending</span>
-                    </div>
-                    <p class="text-sm text-slate-600 mb-3">{{ $deposit->description }}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-emerald-600 text-lg">Rp {{ number_format($deposit->amount, 0, ',', '.') }}</span>
+            <form action="{{ route('admin.deposit.approveAll') }}" method="POST" onsubmit="return confirm('Terima semua setoran ini dan catat di buku kas?')">
+                @csrf
+                <button class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Terima semua</button>
+            </form>
+        </div>
+        <table class="w-full text-sm">
+            <tbody class="divide-y divide-slate-50">
+            @foreach($pendingDeposits as $deposit)
+                <tr>
+                    <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ $deposit->created_at->format('d M H:i') }}</td>
+                    <td class="px-5 py-3"><div class="font-semibold text-slate-700">{{ $deposit->user->name ?? '-' }}</div><div class="text-xs text-slate-400">{{ $deposit->description }}</div></td>
+                    <td class="px-5 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">Rp {{ number_format($deposit->amount, 0, ',', '.') }}</td>
+                    <td class="px-5 py-3 text-right">
                         <form action="{{ route('admin.deposit.approve', $deposit->id) }}" method="POST">
                             @csrf
-                            <button class="bg-emerald-500 text-white px-3 py-1.5 rounded text-sm font-bold shadow-sm">
-                                Terima
-                            </button>
+                            <button class="text-sm font-semibold text-emerald-700 hover:underline">Terima</button>
                         </form>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        @endif
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
     </div>
+    @endif
 
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+            <h3 class="font-semibold text-slate-800">Transaksi terakhir</h3>
+            <a href="{{ route('reports.history') }}" class="text-sm font-semibold text-sky-600 hover:underline">Buka buku kas</a>
+        </div>
+        <table class="w-full text-sm">
+            <tbody class="divide-y divide-slate-50">
+            @forelse($recentTransactions as $trx)
+                <tr>
+                    <td class="px-5 py-3 text-slate-500 whitespace-nowrap">{{ $trx->created_at?->format('d M H:i') }}</td>
+                    <td class="px-5 py-3">
+                        <div class="text-slate-700">{{ $trx->description }}</div>
+                        <div class="text-xs text-slate-400">{{ $trx->account->name ?? '' }}{{ $trx->user ? ' · ' . $trx->user->name : '' }}</div>
+                    </td>
+                    <td class="px-5 py-3 text-right font-semibold whitespace-nowrap {{ $trx->type === 'income' ? 'text-emerald-600' : 'text-rose-600' }}">
+                        {{ $trx->type === 'income' ? '+' : '−' }} Rp {{ number_format($trx->amount, 0, ',', '.') }}
+                    </td>
+                </tr>
+            @empty
+                <tr><td class="px-5 py-10 text-center text-slate-400">Belum ada transaksi.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
 @endsection

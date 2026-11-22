@@ -1,141 +1,143 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
-    <div>
-        <div class="flex items-center gap-3 mb-2">
-            <div class="bg-sky-100 p-2 rounded-xl text-sky-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
-                </svg>
-            </div>
-            <h2 class="text-3xl font-black text-slate-800 tracking-tight">Analisa Voucher</h2>
-        </div>
-        <p class="text-slate-500 font-medium">Melihat trend penjualan voucher dan reseller paling aktif.</p>
-    </div>
+@include('partials.flash')
+@php
+    $rp = fn ($n) => 'Rp ' . number_format((float) $n, 0, ',', '.');
+    $num = fn ($n) => number_format((float) $n, 0, ',', '.');
+    $money = ['income_month', 'commission_month', 'income_today'];
+    $fmt = fn ($k, $v) => in_array($k, $money, true) ? $rp($v) : $num($v);
+    $max = max(1, (float) ($resellers->max(fn ($r) => (float) ($r['stats'][$sort] ?? 0)) ?? 0));
+    $types = ['reseller' => 'Reseller', 'outlet' => 'Outlet'];
+@endphp
 
-    <!-- Timeframe Selector -->
-    <div class="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 flex overflow-hidden">
-        @foreach(['weekly' => 'Mingguan', 'monthly' => 'Bulanan', 'six_monthly' => 'Per 6 Bulan'] as $key => $label)
-            <a href="{{ route('reports.vouchers', ['timeframe' => $key]) }}" 
-               class="px-6 py-2.5 rounded-xl text-xs font-black transition-all {{ $timeframe === $key ? 'bg-sky-600 text-white shadow-lg shadow-sky-200' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50' }}">
-                {{ $label }}
-            </a>
-        @endforeach
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">Analisa Voucher</h2>
+        <p class="text-sm text-slate-500">Reseller dan outlet mana yang paling banyak menghasilkan.</p>
     </div>
+    @if($network)
+    <form method="GET">
+        <select name="sort" onchange="this.form.submit()" class="py-2 rounded-xl border-slate-200 text-sm text-slate-600">
+            @foreach($metrics as $k => $v)<option value="{{ $k }}" @selected($sort === $k)>Urutkan: {{ $v }}</option>@endforeach
+        </select>
+    </form>
+    @endif
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- TREND PENJUALAN -->
-    <div class="lg:col-span-2">
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-bold text-slate-700">Trend Penjualan ({{ $timeframe === 'weekly' ? '12 Minggu Terakhir' : ($timeframe === 'six_monthly' ? 'Daftar Per Semester' : '8 Bulan Terakhir') }})</h3>
-                <span class="text-[10px] font-black text-sky-600 uppercase tracking-widest bg-sky-50 px-2 py-1 rounded-md">Voucher Revenue</span>
-            </div>
-            <div class="p-8">
-                <div class="flex items-end gap-2 h-64">
-                    @php
-                        $maxAmount = $voucherTrend->max('total_amount') ?: 1;
-                    @endphp
-                    @forelse($voucherTrend as $trend)
-                        <div class="flex-1 flex flex-col items-center group">
-                            <div class="relative w-full flex flex-col items-center">
-                                <!-- Tooltip -->
-                                <div class="absolute -top-12 opacity-0 group-hover:opacity-100 transition-all bg-slate-800 text-white text-[10px] py-1 px-2 rounded-lg whitespace-nowrap z-10 font-bold mb-2">
-                                    Rp {{ number_format($trend->total_amount, 0, ',', '.') }}
-                                </div>
-                                <!-- Bar -->
-                                <div class="w-full bg-sky-500 rounded-t-xl transition-all group-hover:bg-sky-600 group-hover:shadow-lg group-hover:shadow-sky-200" style="height: {{ ($trend->total_amount / $maxAmount) * 200 }}px"></div>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400 mt-3 uppercase tracking-tight">
-                                @if($timeframe === 'weekly')
-                                    W{{ explode('-', $trend->label)[0] }}
-                                @elseif($timeframe === 'six_monthly')
-                                    {{ $trend->label }}
-                                @else
-                                    {{ date('M Y', strtotime($trend->label . '-01')) }}
-                                @endif
-                            </span>
-                            <span class="text-[9px] font-black text-slate-500">{{ $trend->transaction_count }} trx</span>
-                        </div>
-                    @empty
-                        <div class="w-full text-center py-20 text-slate-400 italic font-medium">Belum ada data transaksi voucher.</div>
-                    @endforelse
-                </div>
-            </div>
+@if(!$network)
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 mb-4 text-sm text-slate-600">
+        Peringkat reseller diambil dari server jaringan. Hubungkan server dulu di <b>Pengaturan → Server Jaringan</b> (khusus pemilik).
+        Sementara itu, di bawah ditampilkan setoran voucher yang tercatat di buku kas.
+    </div>
+@elseif($networkError)
+    <div class="mb-4 p-3 rounded-xl bg-amber-50 text-amber-800 text-sm">Data reseller dari server belum bisa dimuat: {{ $networkError }}</div>
+@else
+    {{-- Ringkasan semua mitra --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
+            <div class="text-xs text-slate-400">Pendapatan bulan ini</div>
+            <div class="text-lg font-bold text-emerald-600">{{ $rp($totals['income_month']) }}</div>
         </div>
-        
-        <div class="mt-8 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-6 border-b border-slate-50 bg-slate-50/50">
-                <h3 class="font-bold text-slate-700">Detail Per Periode ({{ ucfirst($timeframe) }})</h3>
-            </div>
-            <table class="w-full text-left">
-                <thead class="bg-slate-50/30 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
+            <div class="text-xs text-slate-400">Transaksi bulan ini</div>
+            <div class="text-lg font-bold text-slate-800">{{ $num($totals['trx_count_month']) }}</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
+            <div class="text-xs text-slate-400">Voucher dibuat bulan ini</div>
+            <div class="text-lg font-bold text-slate-800">{{ $num($totals['voucher_gen_month']) }}</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
+            <div class="text-xs text-slate-400">Komisi bulan ini</div>
+            <div class="text-lg font-bold text-slate-800">{{ $rp($totals['commission_month']) }}</div>
+        </div>
+    </div>
+
+    {{-- Peringkat --}}
+    <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-4">
+        <div class="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
+            <h3 class="font-semibold text-slate-800">Peringkat reseller & outlet</h3>
+            <span class="text-xs text-slate-400">diperbarui tiap 10 menit{{ $limited ? ' · 40 mitra pertama' : '' }}</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-left text-xs text-slate-400 border-b border-slate-100">
                     <tr>
-                        <th class="px-8 py-4">Periode</th>
-                        <th class="px-8 py-4">Total Transaksi</th>
-                        <th class="px-8 py-4 text-right">Total Pendapatan</th>
+                        <th class="px-4 py-3 font-semibold w-8">#</th>
+                        <th class="px-4 py-3 font-semibold">Mitra</th>
+                        <th class="px-4 py-3 font-semibold min-w-[180px]">{{ $metrics[$sort] }}</th>
+                        <th class="px-4 py-3 font-semibold text-right">Pendapatan bln ini</th>
+                        <th class="px-4 py-3 font-semibold text-right">Hari ini</th>
+                        <th class="px-4 py-3 font-semibold text-right">Transaksi</th>
+                        <th class="px-4 py-3 font-semibold text-right">Voucher dibuat</th>
+                        <th class="px-4 py-3 font-semibold text-right">Stok</th>
+                        <th class="px-4 py-3 font-semibold text-right">Komisi</th>
+                        <th class="px-4 py-3 font-semibold text-right">Saldo</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                    @foreach($voucherTrend->reverse() as $trend)
-                    <tr class="hover:bg-slate-50/50 transition">
-                        <td class="px-8 py-4 font-bold text-slate-700">
-                            @if($timeframe === 'weekly')
-                                Minggu ke-{{ explode('-', $trend->label)[0] }} Thn {{ explode('-', $trend->label)[1] }}
-                            @elseif($timeframe === 'six_monthly')
-                                Semester {{ $trend->label }}
+                @forelse($resellers as $i => $r)
+                    @php $s = $r['stats']; $v = (float) ($s[$sort] ?? 0); @endphp
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 font-bold {{ $i < 3 ? 'text-amber-600' : 'text-slate-400' }}">{{ $i + 1 }}</td>
+                        <td class="px-4 py-3">
+                            @if($isOwner)
+                                <a href="{{ route('network.entities.show', $r['id']) }}" class="font-semibold text-slate-800 hover:text-sky-700">{{ $r['name'] }}</a>
                             @else
-                                {{ date('F Y', strtotime($trend->label . '-01')) }}
+                                <span class="font-semibold text-slate-800">{{ $r['name'] }}</span>
                             @endif
+                            <div class="text-xs text-slate-400">{{ $types[$r['type']] ?? $r['type'] }}{{ $r['code'] ? ' · ' . $r['code'] : '' }}</div>
                         </td>
-                        <td class="px-8 py-4">
-                            <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold">{{ $trend->transaction_count }} Transaksi</span>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-sky-500 rounded-full" style="width: {{ round($v / $max * 100) }}%"></div></div>
+                                <span class="text-xs font-semibold text-slate-700 whitespace-nowrap">{{ $fmt($sort, $v) }}</span>
+                            </div>
                         </td>
-                        <td class="px-8 py-4 text-right font-black text-sky-600">Rp {{ number_format($trend->total_amount, 0, ',', '.') }}</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap font-semibold text-emerald-700">{{ $rp($s['income_month'] ?? 0) }}</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap text-slate-600">{{ $rp($s['income_today'] ?? 0) }}</td>
+                        <td class="px-4 py-3 text-right text-slate-600">{{ $num($s['trx_count_month'] ?? 0) }}</td>
+                        <td class="px-4 py-3 text-right text-slate-600">{{ $num($s['voucher_gen_month'] ?? 0) }}</td>
+                        <td class="px-4 py-3 text-right text-slate-600">{{ $num($s['voucher_stock'] ?? 0) }}</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap text-slate-600">{{ $rp($s['commission_month'] ?? 0) }}</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap text-slate-600">{{ $rp($r['balance']) }}</td>
                     </tr>
-                    @endforeach
+                @empty
+                    <tr><td colspan="10" class="px-4 py-12 text-center text-slate-400">Belum ada reseller atau outlet di server jaringan.</td></tr>
+                @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+@endif
 
-    <!-- TOP RESELLERS -->
-    <div class="lg:col-span-1">
-        <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-            <div class="p-6 border-b border-slate-50 bg-gradient-to-r from-sky-600 to-sky-700">
-                <h3 class="font-bold text-white">Top 10 Reseller Voucher</h3>
-                <p class="text-sky-100 text-xs mt-1">Berdasarkan total nominal pembelian.</p>
-            </div>
-            <div class="p-4">
-                <div class="space-y-3">
-                    @forelse($topResellers as $index => $reseller)
-                        <div class="flex items-center p-3 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100 group">
-                            <div class="w-10 h-10 rounded-xl {{ $index < 3 ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500' }} flex items-center justify-center font-black mr-4 shadow-sm">
-                                {{ $index + 1 }}
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="text-sm font-bold text-slate-800 group-hover:text-sky-700 transition">{{ $reseller->customer->name ?? 'Unknown' }}</h4>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{{ $reseller->total_vouchers }} Transaksi</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-black text-slate-700 group-hover:text-slate-900">Rp{{ number_format($reseller->total_spent, 0, ',', '.') }}</p>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="py-10 text-center text-slate-400 italic">Data belum tersedia.</div>
-                    @endforelse
+{{-- Dari buku kas --}}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-100 p-5">
+        <h3 class="font-semibold text-slate-800 mb-1">Setoran voucher per bulan</h3>
+        <p class="text-xs text-slate-400 mb-4">Dari buku kas (akun Pendapatan Voucher), 6 bulan terakhir.</p>
+        @php $tmax = max(1, $trend->max('total')); @endphp
+        <div class="flex items-end gap-2 h-40">
+            @foreach($trend as $t)
+                <div class="flex-1 flex flex-col items-center justify-end h-full" title="{{ $rp($t['total']) }} · {{ $t['count'] }} setoran">
+                    <div class="w-full bg-sky-500 rounded-t-md" style="height: {{ max(2, round($t['total'] / $tmax * 100)) }}%"></div>
+                    <span class="text-[10px] text-slate-400 mt-1 whitespace-nowrap">{{ $t['label'] }}</span>
                 </div>
-            </div>
-            <div class="p-6 bg-slate-50 border-t border-slate-100">
-                <div class="flex items-center gap-2 text-slate-500 text-[10px] font-bold italic">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Data dihitung dari akun {{ $voucherAccount->name }} ({{ $voucherAccount->code }})
+            @endforeach
+        </div>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-100 p-5">
+        <h3 class="font-semibold text-slate-800 mb-1">Penyetor voucher terbanyak</h3>
+        <p class="text-xs text-slate-400 mb-4">Setoran kolektor untuk pelanggan bertipe Reseller/Hotspot.</p>
+        <div class="space-y-2">
+            @forelse($ledgerResellers as $r)
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-700">{{ $r['name'] }} <span class="text-xs text-slate-400">· {{ $r['count'] }}×</span></span>
+                    <span class="font-semibold text-slate-800">{{ $rp($r['total']) }}</span>
                 </div>
-            </div>
+            @empty
+                <p class="text-sm text-slate-400">Belum ada setoran voucher di buku kas.</p>
+            @endforelse
         </div>
     </div>
 </div>

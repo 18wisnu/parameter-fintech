@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ChartOfAccount;
-use App\Models\Transaction;
 use App\Models\Expense;
+use App\Services\Finance\Ledger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,51 +13,44 @@ class ExpenseController extends Controller
 {
     public function create()
     {
-        // Gunakan nama $expenseAccounts agar pas dengan baris 33 di blade Bos
-        $expenseAccounts = ChartOfAccount::where('type', 'expense')->get();
-
-        // Akun Kas sebagai sumber uang
-        $sourceAccounts = ChartOfAccount::where('type', 'asset')
-            ->where('is_cash_account', true)
-            ->get();
+        $expenseAccounts = ChartOfAccount::where('type', 'expense')->orderBy('code')->get();
+        $sourceAccounts = ChartOfAccount::where('type', 'asset')->where('is_cash_account', true)->orderBy('code')->get();
 
         return view('admin.expenses.create', compact('expenseAccounts', 'sourceAccounts'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'date'              => 'required|date',
-            'amount'            => 'required|numeric|min:1',
-            'description'       => 'required|string',
-            'account_id'        => 'required', 
-            'source_account_id' => 'required', 
+        $data = $request->validate([
+            'date' => 'required|date|before_or_equal:today',
+            'amount' => 'required|numeric|min:1',
+            'description' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:500',
+            'account_id' => 'required|integer|exists:chart_of_accounts,id',
+            'source_account_id' => 'required|integer|exists:chart_of_accounts,id',
+            'proof_image' => 'nullable|image|max:4096',
         ]);
 
-        try {
-            DB::transaction(function () use ($request) {
-                // 1. Catat Pengeluaran
-                Expense::create([
-                    'transaction_date' => $request->date,
-                    'amount'           => $request->amount,
-                    'description'      => $request->description,
-                ]);
+        $account = ChartOfAccount::where('type', 'expense')->findOrFail($data['account_id']);
+        $source = ChartOfAccount::where('type', 'asset')->where('is_cash_account', true)->findOrFail($data['source_account_id']);
 
-                // 2. Potong Saldo Jurnal
-                Transaction::create([
-                    'date'              => $request->date,
-                    'amount'            => $request->amount,
-                    'description'       => $request->description,
-                    'account_id'        => $request->source_account_id, 
-                    'target_account_id' => $request->account_id,        
-                    'type'              => 'expense',
-                    'is_locked'         => false,
-                ]);
-            });
+        $path = $request->hasFile('proof_image') ? $request->file('proof_image')->store('expenses', 'public') : null;
 
-            return redirect()->route('dashboard')->with('success', 'Pengeluaran berhasil dicatat!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal: ' . $e->getMessage());
-        }
+        DB::transaction(function () use ($data, $account, $source, $path) {
+            $expense = Expense::create([
+                'transaction_date' => $data['date'],
+                'amount' => $data['amount'],
+                'description' => $data['description'],
+                'category' => $account->name,
+                'account_id' => $account->id,
+                'source_account_id' => $source->id,
+                'user_id' => auth()->id(),
+                'proof_image' => $path,
+            ]);
+
+            Ledger::expense($expense, $account, $source, auth()->user(), $data['notes'] ?? null);
+        });
+
+        return redirect()->route('reports.history')->with('success', 'Pengeluaran dicatat di buku kas.');
     }
 }

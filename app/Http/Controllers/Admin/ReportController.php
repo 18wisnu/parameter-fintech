@@ -276,118 +276,196 @@ class ReportController extends Controller
     // 3. FITUR RIWAYAT TRANSAKSI (FIX PEMASUKAN/PENGELUARAN)
     // ----------------------------------------------------------------------
 
+    /**
+     * Buku kas: semua pemasukan & pengeluaran dengan detail lengkap,
+     * saldo awal periode, saldo berjalan per baris dan saldo akhir.
+     */
     public function history(Request $request)
     {
-        $query = Transaction::query()->with(['account', 'sourceAccount']);
+        $filtered = $this->ledgerQuery($request);
 
-        if ($request->start_date && $request->end_date) {
-            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+        // Saldo awal = semua transaksi sebelum tanggal mulai
+        $opening = 0.0;
+        if ($request->filled('start_date')) {
+            $opening = (float) $this->signedSum(Transaction::query()->where('date', '<', $request->start_date)
+                ->when($request->filled('account_id'), fn ($q) => $q->where('account_id', $request->account_id)));
         }
 
-        $transactions = $query->orderBy('date', 'desc')->paginate(15);
+        $totals = (clone $filtered)->reorder()
+            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income")
+            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense")
+            ->selectRaw('COUNT(*) as n')
+            ->first();
+        $closing = $opening + (float) $totals->income - (float) $totals->expense;
 
-        return view('admin.reports.history', compact('transactions'));
+        $transactions = (clone $filtered)->with(['account', 'sourceAccount', 'customer', 'user', 'invoice'])
+            ->paginate(25)->withQueryString();
+
+        // Saldo setelah baris teratas halaman ini = saldo akhir − semua baris yang lebih baru (halaman sebelumnya)
+        $newer = 0.0;
+        $offset = ($transactions->currentPage() - 1) * $transactions->perPage();
+        if ($offset > 0) {
+            $newer = (float) (clone $filtered)->limit($offset)->get(['type', 'amount'])
+                ->sum(fn ($t) => $t->type === 'income' ? $t->amount : ($t->type === 'expense' ? -$t->amount : 0));
+        }
+        $running = $closing - $newer;
+        $balances = [];
+        foreach ($transactions as $trx) {
+            $balances[$trx->id] = $running;
+            $running -= $trx->signedAmount();
+        }
+
+        return view('admin.reports.history', [
+            'transactions' => $transactions,
+            'balances' => $balances,
+            'opening' => $opening,
+            'closing' => $closing,
+            'totals' => $totals,
+            'accounts' => \App\Models\ChartOfAccount::whereIn('type', ['revenue', 'expense', 'equity'])->orderBy('code')->get(),
+            'staff' => \App\Models\User::membersOfCurrentBusiness()->orderBy('name')->get(),
+            'methods' => Transaction::PAYMENT_METHODS,
+        ]);
     }
 
     public function exportHistoryPdf(Request $request)
     {
-        $query = Transaction::query();
+        $transactions = $this->ledgerQuery($request)->with(['account', 'customer', 'user'])->get();
 
-        if ($request->start_date && $request->end_date) {
-            $query->whereBetween('date', [$request->start_date, $request->end_date]);
-        }
-
-        $transactions = $query->orderBy('date', 'desc')->get();
-        
         $pdf = Pdf::loadView('admin.reports.pdf_history', compact('transactions'));
-        return $pdf->download('laporan-riwayat-transaksi.pdf');
+        return $pdf->download('buku-kas.pdf');
     }
 
     public function exportHistoryExcel(Request $request)
     {
-        $query = Transaction::query()->with(['account', 'sourceAccount', 'customer', 'user']);
+        $transactions = $this->ledgerQuery($request)->with(['account', 'sourceAccount', 'customer', 'user'])->get();
 
-        if ($request->start_date && $request->end_date) {
-            $query->whereBetween('date', [$request->start_date, $request->end_date]);
-        }
-
-        $transactions = $query->orderBy('date', 'desc')->get();
-        
-        $fileName = 'riwayat-transaksi-' . now()->format('Ymd-His') . '.xlsx';
+        $fileName = 'buku-kas-' . now()->format('Ymd-His') . '.xlsx';
         return Excel::download(new \App\Exports\TransactionsExport($transactions), $fileName);
+    }
+
+    /** Filter buku kas: tanggal, arus, akun, petugas, metode, kata kunci. Urut terbaru dulu. */
+    private function ledgerQuery(Request $request)
+    {
+        return Transaction::query()
+            ->when($request->filled('start_date'), fn ($q) => $q->where('date', '>=', $request->start_date))
+            ->when($request->filled('end_date'), fn ($q) => $q->where('date', '<=', $request->end_date))
+            ->when(in_array($request->type, ['income', 'expense'], true), fn ($q) => $q->where('type', $request->type))
+            ->when($request->filled('account_id'), fn ($q) => $q->where('account_id', $request->account_id))
+            ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', $request->user_id))
+            ->when($request->filled('payment_method'), fn ($q) => $q->where('payment_method', $request->payment_method))
+            ->when(trim((string) $request->search) !== '', function ($q) use ($request) {
+                $s = trim((string) $request->search);
+                $q->where(fn ($w) => $w->where('description', 'like', "%{$s}%")
+                    ->orWhere('reference', 'like', "%{$s}%")
+                    ->orWhere('notes', 'like', "%{$s}%"));
+            })
+            ->orderByDesc('date')->orderByDesc('id');
+    }
+
+    private function signedSum($query): float
+    {
+        return (float) $query->selectRaw("COALESCE(SUM(CASE WHEN type = 'income' THEN amount WHEN type = 'expense' THEN -amount ELSE 0 END), 0) as s")->value('s');
     }
 
     // ----------------------------------------------------------------------
     // 4. FITUR ANALITIK VOUCHER (TREND & RESELLER TERBANYAK)
     // ----------------------------------------------------------------------
 
+    /**
+     * Analisa voucher: reseller/outlet mana yang paling banyak menghasilkan.
+     * Sumber utama: statistik tiap reseller di server jaringan (pendapatan, transaksi,
+     * voucher dibuat/dipakai, komisi, stok). Pelengkap: setoran voucher di buku kas.
+     */
     public function vouchers(Request $request)
     {
-        // 1. Cari Akun Pendapatan Voucher (Code: 4002)
-        $voucherAccount = ChartOfAccount::where('code', '4002')->first();
-        
-        if (!$voucherAccount) {
-            return redirect()->back()->with('error', 'Akun Pendapatan Voucher (4002) tidak ditemukan di Chart of Accounts!');
+        $business = \App\Models\Business::findOrFail(auth()->user()->current_business_id);
+
+        $metrics = [
+            'income_month' => 'Pendapatan bulan ini',
+            'trx_count_month' => 'Transaksi bulan ini',
+            'voucher_gen_month' => 'Voucher dibuat bulan ini',
+            'commission_month' => 'Komisi bulan ini',
+            'income_today' => 'Pendapatan hari ini',
+            'voucher_stock' => 'Stok voucher',
+        ];
+        $sort = array_key_exists($request->sort, $metrics) ? $request->sort : 'income_month';
+
+        $resellers = collect();
+        $networkError = null;
+        $limited = false;
+
+        if ($business->hasMixradius()) {
+            try {
+                [$rows, $limited] = \Illuminate\Support\Facades\Cache::remember(
+                    "network:{$business->id}:reseller-stats", 600,
+                    fn () => $this->resellerStats($business)
+                );
+                $resellers = collect($rows);
+            } catch (\App\Services\Mixradius\MixradiusException $e) {
+                $networkError = $e->getMessage();
+            }
         }
 
-        $timeframe = $request->timeframe ?? 'monthly';
+        $resellers = $resellers->sortByDesc(fn ($r) => (float) ($r['stats'][$sort] ?? 0))->values();
+        $totals = collect(array_keys($metrics))->mapWithKeys(fn ($k) => [$k => $resellers->sum(fn ($r) => (float) ($r['stats'][$k] ?? 0))]);
 
-        // 2. Data Trend Voucher berdasarkan Timeframe
-        $query = Transaction::where('account_id', $voucherAccount->id)
-            ->where('type', 'income');
-
-        if ($timeframe === 'weekly') {
-            $voucherTrend = $query->select(
-                DB::raw("DATE_FORMAT(date, '%u-%Y') as label"), 
-                DB::raw("SUM(amount) as total_amount"),
-                DB::raw("COUNT(*) as transaction_count"),
-                DB::raw("MIN(date) as sort_date")
-            )
-            ->groupBy('label')
-            ->orderBy('sort_date', 'desc')
-            ->take(12)
-            ->get()
-            ->reverse();
-        } elseif ($timeframe === 'six_monthly') {
-            $voucherTrend = $query->select(
-                DB::raw("IF(MONTH(date) <= 6, CONCAT('S1-', YEAR(date)), CONCAT('S2-', YEAR(date))) as label"), 
-                DB::raw("SUM(amount) as total_amount"),
-                DB::raw("COUNT(*) as transaction_count"),
-                DB::raw("MIN(date) as sort_date")
-            )
-            ->groupBy('label')
-            ->orderBy('sort_date', 'desc')
-            ->take(6)
-            ->get()
-            ->reverse();
-        } else { // monthly
-            $voucherTrend = $query->select(
-                DB::raw("DATE_FORMAT(date, '%Y-%m') as label"), 
-                DB::raw("SUM(amount) as total_amount"),
-                DB::raw("COUNT(*) as transaction_count")
-            )
-            ->groupBy('label')
-            ->orderBy('label', 'desc')
-            ->take(8)
-            ->get()
-            ->reverse();
-        }
-
-        // 3. Top Reseller Voucher (Berdasarkan Total Nominal)
-        $topResellers = Transaction::where('account_id', $voucherAccount->id)
-            ->where('type', 'income')
-            ->whereNotNull('customer_id')
-            ->with('customer')
-            ->select(
-                'customer_id',
-                DB::raw("SUM(amount) as total_spent"),
-                DB::raw("COUNT(*) as total_vouchers")
-            )
-            ->groupBy('customer_id')
-            ->orderBy('total_spent', 'desc')
-            ->take(10)
+        // Buku kas: setoran voucher (akun 4002) 6 bulan terakhir, per bulan & per reseller
+        $voucherAccount = ChartOfAccount::byCode(ChartOfAccount::PENDAPATAN_VOUCHER);
+        $since = now()->subMonths(5)->startOfMonth();
+        $ledger = Transaction::with('customer')
+            ->where('account_id', $voucherAccount->id)->where('type', 'income')
+            ->where('date', '>=', $since->toDateString())
             ->get();
 
-        return view('admin.reports.vouchers', compact('voucherTrend', 'topResellers', 'voucherAccount', 'timeframe'));
+        $trend = collect(range(0, 5))->map(function ($i) use ($since, $ledger) {
+            $m = $since->copy()->addMonths($i);
+            $rows = $ledger->filter(fn ($t) => Carbon::parse($t->date)->format('Y-m') === $m->format('Y-m'));
+
+            return ['label' => $m->locale('id')->translatedFormat('M Y'), 'total' => (float) $rows->sum('amount'), 'count' => $rows->count()];
+        });
+
+        $ledgerResellers = $ledger->groupBy('customer_id')->map(fn ($rows) => [
+            'name' => $rows->first()->customer->name ?? 'Tanpa pelanggan',
+            'total' => (float) $rows->sum('amount'),
+            'count' => $rows->count(),
+        ])->sortByDesc('total')->values()->take(10);
+
+        return view('admin.reports.vouchers', compact(
+            'resellers', 'metrics', 'sort', 'totals', 'networkError', 'limited', 'trend', 'ledgerResellers'
+        ) + ['network' => $business->hasMixradius(), 'isOwner' => auth()->user()->roleIn($business->id) === 'owner']);
+    }
+
+    /**
+     * Statistik reseller & outlet dari server. Dibatasi 40 mitra per pengambilan
+     * (batas 60 permintaan/menit); hasil di-cache 10 menit.
+     *
+     * @return array{0: array, 1: bool}
+     */
+    private function resellerStats(\App\Models\Business $business): array
+    {
+        $client = \App\Services\Mixradius\MixradiusClient::forBusiness($business);
+        $partners = [];
+        foreach ($client->paginate('/v1/entities') as $e) {
+            if (in_array($e['type'] ?? null, ['reseller', 'outlet'], true)) {
+                $partners[] = $e;
+            }
+        }
+
+        $limited = count($partners) > 40;
+        $rows = [];
+        foreach (array_slice($partners, 0, 40) as $e) {
+            $detail = $client->get('/v1/entities/' . (int) $e['id']);
+            $rows[] = [
+                'id' => (int) $e['id'],
+                'name' => $detail['name'] ?? $e['name'] ?? '-',
+                'code' => $detail['code'] ?? $e['code'] ?? null,
+                'type' => $detail['type'] ?? $e['type'] ?? null,
+                'status' => $detail['status'] ?? $e['status'] ?? null,
+                'balance' => (float) ($detail['balance'] ?? $e['balance'] ?? 0),
+                'stats' => $detail['stats'] ?? [],
+            ];
+        }
+
+        return [$rows, $limited];
     }
 }

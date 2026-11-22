@@ -267,6 +267,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- DASHBOARD UTAMA ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/deposit/approve-all', [DashboardController::class, 'approveAllDeposits'])->name('admin.deposit.approveAll');
     Route::post('/deposit/{id}/approve', [DashboardController::class, 'approveDeposit'])->name('admin.deposit.approve');
 
     // --- MANAJEMEN PEGAWAI & ROLE ---
@@ -328,47 +329,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profit-sharing/stakeholders', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'storeStakeholder'])->name('admin.profit_sharing.stakeholder.store');
     Route::delete('/profit-sharing/stakeholders/{id}', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'destroyStakeholder'])->name('admin.profit_sharing.stakeholder.destroy');
 
+    }); // end tenant.role:owner,admin
+
     // --- JARINGAN (data langsung dari server jaringan tenant) ---
+    // Kunci API hanya diatur pemilik (Pengaturan → Server Jaringan). Akses menu per peran:
+    //   pemilik  : semua, termasuk laporan jaringan & reseller (saldo/komisi)
+    //   admin    : voucher, layanan, pengguna online, tiket, pemasangan
+    //   teknisi  : layanan, pengguna online, tiket, pemasangan
+    //   kolektor : cek layanan pelanggan
     Route::middleware('network')->prefix('network')->name('network.')->group(function () {
         $n = 'App\\Http\\Controllers\\Network\\';
 
-        // Voucher
-        Route::get('vouchers', [$n . 'VoucherController', 'index'])->name('vouchers.index');
-        Route::get('vouchers/create', [$n . 'VoucherController', 'create'])->name('vouchers.create');
-        Route::post('vouchers', [$n . 'VoucherController', 'store'])->name('vouchers.store');
-        Route::get('vouchers/batches', [$n . 'VoucherController', 'batches'])->name('vouchers.batches');
-        Route::get('vouchers/batches/{batch}', [$n . 'VoucherController', 'showBatch'])->name('vouchers.batches.show');
-        Route::get('vouchers/batches/{batch}/print', [$n . 'VoucherController', 'printBatch'])->name('vouchers.batches.print');
-        Route::get('vouchers/{code}', [$n . 'VoucherController', 'show'])->name('vouchers.show');
-        Route::put('vouchers/{code}/status', [$n . 'VoucherController', 'updateStatus'])->name('vouchers.status');
+        Route::middleware('tenant.role:owner')->group(function () use ($n) {
+            Route::get('partners', [$n . 'EntityController', 'index'])->name('entities.index');
+            Route::get('partners/{id}', [$n . 'EntityController', 'show'])->whereNumber('id')->name('entities.show');
+            Route::get('reports', [$n . 'ReportController', 'index'])->name('reports.index');
+        });
 
-        // Layanan & pengguna online
-        Route::get('services', [$n . 'ServiceController', 'index'])->name('services.index');
-        Route::get('online', [$n . 'ServiceController', 'online'])->name('online.index');
-        Route::post('online/{username}/disconnect', [$n . 'ServiceController', 'disconnect'])->name('online.disconnect');
+        Route::middleware('tenant.role:owner,admin')->group(function () use ($n) {
+            Route::get('vouchers', [$n . 'VoucherController', 'index'])->name('vouchers.index');
+            Route::get('vouchers/create', [$n . 'VoucherController', 'create'])->name('vouchers.create');
+            Route::post('vouchers', [$n . 'VoucherController', 'store'])->name('vouchers.store');
+            Route::get('vouchers/batches', [$n . 'VoucherController', 'batches'])->name('vouchers.batches');
+            Route::get('vouchers/batches/{batch}', [$n . 'VoucherController', 'showBatch'])->name('vouchers.batches.show');
+            Route::get('vouchers/batches/{batch}/print', [$n . 'VoucherController', 'printBatch'])->name('vouchers.batches.print');
+            Route::get('vouchers/{code}', [$n . 'VoucherController', 'show'])->name('vouchers.show');
+            Route::put('vouchers/{code}/status', [$n . 'VoucherController', 'updateStatus'])->name('vouchers.status');
+        });
 
-        // Tiket
-        Route::get('tickets', [$n . 'TicketController', 'index'])->name('tickets.index');
-        Route::get('tickets/create', [$n . 'TicketController', 'create'])->name('tickets.create');
-        Route::post('tickets', [$n . 'TicketController', 'store'])->name('tickets.store');
-        Route::get('tickets/{id}', [$n . 'TicketController', 'show'])->whereNumber('id')->name('tickets.show');
-        Route::post('tickets/{id}/reply', [$n . 'TicketController', 'reply'])->whereNumber('id')->name('tickets.reply');
+        Route::middleware('tenant.role:owner,admin,teknisi')->group(function () use ($n) {
+            Route::get('online', [$n . 'ServiceController', 'online'])->name('online.index');
+            Route::post('online/{username}/disconnect', [$n . 'ServiceController', 'disconnect'])->name('online.disconnect');
 
-        // Instalasi
-        Route::get('installations', [$n . 'InstallationController', 'index'])->name('installations.index');
-        Route::get('installations/create', [$n . 'InstallationController', 'create'])->name('installations.create');
-        Route::post('installations', [$n . 'InstallationController', 'store'])->name('installations.store');
-        Route::get('installations/{id}', [$n . 'InstallationController', 'show'])->whereNumber('id')->name('installations.show');
+            Route::get('tickets', [$n . 'TicketController', 'index'])->name('tickets.index');
+            Route::get('tickets/create', [$n . 'TicketController', 'create'])->name('tickets.create');
+            Route::post('tickets', [$n . 'TicketController', 'store'])->name('tickets.store');
+            Route::get('tickets/{id}', [$n . 'TicketController', 'show'])->whereNumber('id')->name('tickets.show');
+            Route::post('tickets/{id}/reply', [$n . 'TicketController', 'reply'])->whereNumber('id')->name('tickets.reply');
 
-        // Reseller / Outlet
-        Route::get('partners', [$n . 'EntityController', 'index'])->name('entities.index');
-        Route::get('partners/{id}', [$n . 'EntityController', 'show'])->whereNumber('id')->name('entities.show');
+            Route::get('installations', [$n . 'InstallationController', 'index'])->name('installations.index');
+            Route::get('installations/create', [$n . 'InstallationController', 'create'])->name('installations.create');
+            Route::post('installations', [$n . 'InstallationController', 'store'])->name('installations.store');
+            Route::get('installations/{id}', [$n . 'InstallationController', 'show'])->whereNumber('id')->name('installations.show');
+        });
 
-        // Laporan jaringan
-        Route::get('reports', [$n . 'ReportController', 'index'])->name('reports.index');
+        Route::middleware('tenant.role:owner,admin,teknisi,kolektor')->group(function () use ($n) {
+            Route::get('services', [$n . 'ServiceController', 'index'])->name('services.index');
+        });
     });
-
-    }); // end tenant.role:owner,admin
 
 });
 

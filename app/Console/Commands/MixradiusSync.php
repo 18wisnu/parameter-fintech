@@ -24,7 +24,7 @@ class MixradiusSync extends Command
         foreach ($query->get() as $business) {
             try {
                 $s = (new CustomerSync($business))->run();
-                $this->info("[{$business->name}] {$s['total']} pelanggan: {$s['created']} baru, {$s['updated']} diperbarui ({$s['linked']} dihubungkan ke data lama).");
+                $this->info("[{$business->name}] {$s['total']} pelanggan: {$s['created']} baru, {$s['updated']} diperbarui ({$s['linked']} dihubungkan ke data lama), {$s['voided']} tagihan lunas di server.");
             } catch (MixradiusException $e) {
                 $failed = true;
                 $this->error("[{$business->name}] Gagal: {$e->getMessage()}");

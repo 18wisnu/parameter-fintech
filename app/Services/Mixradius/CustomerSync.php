@@ -20,7 +20,7 @@ class CustomerSync
         $this->client ??= MixradiusClient::forBusiness($business);
     }
 
-    /** @return array{created:int, updated:int, linked:int, total:int} */
+    /** @return array{created:int, updated:int, linked:int, total:int, voided:int} */
     public function run(): array
     {
         // 1. Layanan dikelompokkan per kode pelanggan
@@ -77,6 +77,9 @@ class CustomerSync
         }
 
         $this->business->forceFill(['mixradius_last_sync_at' => $now])->save();
+
+        // Tagihan yang ternyata sudah dibayar di server tidak lagi dihitung belum bayar
+        $stats['voided'] = (new \App\Services\Billing\InvoiceGenerator($this->business))->reconcile();
 
         return $stats;
     }

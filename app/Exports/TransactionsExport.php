@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\Transaction;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -11,11 +12,8 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class TransactionsExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
-    protected $transactions;
-
-    public function __construct($transactions)
+    public function __construct(protected $transactions)
     {
-        $this->transactions = $transactions;
     }
 
     public function collection()
@@ -26,14 +24,8 @@ class TransactionsExport implements FromCollection, WithHeadings, WithMapping, S
     public function headings(): array
     {
         return [
-            'ID',
-            'Tanggal',
-            'Tipe Arus',
-            'Kategori / Akun',
-            'Keterangan',
-            'Pelanggan',
-            'Petugas / Kasir',
-            'Nominal (Rp)',
+            'ID', 'Tanggal', 'Jam Dicatat', 'Arus', 'Akun', 'Kas / Bank', 'Keterangan', 'Catatan',
+            'Pelanggan', 'Kode Pelanggan', 'Petugas', 'Referensi', 'Metode', 'Masuk (Rp)', 'Keluar (Rp)', 'Bukti',
         ];
     }
 
@@ -42,19 +34,25 @@ class TransactionsExport implements FromCollection, WithHeadings, WithMapping, S
         return [
             $trx->id,
             $trx->date ? \Carbon\Carbon::parse($trx->date)->format('d-m-Y') : '-',
-            $trx->type === 'income' ? 'Pemasukan' : 'Pengeluaran',
-            $trx->account->name ?? ($trx->category ?? '-'),
+            $trx->created_at?->format('H:i'),
+            $trx->type === 'income' ? 'Pemasukan' : ($trx->type === 'expense' ? 'Pengeluaran' : 'Transfer'),
+            $trx->account->name ?? '-',
+            $trx->sourceAccount->name ?? '-',
             $trx->description ?? '-',
-            $trx->customer->name ?? '-',
-            $trx->user->name ?? '-',
-            (float)$trx->amount,
+            $trx->notes ?? '',
+            $trx->customer->name ?? '',
+            $trx->customer?->displayCode() ?? '',
+            $trx->user->name ?? '',
+            $trx->reference ?? '',
+            Transaction::PAYMENT_METHODS[$trx->payment_method] ?? '',
+            $trx->type === 'income' ? (float) $trx->amount : null,
+            $trx->type === 'expense' ? (float) $trx->amount : null,
+            $trx->proof_image ? asset('storage/' . $trx->proof_image) : '',
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        return [
-            1 => ['font' => ['bold' => true]],
-        ];
+        return [1 => ['font' => ['bold' => true]]];
     }
 }

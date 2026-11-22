@@ -30,7 +30,7 @@ class ServiceRenewalTest extends TestCase
         parent::setUp();
 
         foreach ([['1001', 'Kas', 'asset'], ['4001', 'Pendapatan PPPoE', 'revenue']] as [$code, $name, $type]) {
-            DB::table('chart_of_accounts')->insert(['code' => $code, 'name' => $name, 'type' => $type, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('chart_of_accounts')->insertOrIgnore(['code' => $code, 'name' => $name, 'type' => $type, 'created_at' => now(), 'updated_at' => now()]);
         }
 
         $this->owner = User::factory()->create();
@@ -164,6 +164,16 @@ class ServiceRenewalTest extends TestCase
     public function test_isolated_customers_still_get_invoices(): void
     {
         $this->invoice->delete();
+        // Generate menyinkronkan masa aktif dulu: layanan isolir, masa aktif 1 Nov (belum bayar November)
+        Http::fake([
+            'panel.test/api/v1/services*' => Http::response(['success' => true, 'data' => ['items' => [
+                ['service_id' => 10, 'username' => 'ppp-john', 'customer_code' => 'CUST001', 'service_type' => 'ppp',
+                    'status' => 'suspended', 'expiry_date' => '2026-11-01', 'product' => ['price' => 200000]],
+            ], 'total_pages' => 1]]),
+            'panel.test/api/v1/customers*' => Http::response(['success' => true, 'data' => ['items' => [
+                ['id' => 1, 'customer_code' => 'CUST001', 'fullname' => 'John', 'status' => 'active'],
+            ], 'total_pages' => 1]]),
+        ]);
 
         $this->post(route('invoices.generate'))->assertSessionHas('success');
 

@@ -83,6 +83,7 @@ class MixradiusController extends Controller
 
         return redirect()->route('admin.mixradius.edit')->with('success',
             "Sinkronisasi selesai: {$s['total']} pelanggan — {$s['created']} baru, {$s['updated']} diperbarui"
-            . ($s['linked'] ? " ({$s['linked']} dihubungkan ke data lama berdasarkan kode pelanggan)" : '') . '.');
+            . ($s['linked'] ? " ({$s['linked']} dihubungkan ke data lama berdasarkan kode pelanggan)" : '')
+            . ($s['voided'] ? ". {$s['voided']} tagihan ternyata sudah dibayar di server, ditandai lunas di server" : '') . '.');
     }
 }

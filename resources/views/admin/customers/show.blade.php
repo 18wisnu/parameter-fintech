@@ -130,10 +130,12 @@
                 </td>
                 <td class="px-5 py-3 text-right font-semibold text-slate-800 whitespace-nowrap">Rp {{ number_format($inv->amount, 0, ',', '.') }}</td>
                 <td class="px-5 py-3">
-                    <span class="px-2 py-0.5 rounded-md text-xs font-semibold {{ $inv->status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }}">{{ $inv->status === 'paid' ? 'Lunas' : 'Belum bayar' }}</span>
+                    @php $lbl = ['paid' => ['Lunas', 'bg-emerald-50 text-emerald-700'], 'void' => ['Lunas di server', 'bg-slate-100 text-slate-600']][$inv->status] ?? ['Belum bayar', 'bg-rose-50 text-rose-700']; @endphp
+                    <span class="px-2 py-0.5 rounded-md text-xs font-semibold {{ $lbl[1] }}">{{ $lbl[0] }}</span>
                 </td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{{ route('invoices.print', $inv->id) }}" target="_blank" class="text-sm text-slate-500 hover:text-slate-800 font-semibold">Cetak</a>
+                <td class="px-5 py-3 text-right whitespace-nowrap">
+                    <a href="{{ route('invoices.print', $inv->id) }}" target="_blank" class="text-sm text-slate-500 hover:text-slate-800 font-semibold">A4</a>
+                    <a href="{{ route('invoices.print', ['id' => $inv->id, 'format' => 'pos']) }}" target="_blank" class="ml-3 text-sm text-slate-500 hover:text-slate-800 font-semibold">POS</a>
                 </td>
             </tr>
         @empty
