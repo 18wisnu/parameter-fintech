@@ -108,6 +108,37 @@ class MixradiusSyncTest extends TestCase
         Http::assertSent(fn ($r) => $r->hasHeader('X-API-Key', 'mk_test') && $r->hasHeader('X-API-Secret', 'sk_test'));
     }
 
+    public function test_resellers_are_synced_and_selectable_for_voucher_deposit(): void
+    {
+        [$owner, $biz] = $this->connectedBusiness('a@test.com', 'Tenant A', 'https://a.mixradius.test');
+
+        $page = fn (array $items) => Http::response(['success' => true, 'data' => [
+            'items' => $items, 'total' => count($items), 'page' => 1, 'total_pages' => 1,
+        ]]);
+        Http::fake([
+            'a.mixradius.test/api/v1/customers*' => $page([['id' => 1, 'customer_code' => 'C1', 'fullname' => 'Hotspot User', 'status' => 'active']]),
+            'a.mixradius.test/api/v1/services*' => $page([['service_id' => 9, 'customer_code' => 'C1', 'service_type' => 'hotspot', 'status' => 'active', 'product' => ['price' => 5000]]]),
+            'a.mixradius.test/api/v1/entities*' => $page([
+                ['id' => 50, 'type' => 'reseller', 'name' => 'Toko Andi', 'code' => 'RS01', 'status' => 'active'],
+                ['id' => 51, 'type' => 'outlet', 'name' => 'Warung Sari', 'status' => 'active'],
+                ['id' => 1, 'type' => 'isp', 'name' => 'Pusat'],
+            ]),
+        ]);
+
+        $this->actingAs($owner)->post(route('admin.mixradius.sync'))->assertSessionHas('success');
+        $this->actingAs($owner)->post(route('admin.mixradius.sync')); // tidak duplikat
+
+        $resellers = Customer::withoutGlobalScope('tenant')->where('business_id', $biz->id)->where('type', 'reseller')->get();
+        $this->assertSame(['Toko Andi', 'Warung Sari'], $resellers->pluck('name')->sort()->values()->all());
+        $this->assertFalse($resellers->first()->isLinked());
+        $this->assertEquals(0, $resellers->first()->package_fee);
+
+        $this->actingAs($owner)->get(route('mobile.deposits.create'))
+            ->assertOk()
+            ->assertSee('Toko Andi')
+            ->assertSee('data-type="VOUCHER"', false);
+    }
+
     public function test_permission_error_is_reported_clearly(): void
     {
         [$owner] = $this->connectedBusiness('a@test.com', 'Tenant A', 'https://a.mixradius.test');

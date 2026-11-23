@@ -51,7 +51,7 @@ class CustomerSync
 
                 // Pelanggan lokal lama dengan kode yang sama: hubungkan, jangan buat duplikat
                 if (!$customer && !empty($remote['customer_code'])) {
-                    $customer = (clone $query)->whereNull('mixradius_id')
+                    $customer = (clone $query)->whereNull('mixradius_id')->whereNull('mixradius_entity_id')
                         ->where(fn ($q) => $q->where('code', $remote['customer_code'])
                             ->orWhere('customer_id', $remote['customer_code']))
                         ->first();
@@ -76,12 +76,59 @@ class CustomerSync
             });
         }
 
+        $stats['partners'] = $this->syncPartners($now);
+
         $this->business->forceFill(['mixradius_last_sync_at' => $now])->save();
 
         // Tagihan yang ternyata sudah dibayar di server tidak lagi dihitung belum bayar
         $stats['voided'] = (new \App\Services\Billing\InvoiceGenerator($this->business))->reconcile();
 
         return $stats;
+    }
+
+    /**
+     * Reseller & outlet di server jaringan → pelanggan bertipe reseller, supaya bisa
+     * dipilih saat setoran voucher. Tanpa tagihan bulanan (biaya paket 0).
+     * Butuh izin entities.read; bila tidak ada, dilewati tanpa menggagalkan sinkron.
+     */
+    private function syncPartners(\Illuminate\Support\Carbon $now): int
+    {
+        try {
+            $partners = [];
+            foreach ($this->client->paginate('/v1/entities') as $e) {
+                if (isset($e['id']) && in_array($e['type'] ?? null, ['reseller', 'outlet'], true)) {
+                    $partners[] = $e;
+                }
+            }
+        } catch (MixradiusException) {
+            return 0;
+        }
+
+        $query = Customer::withoutGlobalScope('tenant')->where('business_id', $this->business->id);
+
+        foreach ($partners as $e) {
+            $name = trim((string) ($e['name'] ?? '')) ?: ('Reseller ' . $e['id']);
+
+            $customer = (clone $query)->where('mixradius_entity_id', (string) $e['id'])->first()
+                // Reseller yang dulu dibuat manual dengan nama sama: hubungkan
+                ?? (clone $query)->whereNull('mixradius_entity_id')->whereNull('mixradius_id')
+                    ->where('type', 'reseller')->where('name', $name)->first()
+                ?? new Customer(['type' => 'reseller', 'package_fee' => 0]);
+
+            $customer->business_id = $this->business->id;
+            $customer->fill(array_filter([
+                'mixradius_entity_id' => (string) $e['id'],
+                'name' => $name,
+                'type' => 'reseller',
+                'code' => $e['code'] ?? null,
+                'phone' => $e['phone'] ?? null,
+                'address' => $e['address'] ?? null,
+                'status' => in_array($e['status'] ?? 'active', ['inactive', 'suspended', 'terminated'], true) ? 'inactive' : 'active',
+                'mixradius_synced_at' => $now,
+            ], fn ($v) => $v !== null && $v !== ''))->save();
+        }
+
+        return count($partners);
     }
 
     /** Layanan utama: yang aktif lebih dulu, lalu yang pertama. */
