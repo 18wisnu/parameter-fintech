@@ -111,6 +111,15 @@
                 @endif
             </dl>
         @endif
+
+        <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-4 pt-4 border-t border-slate-50">
+            <div><dt class="text-xs text-slate-400">Kolektor</dt><dd class="text-slate-700">{{ $customer->collector->name ?? '—' }}</dd></div>
+            <div><dt class="text-xs text-slate-400">Diskon / bulan</dt><dd class="text-slate-700">{{ $customer->discount > 0 ? 'Rp ' . number_format($customer->discount, 0, ',', '.') : '—' }}</dd></div>
+            <div><dt class="text-xs text-slate-400">Biaya pasang</dt><dd class="text-slate-700">{{ $customer->installation_fee > 0 ? 'Rp ' . number_format($customer->installation_fee, 0, ',', '.') . ($customer->installation_billed ? ' (sudah ditagih)' : ' (belum ditagih)') : '—' }}</dd></div>
+            @if($customer->start_date)
+            <div><dt class="text-xs text-slate-400">Mulai berlangganan</dt><dd class="text-slate-700">{{ $fmtDate($customer->start_date) }}</dd></div>
+            @endif
+        </dl>
     </div>
 </div>
 

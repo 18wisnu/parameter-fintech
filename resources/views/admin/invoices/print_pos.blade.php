@@ -62,6 +62,11 @@
         <div class="hr"></div>
         <div>Internet {{ $period->translatedFormat('F Y') }}</div>
         @if($c?->product_name)<div class="muted">{{ $c->product_name }}{{ $c->bandwidth ? ' ' . $c->bandwidth : '' }}</div>@endif
+        @if(count($inv->details['lines'] ?? []) > 1)
+            @foreach($inv->details['lines'] as $line)
+                <div class="row"><span>{{ \Illuminate\Support\Str::limit($line['label'], 22) }}</span><span>{{ $line['amount'] < 0 ? '-' : '' }}{{ $rp(abs($line['amount'])) }}</span></div>
+            @endforeach
+        @endif
         <div class="row b big" style="margin-top:4px"><span>TOTAL</span><span>{{ $rp($inv->amount) }}</span></div>
         @if($inv->status === 'paid')
             <div class="stamp">LUNAS</div>

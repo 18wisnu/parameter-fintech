@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToTenant;
+use App\Traits\Auditable;
 
 class Customer extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, BelongsToTenant, Auditable;
 
     public const TYPES = ['pppoe' => 'PPPoE', 'hotspot' => 'Hotspot', 'general' => 'DHCP / Static', 'reseller' => 'Reseller'];
     public const STATUSES = ['active' => 'Aktif', 'isolated' => 'Isolir', 'inactive' => 'Nonaktif'];
@@ -35,6 +36,11 @@ class Customer extends Model
         'due_date',
         'is_isolated',
         'activated_by_id',
+        'collector_id',
+        'discount',
+        'installation_fee',
+        'installation_billed',
+        'start_date',
         'code',
         'status',
         'mixradius_id',
@@ -46,9 +52,25 @@ class Customer extends Model
     protected $casts = [
         'mixradius_synced_at' => 'datetime',
         'is_isolated' => 'boolean',
+        'installation_billed' => 'boolean',
+        'start_date' => 'date',
         'latitude' => 'float',
         'longitude' => 'float',
     ];
+
+    /** Sinkron otomatis (scheduler) memperbarui pelanggan tiap jam: tidak dicatat di jejak audit. */
+    public bool $auditConsole = false;
+
+    public function auditLabel(): string
+    {
+        return $this->name . ($this->displayCode() ? ' (' . $this->displayCode() . ')' : '');
+    }
+
+    /** Kolektor penanggung jawab penagihan. */
+    public function collector()
+    {
+        return $this->belongsTo(User::class, 'collector_id');
+    }
 
     public function activatedBy()
     {

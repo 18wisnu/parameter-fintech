@@ -92,6 +92,14 @@
         <table>
             <thead><tr><th>Keterangan</th><th class="right">Jumlah</th></tr></thead>
             <tbody>
+                @if(!empty($inv->details['lines']))
+                    @foreach($inv->details['lines'] as $line)
+                    <tr>
+                        <td>{{ $line['label'] }}</td>
+                        <td class="right">{{ $line['amount'] < 0 ? '− ' : '' }}Rp {{ number_format(abs($line['amount']), 0, ',', '.') }}</td>
+                    </tr>
+                    @endforeach
+                @else
                 <tr>
                     <td>
                         Langganan internet {{ $c?->product_name ? '— ' . $c->product_name : '' }}{{ $c?->bandwidth ? ' (' . $c->bandwidth . ')' : '' }}
@@ -99,6 +107,7 @@
                     </td>
                     <td class="right">Rp {{ number_format($inv->amount, 0, ',', '.') }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="right" style="border:0"><b>Total</b></td>
                     <td class="right total" style="border:0">Rp {{ number_format($inv->amount, 0, ',', '.') }}</td>

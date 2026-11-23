@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToTenant;
+use App\Traits\Auditable;
 
 /**
  * Baris buku kas. Konvensi akun:
@@ -13,7 +14,7 @@ use App\Traits\BelongsToTenant;
  */
 class Transaction extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, BelongsToTenant, Auditable;
 
     public const PAYMENT_METHODS = [
         'cash' => 'Tunai',
@@ -72,6 +73,30 @@ class Transaction extends Model
     public function deposit()
     {
         return $this->belongsTo(Deposit::class)->withoutGlobalScopes();
+    }
+
+    protected static function booted(): void
+    {
+        // Tutup buku: transaksi di bulan yang sudah ditutup terkunci (termasuk memindahkan tanggal ke/dari bulan itu)
+        static::saving(function (Transaction $trx) {
+            $businessId = $trx->business_id ?: auth()->user()?->current_business_id;
+            PeriodClosing::assertOpen($businessId, $trx->date);
+            if ($trx->exists && $trx->isDirty('date')) {
+                PeriodClosing::assertOpen($businessId, $trx->getOriginal('date'));
+            }
+        });
+        static::deleting(fn (Transaction $trx) => PeriodClosing::assertOpen($trx->business_id, $trx->date));
+    }
+
+    public function auditLabel(): string
+    {
+        return trim(($this->reference ? $this->reference . ' — ' : '') . ($this->description ?? '')
+            . ' (Rp ' . number_format((float) $this->amount, 0, ',', '.') . ')');
+    }
+
+    public function expense()
+    {
+        return $this->belongsTo(Expense::class)->withoutGlobalScopes();
     }
 
     public function signedAmount(): float

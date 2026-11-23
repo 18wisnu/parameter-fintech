@@ -46,6 +46,9 @@
     $groups = [
         ['Keuangan', 'money', $isManager ? [
             ['reports.history', 'reports.history', 'Buku Kas', $f('transactions')],
+            ['finance.cash.index', 'finance.cash.*', 'Tutup Kas Harian', true],
+            ['finance.receivables.index', 'finance.receivables.*', 'Umur Piutang', $f('invoices')],
+            ['finance.pl.index', 'finance.pl.*', 'Laba Rugi & Tutup Buku', true],
             ['reports.index', 'reports.index', 'Bagi Hasil', $f('profit_sharing')],
             ['admin.salaries.index', 'admin.salaries.*', 'Gaji Pegawai', $f('salary_management')],
             ['reports.reserve', 'reports.reserve', 'Dana Cadangan', $f('reserve_fund')],
@@ -65,6 +68,7 @@
             ['admin.profit_sharing.index', 'admin.profit_sharing.*', 'Master Setting', $isManager],
             ['admin.users.index', 'admin.users.*', 'Data Pegawai', $isManager && $f('staff_data')],
             ['admin.mixradius.edit', 'admin.mixradius.*', 'Server Jaringan', $isOwner],
+            ['admin.audit.index', 'admin.audit.*', 'Jejak Audit', $isOwner],
             ['admin.logs.index', 'admin.logs.*', 'Log Sistem', $isOwner],
             ['admin.system.index', 'admin.system.*', 'Update Sistem', $isOwner],
         ]],
@@ -75,7 +79,7 @@
     $linkOff = 'text-white/80 hover:bg-white/10 hover:text-white';
 @endphp
 
-    <header class="fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-100 z-40 flex items-center gap-3 px-4 md:hidden">
+    <header class="fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-100 z-40 flex items-center print:hidden gap-3 px-4 md:hidden">
         <button @click="sidebarOpen = true" class="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg" aria-label="Menu">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
@@ -84,7 +88,7 @@
 
     <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity class="fixed inset-0 bg-slate-900/50 z-50 md:hidden" x-cloak></div>
 
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-50 w-60 h-full text-white transition-transform duration-300 md:translate-x-0 flex flex-col" style="background-color: {{ $appSettings['theme_color'] }}">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-50 w-60 h-full text-white transition-transform duration-300 md:translate-x-0 flex flex-col print:hidden" style="background-color: {{ $appSettings['theme_color'] }}">
 
         {{-- Unit bisnis aktif --}}
         <a href="{{ route('admin.business.index') }}" class="block px-4 py-4 border-b border-white/10 hover:bg-black/10" title="Ganti unit bisnis">
@@ -142,7 +146,7 @@
         </form>
     </aside>
 
-    <main class="min-h-screen pt-14 md:pt-0 md:ml-60">
+    <main class="min-h-screen pt-14 md:pt-0 md:ml-60 print:ml-0 print:pt-0">
         <div class="p-4 md:p-8 max-w-7xl mx-auto">
             @yield('content')
         </div>

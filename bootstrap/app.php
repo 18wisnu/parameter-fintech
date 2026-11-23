@@ -23,6 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Bulan sudah tutup buku: kembali dengan pesan
+        $exceptions->render(function (\App\Exceptions\ClosedPeriodException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 423);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        });
+
         // Error dari server jaringan: halaman GET tampilkan pesan, aksi POST/PUT kembali dengan pesan
         $exceptions->render(function (\App\Services\Mixradius\MixradiusException $e, \Illuminate\Http\Request $request) {
             if ($request->expectsJson()) {

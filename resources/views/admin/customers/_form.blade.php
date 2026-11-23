@@ -137,6 +137,51 @@
         @endif
     </section>
 
+    {{-- Penagihan (lokal, tidak dikirim ke server jaringan) --}}
+    <section class="bg-white rounded-2xl border border-slate-100 p-5">
+        <h3 class="font-semibold text-slate-800 mb-1">Penagihan</h3>
+        <p class="text-xs text-slate-400 mb-4">Berlaku di tagihan aplikasi ini.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="{{ $label }}">Kolektor penanggung jawab</label>
+                <select name="collector_id" class="{{ $input }}">
+                    <option value="">— Belum ditentukan —</option>
+                    @foreach($collectors as $s)
+                        <option value="{{ $s->id }}" @selected(old('collector_id', $customer->collector_id) == $s->id)>{{ $s->name }} ({{ $s->role }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="{{ $label }}">Diskon per bulan</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-sm text-slate-400">Rp</span>
+                    <input type="number" min="0" name="discount" value="{{ old('discount', (int) $customer->discount) }}" class="{{ $input }} pl-10">
+                </div>
+            </div>
+            <div>
+                <label class="{{ $label }}">Biaya pemasangan</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-sm text-slate-400">Rp</span>
+                    <input type="number" min="0" name="installation_fee" value="{{ old('installation_fee', (int) $customer->installation_fee) }}" class="{{ $input }} pl-10" @disabled($customer->installation_billed)>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">{{ $customer->installation_billed ? 'Sudah ditagihkan.' : 'Ditagih sekali, di tagihan pertama.' }}</p>
+            </div>
+            @unless($linked || $creatingOnNetwork)
+            <div>
+                <label class="{{ $label }}">Mulai berlangganan</label>
+                <input type="date" name="start_date" value="{{ old('start_date', $customer->start_date?->toDateString()) }}" class="{{ $input }}">
+                <p class="text-xs text-slate-400 mt-1">Mulai di tengah bulan → tagihan bulan itu dihitung prorata.</p>
+            </div>
+            @endunless
+            @unless($customer->exists)
+            <label class="sm:col-span-2 flex items-center gap-2 text-sm text-slate-700">
+                <input type="checkbox" name="bill_now" value="1" @checked(old('bill_now')) class="rounded border-slate-300 text-sky-600">
+                Buat tagihan pertama sekarang (bulan {{ now()->locale('id')->translatedFormat('F Y') }})
+            </label>
+            @endunless
+        </div>
+    </section>
+
     {{-- Lainnya --}}
     <section class="bg-white rounded-2xl border border-slate-100 p-5">
         <h3 class="font-semibold text-slate-800 mb-4">Lainnya</h3>
