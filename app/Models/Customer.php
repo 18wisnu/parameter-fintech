@@ -46,6 +46,7 @@ class Customer extends Model
         'mixradius_id',
         'mixradius_service_id',
         'mixradius_username',
+        'mixradius_entity_id',
         'mixradius_synced_at',
     ];
 
