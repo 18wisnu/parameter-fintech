@@ -24,11 +24,20 @@ class DepositController extends Controller
     }
 
     // 1. Form setoran
-    public function create()
+    public function create(Request $request)
     {
-        $customers = Customer::orderBy('name', 'asc')->get();
+        // Pelanggan yang ditugaskan ke kolektor ini tampil paling atas
+        $customers = Customer::orderByRaw('CASE WHEN collector_id = ? THEN 0 ELSE 1 END', [Auth::id()])
+            ->orderBy('name', 'asc')->get();
 
-        return view('mobile.deposits.create', compact('customers'));
+        $selected = $customers->firstWhere('id', (int) $request->query('customer_id'));
+        $preset = [
+            'customer_id' => $selected?->id,
+            'amount' => $selected ? ((int) $request->query('amount') ?: null) : null,
+            'group' => $selected ? (in_array($selected->type, ['reseller', 'hotspot'], true) ? 'VOUCHER' : 'MONTHLY') : null,
+        ];
+
+        return view('mobile.deposits.create', compact('customers', 'preset'));
     }
 
     // 2. Simpan setoran. Tanpa fitur konfirmasi, setoran langsung diterima & masuk buku kas.

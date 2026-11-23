@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\BelongsToTenant;
+use App\Traits\Auditable;
 
 class Deposit extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, BelongsToTenant, Auditable;
 
     protected $fillable = [
         'business_id',
@@ -26,6 +27,12 @@ class Deposit extends Model
     protected $casts = [
         'approved_at' => 'datetime',
     ];
+
+    public function auditLabel(): string
+    {
+        return 'STR-' . str_pad((string) $this->id, 5, '0', STR_PAD_LEFT) . ' ' . ($this->description ?? '')
+            . ' (Rp ' . number_format((float) $this->amount, 0, ',', '.') . ')';
+    }
 
     /** Kolektor / teknisi penyetor. */
     public function user()

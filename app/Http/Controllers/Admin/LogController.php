@@ -11,10 +11,7 @@ class LogController extends Controller
 {
     public function index()
     {
-        if (auth()->user()->role !== 'owner') {
-            abort(403);
-        }
-
+        // Akses dibatasi middleware tenant.role:owner; log otomatis terfilter per tenant aktif
         // Activity Logs
         $activityLogs = ActivityLog::with('user')
             ->latest()

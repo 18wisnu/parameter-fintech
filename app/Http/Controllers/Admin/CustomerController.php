@@ -91,6 +91,7 @@ class CustomerController extends Controller
         $network = $business->hasMixradius();
 
         $data = $request->validate($this->rules(null, $network));
+        $data = $this->moneyDefaults($data);
         $data['is_isolated'] = $request->boolean('is_isolated');
         $data['status'] = ($data['status'] ?? null) ?: ($data['is_isolated'] ? 'isolated' : 'active');
 
@@ -140,6 +141,12 @@ class CustomerController extends Controller
         }
 
         $msg = 'Pelanggan berhasil ditambahkan.';
+        if ($request->boolean('bill_now')) {
+            $invoice = (new \App\Services\Billing\InvoiceGenerator($business))->createFor($customer, now());
+            $msg .= $invoice
+                ? ' Tagihan pertama ' . $invoice->invoice_number . ' dibuat: Rp ' . number_format($invoice->amount, 0, ',', '.') . '.'
+                : ' Tagihan pertama belum dibuat (belum mulai berlangganan bulan ini atau totalnya nol).';
+        }
         if ($network) {
             $msg .= ' Layanan internet aktif setelah tagihan pertama dibayar.';
         }
@@ -158,6 +165,10 @@ class CustomerController extends Controller
         $linked = $customer->isLinked() && $business->hasMixradius();
 
         $data = $request->validate($this->rules($customer, false, $linked));
+        $data = $this->moneyDefaults($data);
+        if ($customer->installation_billed) {
+            unset($data['installation_fee']); // sudah ditagihkan, tidak bisa diubah
+        }
 
         if ($linked) {
             // Profil dikirim ke server dulu; kalau ditolak, data lokal tidak diubah
@@ -229,6 +240,10 @@ class CustomerController extends Controller
             'longitude' => 'nullable|numeric|between:-180,180',
             'notes' => 'nullable|string|max:500',
             'activated_by_id' => ['nullable', 'integer', Rule::exists('business_user', 'user_id')->where('business_id', $businessId)],
+            // Penagihan lokal (tidak dikirim ke server jaringan)
+            'collector_id' => ['nullable', 'integer', Rule::exists('business_user', 'user_id')->where('business_id', $businessId)],
+            'discount' => 'nullable|numeric|min:0',
+            'installation_fee' => 'nullable|numeric|min:0',
         ];
 
         if ($creatingOnNetwork) {
@@ -249,8 +264,21 @@ class CustomerController extends Controller
             'package_fee' => 'required|numeric|min:0',
             'product_name' => 'nullable|string|max:100',
             'due_date' => 'nullable|date',
+            'start_date' => 'nullable|date',
             'status' => 'nullable|in:' . implode(',', array_keys(Customer::STATUSES)),
         ];
+    }
+
+    /** Kolom nominal yang dikosongkan di form disimpan sebagai 0. */
+    private function moneyDefaults(array $data): array
+    {
+        foreach (['discount', 'installation_fee'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $data[$key] = (float) ($data[$key] ?? 0);
+            }
+        }
+
+        return $data;
     }
 
     private function formData(Customer $customer): array
@@ -271,6 +299,7 @@ class CustomerController extends Controller
         return [
             'customer' => $customer,
             'staff' => User::inCurrentBusiness(['teknisi', 'kolektor'])->get(),
+            'collectors' => User::membersOfCurrentBusiness()->orderByRaw("CASE WHEN bu.role = 'kolektor' THEN 0 ELSE 1 END")->orderBy('name')->get(),
             'network' => $network,
             'linked' => $customer->isLinked() && $network,
             'products' => $products,

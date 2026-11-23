@@ -222,6 +222,7 @@ Route::middleware(['auth'])->prefix('mobile')->group(function () {
     Route::get('/deposits/create', [DepositController::class, 'create'])->name('mobile.deposits.create');
     Route::post('/deposits', [DepositController::class, 'store'])->name('mobile.deposits.store');
     Route::get('/salary', [MobileSalaryController::class, 'show'])->name('mobile.salary.show');
+    Route::get('/collections', [\App\Http\Controllers\Mobile\CollectionController::class, 'index'])->name('mobile.collections.index');
 });
 
 /*
@@ -254,6 +255,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/system/update', [\App\Http\Controllers\Admin\SystemController::class, 'updateVersion'])->name('admin.system.update');
 
         Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
+        Route::get('/audit', [\App\Http\Controllers\Admin\Finance\AuditController::class, 'index'])->name('admin.audit.index');
+
+        // Tutup buku bulanan (kunci transaksi) — hanya pemilik
+        Route::post('/finance/profit-loss/close', [\App\Http\Controllers\Admin\Finance\ProfitLossController::class, 'close'])->name('finance.pl.close');
+        Route::delete('/finance/profit-loss/{closing}', [\App\Http\Controllers\Admin\Finance\ProfitLossController::class, 'reopen'])->name('finance.pl.reopen');
 
         // Integrasi Mixradius Evo (per tenant)
         Route::get('/integrations/server', [\App\Http\Controllers\Admin\MixradiusController::class, 'edit'])->name('admin.mixradius.edit');
@@ -319,6 +325,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/history/excel', [ReportController::class, 'exportHistoryExcel'])->name('reports.history.excel');
     Route::get('reports/vouchers', [ReportController::class, 'vouchers'])->name('reports.vouchers');
     
+    // --- KONTROL KEUANGAN ---
+    Route::get('finance/cash-closing', [\App\Http\Controllers\Admin\Finance\CashClosingController::class, 'index'])->name('finance.cash.index');
+    Route::post('finance/cash-closing', [\App\Http\Controllers\Admin\Finance\CashClosingController::class, 'store'])->name('finance.cash.store');
+    Route::get('finance/receivables', [\App\Http\Controllers\Admin\Finance\ReceivableController::class, 'index'])->name('finance.receivables.index');
+    Route::get('finance/receivables/print', [\App\Http\Controllers\Admin\Finance\ReceivableController::class, 'print'])->name('finance.receivables.print');
+    Route::get('finance/profit-loss', [\App\Http\Controllers\Admin\Finance\ProfitLossController::class, 'index'])->name('finance.pl.index');
+
     // Hapus Transaksi
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
 

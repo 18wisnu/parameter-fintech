@@ -60,21 +60,100 @@ class InvoiceGenerator
                 continue;
             }
 
-            $invoice = new Invoice([
-                'customer_id' => $customer->id,
-                'invoice_number' => 'INV-' . $period->format('Ym') . '-' . str_pad((string) $customer->id, 4, '0', STR_PAD_LEFT),
-                'period_date' => $period->toDateString(),
-                'amount' => $customer->package_fee,
-                'status' => 'unpaid',
-            ]);
-            $invoice->business_id = $this->business->id;
-            $invoice->save();
-            $stats['created']++;
+            if ($this->createFor($customer, $period)) {
+                $stats['created']++;
+            }
         }
 
         $stats['voided'] = $this->reconcile();
 
         return $stats;
+    }
+
+    /**
+     * Buat satu tagihan untuk pelanggan & periode (tanpa cek duplikat/masa aktif).
+     * Null bila pelanggan belum mulai berlangganan atau total tagihan nol.
+     */
+    public function createFor(Customer $customer, Carbon $period): ?Invoice
+    {
+        $period = $period->copy()->startOfMonth();
+        $calc = self::lines($customer, $period);
+        if ($calc === null || $calc['total'] <= 0) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($customer, $period, $calc) {
+            $invoice = new Invoice([
+                'customer_id' => $customer->id,
+                'invoice_number' => 'INV-' . $period->format('Ym') . '-' . str_pad((string) $customer->id, 4, '0', STR_PAD_LEFT),
+                'period_date' => $period->toDateString(),
+                'amount' => $calc['total'],
+                'details' => ['lines' => $calc['lines'], 'prorata' => $calc['prorata']],
+                'status' => 'unpaid',
+            ]);
+            $invoice->business_id = $this->business->id;
+            $invoice->save();
+
+            if ($calc['installation']) {
+                $customer->update(['installation_billed' => true]);
+            }
+
+            return $invoice;
+        });
+    }
+
+    /**
+     * Rincian tagihan satu periode:
+     *  - paket per bulan; prorata bila pelanggan mulai di tengah bulan periode
+     *    (hanya pelanggan yang tidak terhubung server — masa aktif pelanggan server diatur server)
+     *  - diskon bulanan
+     *  - biaya pasang, sekali di tagihan pertama
+     *
+     * @return array{lines: array, total: float, prorata: bool, installation: bool}|null  null = belum mulai berlangganan
+     */
+    public static function lines(Customer $customer, Carbon $period): ?array
+    {
+        $period = $period->copy()->startOfMonth();
+        $fee = (float) $customer->package_fee;
+        $lines = [];
+        $prorata = false;
+
+        $start = $customer->start_date ? Carbon::parse($customer->start_date)->startOfDay() : null;
+        if ($start && $start->gt($period->copy()->endOfMonth())) {
+            return null;
+        }
+
+        $label = 'Paket internet' . ($customer->product_name ? ' — ' . $customer->product_name : '')
+            . ' ' . $period->locale('id')->translatedFormat('F Y');
+
+        if ($start && !$customer->isLinked() && $start->isSameMonth($period) && $start->day > 1) {
+            $daysInMonth = $period->daysInMonth;
+            $days = $daysInMonth - $start->day + 1;
+            $amount = round($fee * $days / $daysInMonth / 1000) * 1000; // dibulatkan ke ribuan terdekat
+            $lines[] = ['label' => sprintf('%s (prorata %d/%d hari, mulai %s)', $label, $days, $daysInMonth, $start->format('d/m')), 'amount' => $amount];
+            $prorata = true;
+            $packageAmount = $amount;
+        } else {
+            $lines[] = ['label' => $label, 'amount' => $fee];
+            $packageAmount = $fee;
+        }
+
+        $discount = min((float) $customer->discount, $packageAmount);
+        if ($discount > 0) {
+            $lines[] = ['label' => 'Diskon', 'amount' => -$discount];
+        }
+
+        $installation = (float) $customer->installation_fee > 0 && !$customer->installation_billed;
+        if ($installation) {
+            $lines[] = ['label' => 'Biaya pemasangan', 'amount' => (float) $customer->installation_fee];
+        }
+
+        return [
+            'lines' => $lines,
+            'total' => max(0, array_sum(array_column($lines, 'amount'))),
+            'prorata' => $prorata,
+            'installation' => $installation,
+        ];
     }
 
     /**

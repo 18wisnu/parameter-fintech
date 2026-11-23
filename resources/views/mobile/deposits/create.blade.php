@@ -16,26 +16,26 @@
             
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Nominal (Rp)</label>
-                <input type="number" name="amount" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-bold text-gray-700" placeholder="0" required>
+                <input type="number" name="amount" value="{{ old('amount', $preset['amount'] ?? '') }}" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-bold text-gray-700" placeholder="0" required>
             </div>
 
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Tipe Layanan</label>
-                <select id="filter_tipe" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
-                    <option value="" selected>-- Pilih Tipe --</option>
-                    <option value="PPPOE">Bulanan (PPPoE)</option>
-                    <option value="HOTSPOT">Reseller (Hotspot)</option>
+                <select id="filter_tipe" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">-- Semua --</option>
+                    <option value="MONTHLY" @selected($preset['group'] === 'MONTHLY')>Bulanan (PPPoE / DHCP / Static)</option>
+                    <option value="VOUCHER" @selected($preset['group'] === 'VOUCHER')>Reseller / Hotspot</option>
                 </select>
             </div>
 
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Terima Dari Siapa?</label>
                 <select name="customer_id" id="select_pelanggan" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
-                    <option value="" disabled selected>-- Pilih Nama Pelanggan --</option>
+                    <option value="" disabled @selected(!$preset['customer_id'])>-- Pilih Nama Pelanggan --</option>
                     @foreach($customers as $c)
                         {{-- Atribut data-type inilah yang akan dibaca oleh Javascript di bawah --}}
-                        <option value="{{ $c->id }}" data-type="{{ strtoupper($c->type) }}" style="display: none;">
-                            {{ $c->name }} ({{ strtoupper($c->type) }})
+                        <option value="{{ $c->id }}" data-type="{{ in_array($c->type, ['reseller', 'hotspot'], true) ? 'VOUCHER' : 'MONTHLY' }}" @selected($preset['customer_id'] == $c->id)>
+                            {{ $c->name }}{{ $c->displayCode() ? ' · ' . $c->displayCode() : '' }} ({{ \App\Models\Customer::TYPES[$c->type] ?? strtoupper($c->type) }})
                         </option>
                     @endforeach
                 </select>
@@ -64,14 +64,15 @@
             const selectPelanggan = document.getElementById('select_pelanggan');
             const options = selectPelanggan.options;
 
-            // Reset pilihan pelanggan setiap kali tipe diubah
-            selectPelanggan.value = "";
+            // Reset pilihan pelanggan bila tidak cocok dengan tipe
+            const current = selectPelanggan.selectedOptions[0];
+            if (current && selectedTipe && current.getAttribute('data-type') !== selectedTipe) selectPelanggan.value = "";
 
             for (let i = 0; i < options.length; i++) {
                 const optionTipe = options[i].getAttribute('data-type');
                 
                 // Tampilkan hanya yang cocok dengan tipe yang dipilih
-                if (selectedTipe === "" || optionTipe === selectedTipe) {
+                if (!optionTipe || selectedTipe === "" || optionTipe === selectedTipe) {
                     options[i].style.display = "block";
                 } else {
                     options[i].style.display = "none";
