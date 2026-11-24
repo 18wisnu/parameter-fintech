@@ -82,7 +82,7 @@
         @forelse($riwayatHariIni as $deposit)
             <div class="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-100 flex justify-between items-center transition-all active:bg-slate-50">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl {{ $deposit->status == 'approved' ? 'bg-emerald-50 text-emerald-500' : 'bg-orange-50 text-orange-500' }} flex items-center justify-center text-xl shadow-inner">
+                    <div class="w-12 h-12 rounded-2xl {{ $deposit->status == 'approved' ? 'bg-emerald-50 text-emerald-500' : ($deposit->status == 'rejected' ? 'bg-rose-50 text-rose-500' : 'bg-orange-50 text-orange-500') }} flex items-center justify-center text-xl shadow-inner">
                         @if($deposit->status == 'approved')
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         @else
@@ -98,6 +98,8 @@
                                 <span class="text-orange-500">Menunggu</span>
                             @elseif($deposit->status == 'approved')
                                 <span class="text-emerald-500">Diterima</span>
+                            @elseif($deposit->status == 'rejected')
+                                <span class="text-rose-500">Dibatalkan</span>
                             @endif
                         </p>
                     </div>

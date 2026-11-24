@@ -208,6 +208,7 @@ Route::middleware(['auth'])->prefix('mobile')->group(function () {
         
         $totalHariIni = Deposit::where('user_id', $user->id)
             ->whereDate('created_at', now()->today())
+            ->where('status', '!=', 'rejected') // setoran yang dibatalkan tidak dihitung
             ->sum('amount');
 
         $riwayatHariIni = Deposit::where('user_id', $user->id)
