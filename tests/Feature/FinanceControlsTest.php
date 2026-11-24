@@ -282,4 +282,33 @@ class FinanceControlsTest extends TestCase
         $this->get(route('finance.pl.index'))->assertSee('Hanya pemilik');
         $this->get(route('dashboard'))->assertOk()->assertSee('Tutup Kas Harian')->assertDontSee('Jejak Audit');
     }
+
+    public function test_deleting_deposit_transaction_cancels_the_deposit(): void
+    {
+        $kolektor = $this->member('kolektor');
+        $c = $this->customer();
+        $inv = $this->invoice($c, '2026-11-01');
+
+        $this->actingAs($kolektor)->post(route('mobile.deposits.store'), ['customer_id' => $c->id, 'amount' => 150000]);
+        $deposit = Deposit::firstOrFail();
+        $this->assertSame('approved', $deposit->status);
+        $this->assertSame('paid', $inv->fresh()->status);
+
+        $trx = Transaction::where('deposit_id', $deposit->id)->firstOrFail();
+        $this->actingAs($this->owner)->delete(route('transactions.destroy', $trx->id))
+            ->assertSessionHas('warning', fn ($m) => str_contains($m, 'dibatalkan'));
+
+        $this->assertSame('rejected', $deposit->fresh()->status);
+        $this->assertSame('unpaid', $inv->fresh()->status);
+
+        // Tutup kas tidak lagi menghitung setoran itu
+        $this->post(route('finance.cash.store'), ['date' => '2026-11-23', 'user_id' => $kolektor->id, 'actual_amount' => 0]);
+        $closing = CashClosing::firstOrFail();
+        $this->assertEquals(0, $closing->expected_amount);
+        $this->assertEquals(0, $closing->difference);
+
+        // HP kolektor: tampil "Dibatalkan", total hari ini nol
+        $this->actingAs($kolektor)->get(route('mobile.deposits.index'))->assertSee('Dibatalkan');
+        $this->actingAs($kolektor)->get(route('mobile.home'))->assertSee('Dibatalkan')->assertSee('Rp 0');
+    }
 }

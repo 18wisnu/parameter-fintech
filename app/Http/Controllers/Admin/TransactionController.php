@@ -25,12 +25,22 @@ class TransactionController extends Controller
         }
 
         $reopened = false;
-        DB::transaction(function () use ($transaction, &$reopened) {
+        $cancelled = false;
+        DB::transaction(function () use ($transaction, &$reopened, &$cancelled) {
             $expenseId = $transaction->expense_id;
+            $depositId = $transaction->deposit_id;
             $invoice = $transaction->invoice;
             $transaction->delete();
             if ($expenseId) {
                 Expense::whereKey($expenseId)->first()?->delete();
+            }
+            // Setoran kolektor ikut dibatalkan: tidak lagi dihitung di tutup kas & riwayat kolektor
+            if ($depositId && !Transaction::where('deposit_id', $depositId)->exists()) {
+                $deposit = \App\Models\Deposit::whereKey($depositId)->first();
+                if ($deposit && $deposit->status !== 'rejected') {
+                    $deposit->update(['status' => 'rejected']);
+                    $cancelled = true;
+                }
             }
             // Pembayaran tagihan dihapus → tagihan kembali belum bayar (kecuali masih ada pembayaran lain)
             if ($invoice && $invoice->status === 'paid' && !Transaction::where('invoice_id', $invoice->id)->exists()) {
@@ -40,6 +50,9 @@ class TransactionController extends Controller
         });
 
         $msg = 'Transaksi dihapus dari buku kas dan tercatat di jejak audit.';
+        if ($cancelled) {
+            $msg .= ' Setoran kolektornya ditandai dibatalkan dan tidak dihitung lagi di tutup kas.';
+        }
         if ($reopened) {
             $msg .= ' Tagihannya kembali berstatus belum bayar. Masa aktif internet yang sudah diperpanjang di server tidak dibatalkan otomatis.';
         }
