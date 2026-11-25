@@ -229,6 +229,7 @@
             .features-section { padding: 2rem 1.25rem 3rem; }
         }
     </style>
+    @include('partials.netbill_head')
 </head>
 <body>
 
@@ -243,15 +244,7 @@
     <!-- Top Navigation -->
     <nav class="top-nav">
         <a href="/" class="brand">
-            <div class="brand-icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-            </div>
-            <div>
-                <span class="brand-name">NETBILL</span>
-                <span class="brand-sub">BILLING USAHA INTERNET</span>
-            </div>
+            <img src="{{ asset('images/netbill-logo.png') }}" alt="NetBill – Internet Billing" style="height:48px;width:auto;display:block">
         </a>
 
         <div class="nav-buttons">
