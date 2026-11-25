@@ -23,7 +23,7 @@ class ReportController extends Controller
     private function calculateProfitSharingData($month, $year)
     {
         $business = auth()->user()->currentBusiness;
-        $businessName = $business ? $business->name : 'Parameter Fintech';
+        $businessName = $business ? $business->name : 'NetBill';
 
         // Identifikasi Akun Dana Cadangan agar tidak tercampur ke operasional
         $akunCadangan = ChartOfAccount::where('name', 'like', '%Cadangan%')->first();
@@ -164,7 +164,7 @@ class ReportController extends Controller
             'shares'        => $calc['shares'],
         ];
 
-        $safeName = \Illuminate\Support\Str::slug($calc['businessName']) ?: 'parameter-fintech';
+        $safeName = \Illuminate\Support\Str::slug($calc['businessName']) ?: 'netbill';
         $filename = "Laporan-Bagi-Hasil-{$safeName}-{$month}-{$year}.xlsx";
 
         return Excel::download(new ProfitSharingFinancialExport($exportData), $filename);

@@ -249,6 +249,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('notifications.readAll');
 
+    // --- LANGGANAN NETBILL (semua anggota bisa melihat; kirim pembayaran: pemilik) ---
+    Route::get('/subscription', [\App\Http\Controllers\Admin\SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/subscription', [\App\Http\Controllers\Admin\SubscriptionController::class, 'store'])->name('subscription.store');
+
+    // --- PANEL PENGELOLA NETBILL (superadmin) ---
+    Route::middleware('superadmin')->prefix('platform')->name('platform.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Platform\TenantController::class, 'index'])->name('tenants.index');
+        Route::get('/tenants/{business}', [\App\Http\Controllers\Platform\TenantController::class, 'show'])->name('tenants.show');
+        Route::put('/tenants/{business}', [\App\Http\Controllers\Platform\TenantController::class, 'update'])->name('tenants.update');
+        Route::post('/tenants/{business}/extend', [\App\Http\Controllers\Platform\TenantController::class, 'extend'])->name('tenants.extend');
+        Route::post('/tenants/{business}/suspend', [\App\Http\Controllers\Platform\TenantController::class, 'suspend'])->name('tenants.suspend');
+        Route::post('/tenants/{business}/resume', [\App\Http\Controllers\Platform\TenantController::class, 'resume'])->name('tenants.resume');
+        Route::get('/payments', [\App\Http\Controllers\Platform\PaymentController::class, 'index'])->name('payments.index');
+        Route::post('/payments/{payment}/confirm', [\App\Http\Controllers\Platform\PaymentController::class, 'confirm'])->name('payments.confirm');
+        Route::post('/payments/{payment}/reject', [\App\Http\Controllers\Platform\PaymentController::class, 'reject'])->name('payments.reject');
+        Route::get('/plans', [\App\Http\Controllers\Platform\PlanController::class, 'index'])->name('plans.index');
+        Route::post('/plans', [\App\Http\Controllers\Platform\PlanController::class, 'store'])->name('plans.store');
+        Route::put('/plans/{plan}', [\App\Http\Controllers\Platform\PlanController::class, 'update'])->name('plans.update');
+        Route::put('/settings', [\App\Http\Controllers\Platform\PlanController::class, 'settings'])->name('settings.update');
+    });
+
     // --- KHUSUS OWNER TENANT AKTIF ---
     Route::middleware('tenant.role:owner')->group(function () {
         // Sistem & Update

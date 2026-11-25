@@ -90,6 +90,10 @@ class CustomerController extends Controller
         $business = $this->business();
         $network = $business->hasMixradius();
 
+        if (!$business->canAddCustomers()) {
+            return back()->withInput()->with('error', $this->limitMessage($business));
+        }
+
         $data = $request->validate($this->rules(null, $network));
         $data = $this->moneyDefaults($data);
         $data['is_isolated'] = $request->boolean('is_isolated');
@@ -213,12 +217,22 @@ class CustomerController extends Controller
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
+        $business = $this->business();
+        if (!$business->canAddCustomers()) {
+            return back()->with('error', $this->limitMessage($business));
+        }
         Excel::import(new CustomersImport, $request->file('file'));
 
         return redirect()->back()->with('success', 'Import berhasil.');
     }
 
     // ------------------------------------------------------------------
+
+    private function limitMessage(Business $business): string
+    {
+        return 'Jumlah pelanggan sudah mencapai batas paket ' . ($business->plan?->name ?? '')
+            . ' (' . $business->customerLimit() . ' pelanggan). Naikkan paket di menu Langganan NetBill.';
+    }
 
     private function business(): Business
     {

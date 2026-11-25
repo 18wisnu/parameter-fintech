@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Daftar Akun - Parameter Fintech</title>
+    <title>Daftar - NetBill</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Outfit', sans-serif; }</style>
@@ -201,9 +201,7 @@
                 </div>
                 @endif
 
-                <p class="mt-8 text-center text-xs text-slate-400">
-                    &copy; {{ date('Y') }} Parameter Fintech System v1.0
-                </p>
+                @include('partials.netbill_footer')
             </div>
         </div>
     </div>

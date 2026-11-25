@@ -14,8 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\LogActivity::class,
             \App\Http\Middleware\CheckActiveBusiness::class,
+            \App\Http\Middleware\EnsureSubscriptionActive::class,
         ]);
         $middleware->alias([
+            'superadmin' => \App\Http\Middleware\EnsureSuperadmin::class,
             'tenant.role' => \App\Http\Middleware\EnsureTenantRole::class,
             'network' => \App\Http\Middleware\EnsureNetworkEnabled::class,
         ]);

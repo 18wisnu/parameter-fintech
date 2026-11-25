@@ -23,7 +23,7 @@ class GenerateMonthlyInvoices extends Command
 
         $failed = false;
         foreach ($query->get() as $business) {
-            if (!$business->feature('invoices')) {
+            if (!$business->feature('invoices') || !$business->isServiceable()) {
                 continue;
             }
             try {

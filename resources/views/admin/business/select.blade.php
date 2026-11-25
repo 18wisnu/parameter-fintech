@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pilih Bisnis | Parameter Fintech</title>
+    <title>Pilih Usaha | NetBill</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
@@ -102,7 +102,7 @@
             </div>
         </div>
 
-        <p class="mt-20 text-center text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">PARAMETER FINTECH &bull; SECURE INFRASTRUCTURE</p>
+        <div class="mt-16">@include('partials.netbill_footer', ['class' => 'text-slate-500'])</div>
     </main>
 </body>
 </html>

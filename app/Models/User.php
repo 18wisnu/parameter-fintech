@@ -181,6 +181,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_superadmin' => 'boolean', // pengelola NetBill; sengaja tidak fillable
         ];
     }
 

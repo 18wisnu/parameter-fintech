@@ -22,6 +22,10 @@ class MixradiusSync extends Command
 
         $failed = false;
         foreach ($query->get() as $business) {
+            if (!$business->isServiceable()) {
+                $this->line("[{$business->name}] Dilewati: langganan NetBill tidak aktif.");
+                continue;
+            }
             try {
                 $s = (new CustomerSync($business))->run();
                 $this->info("[{$business->name}] {$s['total']} pelanggan: {$s['created']} baru, {$s['updated']} diperbarui ({$s['linked']} dihubungkan ke data lama), {$s['voided']} tagihan lunas di server.");

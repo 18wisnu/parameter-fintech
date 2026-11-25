@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Laravel') }} - Mobile</title>
+    <title>{{ config('netbill.name') }} - Mobile</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     <div class="bg-sky-600 p-6 shadow-lg sticky top-0 z-50 rounded-b-[2rem]">
         <div class="flex justify-between items-center text-white">
             <div>
-                <p class="text-[10px] opacity-70 uppercase tracking-[0.2em] font-bold mb-0.5">Parameter Fintech</p>
+                <p class="text-[10px] opacity-70 uppercase tracking-[0.2em] font-bold mb-0.5">{{ config('netbill.name') }} · {{ $appSettings['business_name'] ?? '' }}</p>
                 <h1 class="font-bold text-xl tracking-tight">Halo, {{ Auth::user()->name }}</h1>
             </div>
             @if(Auth::user()->avatar)
@@ -31,6 +31,7 @@
     <main class="p-5">
         @yield('content')
     </main>
+    @include('partials.netbill_footer')
 
     <div class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-around py-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50 rounded-t-[2rem]">
         <a href="{{ route('mobile.home') }}" class="flex flex-col items-center transition-all {{ request()->is('mobile/home') ? 'text-sky-600 scale-110' : 'text-slate-400 hover:text-sky-500' }}">

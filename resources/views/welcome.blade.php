@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Parameter Fintech – Sistem Manajemen Keuangan</title>
+    <title>NetBill – Billing untuk Usaha Internet Kecil-kecilan</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -249,8 +249,8 @@
                 </svg>
             </div>
             <div>
-                <span class="brand-name">PARAMETER</span>
-                <span class="brand-sub">FINTECH SYSTEM</span>
+                <span class="brand-name">NETBILL</span>
+                <span class="brand-sub">BILLING USAHA INTERNET</span>
             </div>
         </a>
 
@@ -281,7 +281,7 @@
         </h1>
 
         <p class="hero-subtitle">
-            Parameter Fintech hadir sebagai solusi sistem manajemen keuangan terpadu untuk bisnis internet service provider Anda. Pantau pemasukan, pengeluaran, laporan bagi hasil, dan data pelanggan dalam satu platform.
+            NetBill hadir sebagai aplikasi billing & keuangan untuk usaha internet kecil-kecilan (RT/RW Net, hotspot, ISP lokal). Pantau pemasukan, pengeluaran, laporan bagi hasil, dan data pelanggan dalam satu platform.
         </p>
 
         <div class="hero-cta">
@@ -357,7 +357,7 @@
 
     <!-- Footer -->
     <footer class="footer-bar">
-        &copy; {{ date('Y') }} Parameter Fintech System &mdash; Hak cipta dilindungi undang-undang.
+        &copy; {{ date('Y') }} NetBill &mdash; {{ config('netbill.tagline') }}<br>Made with dedication by {{ config('netbill.company') }}
     </footer>
 
 </div>
