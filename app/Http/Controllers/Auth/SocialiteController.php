@@ -44,7 +44,7 @@ class SocialiteController extends Controller
 
             } else {
                 // Jika email tidak dikenal, tolak!
-                return redirect('/login')->with('error', 'Email Anda tidak terdaftar di sistem Parameter Fintech.');
+                return redirect('/login')->with('error', 'Email Anda tidak terdaftar di sistem NetBill.');
             }
         } catch (\Exception $e) {
             return redirect('/login')->with('error', 'Gagal login dengan Google.');

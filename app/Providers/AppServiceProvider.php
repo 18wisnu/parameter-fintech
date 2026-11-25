@@ -50,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
             try {
                 $user = auth()->user();
                 $appSettings = [
-                    'business_name' => 'Parameter Fintech',
+                    'business_name' => 'NetBill',
                     'theme_color' => '#0369a1',
                     'features' => [
                         'profit_sharing' => true,
@@ -71,6 +71,11 @@ class AppServiceProvider extends ServiceProvider
                         $appSettings['theme_color'] = $business->theme_color;
                         // Menu "Jaringan" hanya muncul jika tenant terhubung ke server jaringan
                         $appSettings['network_enabled'] = $business->hasMixradius();
+                        // Langganan NetBill (untuk banner pengingat di layout)
+                        $appSettings['subscription'] = [
+                            'status' => $business->subscriptionStatus(),
+                            'days_left' => $business->daysLeft(),
+                        ];
 
                         // Features from business table
                         if ($business->enabled_features && is_array($business->enabled_features)) {
@@ -100,7 +105,7 @@ class AppServiceProvider extends ServiceProvider
             } catch (\Exception $e) {
                 // Return default settings
                 $view->with('appSettings', [
-                    'business_name' => 'Parameter Fintech',
+                    'business_name' => 'NetBill',
                     'theme_color' => '#0369a1',
                     'features' => [
                         'profit_sharing' => true,

@@ -32,5 +32,6 @@
                 {{ $slot }}
             </main>
         </div>
+        @include('partials.netbill_footer')
     </body>
 </html>

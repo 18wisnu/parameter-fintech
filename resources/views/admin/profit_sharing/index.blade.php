@@ -70,7 +70,7 @@
                         <label class="block text-sm font-bold text-slate-700 mb-2">Nama Usaha / Perusahaan</label>
                         <input type="text" name="business_name" value="{{ $businessName }}"
                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-800 font-bold focus:ring-2 focus:ring-sky-500 transition-all" 
-                            placeholder="Parameter Fintech">
+                            placeholder="Nama usaha Anda">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-2">Tema Warna Utama</label>

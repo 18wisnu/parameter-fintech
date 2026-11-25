@@ -25,7 +25,7 @@ class CheckActiveBusiness
 
         // User belum terhubung ke tenant manapun (mis. baru daftar): arahkan untuk membuat/memilih bisnis
         if (\App\Models\Business::count() > 0) {
-            if ($request->routeIs('admin.business.*') || $request->is('logout') || $request->routeIs('profile.*')) {
+            if ($request->routeIs('admin.business.*', 'platform.*', 'profile.*') || $request->is('logout')) {
                 return $next($request);
             }
 

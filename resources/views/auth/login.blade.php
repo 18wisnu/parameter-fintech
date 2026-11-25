@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - Parameter Fintech</title>
+    <title>Masuk - NetBill</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Outfit', sans-serif; }</style>
@@ -36,7 +36,7 @@
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
                     <h2 class="text-2xl font-bold text-slate-800">Selamat Datang</h2>
-                    <p class="text-slate-500">Masuk ke aplikasi Parameter Fintech</p>
+                    <p class="text-slate-500">Masuk ke NetBill, billing untuk usaha internet kecil-kecilan</p>
                 </div>
 
                 <div class="hidden lg:block mb-8">
@@ -100,9 +100,7 @@
                     </form>
                 </div>
 
-                <p class="mt-8 text-center text-xs text-slate-400">
-                    &copy; 2026 Parameter Fintech System v1.0
-                </p>
+                @include('partials.netbill_footer')
             </div>
         </div>
     </div>

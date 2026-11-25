@@ -73,7 +73,7 @@ class SystemController extends Controller
             } else {
                 // Fallback ke GitHub REST API jika git fetch terkendala
                 $response = Http::timeout(10)->withHeaders([
-                    'User-Agent' => 'Parameter-Fintech-App'
+                    'User-Agent' => 'NetBill-App'
                 ])->get("https://api.github.com/repos/18wisnu/parameter-fintech/commits/{$currentBranch}");
 
                 if ($response->successful()) {

@@ -109,7 +109,19 @@ class LogActivity
             'activity' => $activity,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'payload' => $request->isMethod('GET') ? null : $request->except(['password', '_token', '_method', 'password_confirmation']),
+            'payload' => $request->isMethod('GET') ? null : self::scrub($request->except(['password', '_token', '_method', 'password_confirmation'])),
         ]);
+    }
+
+    /** File unggahan tidak bisa disimpan sebagai JSON: cukup catat nama filenya. */
+    private static function scrub(array $data): array
+    {
+        array_walk_recursive($data, function (&$v) {
+            if ($v instanceof \Illuminate\Http\UploadedFile) {
+                $v = '[file: ' . $v->getClientOriginalName() . ']';
+            }
+        });
+
+        return $data;
     }
 }

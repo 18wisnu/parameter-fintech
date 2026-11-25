@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin {{ $appSettings['business_name'] }}</title>
+    <title>{{ $appSettings['business_name'] }} · {{ config('netbill.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -67,6 +67,7 @@
         ['Pengaturan', 'cog', [
             ['admin.profit_sharing.index', 'admin.profit_sharing.*', 'Master Setting', $isManager],
             ['admin.users.index', 'admin.users.*', 'Data Pegawai', $isManager && $f('staff_data')],
+            ['subscription.index', 'subscription.*', 'Langganan NetBill', $isManager],
             ['admin.mixradius.edit', 'admin.mixradius.*', 'Server Jaringan', $isOwner],
             ['admin.audit.index', 'admin.audit.*', 'Jejak Audit', $isOwner],
             ['admin.logs.index', 'admin.logs.*', 'Log Sistem', $isOwner],
@@ -129,7 +130,13 @@
                 </div>
             @endforeach
 
-            <div class="pt-3 mt-3 border-t border-white/10">
+            <div class="pt-3 mt-3 border-t border-white/10 space-y-1">
+                @if(auth()->user()?->is_superadmin)
+                <a href="{{ route('platform.tenants.index') }}" class="{{ $linkBase }} {{ request()->routeIs('platform.*') ? $linkOn : $linkOff }}">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Panel Pengelola
+                </a>
+                @endif
                 <a href="{{ route('mobile.home') }}" class="{{ $linkBase }} {{ request()->routeIs('mobile.*') ? $linkOn : $linkOff }}">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icons['phone'] }}"></path></svg>
                     Menu Setoran
@@ -137,6 +144,7 @@
             </div>
         </nav>
 
+        <div class="px-4 pt-2 text-[10px] text-white/50 tracking-wider">Ditenagai <span class="font-bold text-white/70">{{ config('netbill.name') }}</span></div>
         <form method="POST" action="{{ route('logout') }}" class="p-3 border-t border-white/10">
             @csrf
             <button class="{{ $linkBase }} w-full {{ $linkOff }}">
@@ -148,8 +156,19 @@
 
     <main class="min-h-screen pt-14 md:pt-0 md:ml-60 print:ml-0 print:pt-0">
         <div class="p-4 md:p-8 max-w-7xl mx-auto">
+            @php $sub = $appSettings['subscription'] ?? null; @endphp
+            @if($sub && !request()->routeIs('subscription.*', 'platform.*'))
+                @if(in_array($sub['status'], ['expired', 'suspended'], true))
+                    <a href="{{ route('subscription.index') }}" class="print:hidden block mb-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 font-semibold">Langganan NetBill usaha ini tidak aktif. Buka halaman Langganan →</a>
+                @elseif(in_array($sub['status'], ['trial', 'active'], true) && $sub['days_left'] !== null && $sub['days_left'] <= config('netbill.reminder_days'))
+                    <a href="{{ route('subscription.index') }}" class="print:hidden block mb-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3">
+                        {{ $sub['status'] === 'trial' ? 'Masa coba' : 'Langganan' }} NetBill berakhir {{ $sub['days_left'] === 0 ? 'hari ini' : 'dalam ' . $sub['days_left'] . ' hari' }}. <b>Perpanjang sekarang →</b>
+                    </a>
+                @endif
+            @endif
             @yield('content')
         </div>
+        @include('partials.netbill_footer')
     </main>
 </body>
 </html>
