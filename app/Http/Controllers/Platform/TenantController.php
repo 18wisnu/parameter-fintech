@@ -84,6 +84,7 @@ class TenantController extends Controller
             'months' => (int) $data['months'],
             'amount' => $data['amount'] ?? $plan->price * (int) $data['months'],
             'status' => 'pending',
+            'method' => 'manual',
             'admin_notes' => $data['admin_notes'] ?? 'Diperpanjang manual oleh pengelola',
             'submitted_by' => auth()->id(),
         ]);

@@ -11,4 +11,10 @@ return [
 
     // Pengingat perpanjangan muncul N hari sebelum langganan berakhir
     'reminder_days' => 7,
+
+    // Batas waktu membayar pesanan langganan (jam)
+    'order_expiry_hours' => 72,
+
+    // Payment gateway untuk checkout (null = belum dipasang; metode "QRIS / VA / E-wallet" tampil "segera hadir")
+    'gateway' => env('NETBILL_GATEWAY'),
 ];
