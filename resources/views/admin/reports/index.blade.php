@@ -158,6 +158,47 @@
                             Tidak ada laba untuk dibagi bulan ini.
                         </div>
                     @endif
+
+                    {{-- Penerima bagi hasil: tambah / ubah / hapus langsung dari sini --}}
+                    @php $totalPct = (float) $stakeholders->sum('percentage'); @endphp
+                    <div class="mt-6 pt-5 border-t border-slate-100" x-data="{ edit: null }">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-bold text-slate-800">Penerima bagi hasil</h4>
+                            <span class="text-xs font-bold px-2 py-1 rounded-full {{ abs($totalPct - 100) < 0.001 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">Total {{ rtrim(rtrim(number_format($totalPct, 2, ',', '.'), '0'), ',') }}%</span>
+                        </div>
+                        <div class="space-y-2">
+                            @forelse($stakeholders as $st)
+                                <div class="rounded-xl border border-slate-100 px-3 py-2">
+                                    <div class="flex items-center justify-between gap-2" x-show="edit !== {{ $st->id }}">
+                                        <span class="text-sm font-semibold text-slate-700">{{ $st->name }} <span class="text-slate-400 font-normal">· {{ rtrim(rtrim(number_format($st->percentage, 2, ',', '.'), '0'), ',') }}%</span></span>
+                                        <span class="flex items-center gap-3 text-xs font-semibold">
+                                            <button type="button" @click="edit = {{ $st->id }}" class="text-sky-600 hover:underline">Ubah</button>
+                                            <form method="POST" action="{{ route('admin.profit_sharing.stakeholder.destroy', $st->id) }}" onsubmit="return confirm('Hapus {{ addslashes($st->name) }} dari penerima bagi hasil?')">
+                                                @csrf @method('DELETE')
+                                                <button class="text-rose-600 hover:underline">Hapus</button>
+                                            </form>
+                                        </span>
+                                    </div>
+                                    <form x-show="edit === {{ $st->id }}" x-cloak method="POST" action="{{ route('admin.profit_sharing.stakeholder.update', $st->id) }}" class="flex flex-wrap gap-2">
+                                        @csrf @method('PUT')
+                                        <input name="name" value="{{ $st->name }}" required maxlength="255" class="flex-1 min-w-0 py-1.5 px-3 rounded-lg border-slate-200 text-sm">
+                                        <input name="percentage" type="number" step="0.01" min="0" max="100" value="{{ (float) $st->percentage }}" required class="w-24 py-1.5 px-3 rounded-lg border-slate-200 text-sm">
+                                        <button class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold">Simpan</button>
+                                        <button type="button" @click="edit = null" class="px-2 text-xs text-slate-500">Batal</button>
+                                    </form>
+                                </div>
+                            @empty
+                                <p class="text-sm text-slate-400">Belum ada penerima. Tambahkan di bawah.</p>
+                            @endforelse
+                        </div>
+                        <form method="POST" action="{{ route('admin.profit_sharing.stakeholder.store') }}" class="mt-3 flex flex-wrap gap-2">
+                            @csrf
+                            <input name="name" value="{{ old('name') }}" required maxlength="255" placeholder="Nama penerima, mis. Investor / Pengelola" class="flex-1 min-w-0 py-2 px-3 rounded-xl border-slate-200 text-sm">
+                            <input name="percentage" type="number" step="0.01" min="0" max="{{ max(0, 100 - $totalPct) }}" value="{{ old('percentage') }}" required placeholder="%" class="w-24 py-2 px-3 rounded-xl border-slate-200 text-sm">
+                            <button class="px-4 py-2 rounded-xl bg-sky-600 text-white text-sm font-bold">+ Tambah</button>
+                        </form>
+                        <p class="text-[11px] text-slate-400 mt-2">Persentase dihitung dari sisa laba setelah dana cadangan. Total maksimal 100%.</p>
+                    </div>
                 </div>
             </div>
 

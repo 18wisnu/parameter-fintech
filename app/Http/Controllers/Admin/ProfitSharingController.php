@@ -92,12 +92,26 @@ class ProfitSharingController extends Controller
         ]);
     }
 
+    /** Total persentase semua penerima (selain $exceptId) + $new tidak boleh lebih dari 100%. */
+    private function exceedsTotal(float $new, ?int $exceptId = null): ?string
+    {
+        $others = (float) ProfitSharingStakeholder::when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))->sum('percentage');
+
+        return $others + $new > 100.0001
+            ? 'Total persentase menjadi ' . rtrim(rtrim(number_format($others + $new, 2, ',', '.'), '0'), ',') . '%. Maksimal 100%; sisa yang tersedia ' . rtrim(rtrim(number_format(max(0, 100 - $others), 2, ',', '.'), '0'), ',') . '%.'
+            : null;
+    }
+
     public function storeStakeholder(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'percentage' => 'required|numeric|min:0|max:100',
         ]);
+
+        if ($error = $this->exceedsTotal((float) $request->percentage)) {
+            return back()->withInput()->with('error', $error);
+        }
 
         ProfitSharingStakeholder::create([
             'name' => $request->name,
@@ -116,6 +130,9 @@ class ProfitSharingController extends Controller
         ]);
 
         $stakeholder = ProfitSharingStakeholder::findOrFail($id);
+        if ($error = $this->exceedsTotal((float) $request->percentage, $stakeholder->id)) {
+            return back()->withInput()->with('error', $error);
+        }
         $stakeholder->update([
             'name' => $request->name,
             'percentage' => $request->percentage,

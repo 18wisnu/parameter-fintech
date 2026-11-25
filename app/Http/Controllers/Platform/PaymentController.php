@@ -21,7 +21,7 @@ class PaymentController extends Controller
 
     public function confirm(SubscriptionPayment $payment)
     {
-        abort_unless($payment->status === 'pending', 422, 'Pembayaran ini sudah diproses.');
+        abort_unless($payment->isOpen(), 422, 'Pembayaran ini sudah diproses.');
         $payment->confirm(auth()->user());
 
         return back()->with('success', "Pembayaran {$payment->business->name} dikonfirmasi. Langganan aktif sampai " . $payment->period_end->format('d/m/Y') . '.');
@@ -29,7 +29,7 @@ class PaymentController extends Controller
 
     public function reject(Request $request, SubscriptionPayment $payment)
     {
-        abort_unless($payment->status === 'pending', 422, 'Pembayaran ini sudah diproses.');
+        abort_unless($payment->isOpen(), 422, 'Pembayaran ini sudah diproses.');
         $data = $request->validate(['admin_notes' => 'required|string|max:255']);
         $payment->update(['status' => 'rejected', 'admin_notes' => $data['admin_notes'], 'confirmed_by' => auth()->id(), 'confirmed_at' => now()]);
 

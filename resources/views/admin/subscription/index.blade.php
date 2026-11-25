@@ -4,121 +4,105 @@
 @include('partials.flash')
 @php
     $rp = fn ($n) => 'Rp ' . number_format((float) $n, 0, ',', '.');
-    $input = 'w-full py-2 px-3 rounded-xl border-slate-200 text-sm';
     $tone = ['unlimited' => 'emerald', 'trial' => 'sky', 'active' => 'emerald', 'expired' => 'rose', 'suspended' => 'rose'][$status];
     $end = $business->accessEndsAt();
     $limit = $business->customerLimit();
-    $pending = $payments->firstWhere('status', 'pending');
 @endphp
-{{-- kelas dinamis: bg-emerald-50 border-emerald-200 text-emerald-700 bg-sky-50 border-sky-200 text-sky-700 bg-rose-50 border-rose-200 text-rose-700 --}}
+{{-- kelas dinamis: bg-emerald-50 text-emerald-700 ring-emerald-200 bg-sky-50 text-sky-700 ring-sky-200 bg-rose-50 text-rose-700 ring-rose-200 --}}
 
-<div class="mb-5">
-    <h2 class="text-2xl font-bold text-slate-800">Langganan NetBill</h2>
-    <p class="text-sm text-slate-500">Status langganan usaha <b>{{ $business->name }}</b> dan perpanjangannya.</p>
+<div class="mb-6">
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Langganan NetBill</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Status, paket & pembayaran untuk <b class="text-slate-700">{{ $business->name }}</b>.</p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="rounded-2xl border p-5 bg-{{ $tone }}-50 border-{{ $tone }}-200">
-        <div class="text-xs font-semibold uppercase tracking-wider text-{{ $tone }}-700">Status</div>
-        <div class="text-2xl font-bold text-slate-800 mt-1">{{ \App\Models\Business::SUBSCRIPTION_LABELS[$status] }}</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+    <div class="rounded-2xl p-5 bg-{{ $tone }}-50 ring-1 ring-{{ $tone }}-200">
+        <div class="text-xs font-semibold text-{{ $tone }}-700">Status</div>
+        <div class="text-xl font-bold text-slate-900 mt-1">{{ \App\Models\Business::SUBSCRIPTION_LABELS[$status] }}</div>
         <div class="text-sm text-slate-600 mt-1">
             @if($status === 'suspended')
                 {{ $business->suspend_reason }}
             @elseif($end)
-                {{ $status === 'expired' ? 'Berakhir' : 'Berlaku sampai' }} {{ $end->locale('id')->translatedFormat('d F Y') }}
-                @if($business->daysLeft() >= 0) ({{ $business->daysLeft() }} hari lagi) @endif
+                {{ $status === 'expired' ? 'Berakhir' : 'Sampai' }} {{ $end->locale('id')->translatedFormat('d M Y') }}
+                @if($business->daysLeft() >= 0)<span class="text-slate-400">· {{ $business->daysLeft() }} hari lagi</span>@endif
             @else
-                Tidak ada tanggal berakhir.
+                Tanpa tanggal berakhir
             @endif
         </div>
     </div>
-    <div class="rounded-2xl border border-slate-100 bg-white p-5">
-        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Paket</div>
-        <div class="text-2xl font-bold text-slate-800 mt-1">{{ $business->plan->name ?? '-' }}</div>
-        <div class="text-sm text-slate-500 mt-1">{{ $business->plan ? $rp($business->plan->price) . ' / bulan' : 'Belum memilih paket' }}</div>
+    <div class="rounded-2xl p-5 bg-white ring-1 ring-slate-200/70">
+        <div class="text-xs font-semibold text-slate-500">Paket</div>
+        <div class="text-xl font-bold text-slate-900 mt-1">{{ $business->plan->name ?? 'Belum ada' }}</div>
+        <div class="text-sm text-slate-500 mt-1">{{ $business->plan ? $rp($business->plan->price) . ' / bulan' : 'Pilih paket di bawah' }}</div>
     </div>
-    <div class="rounded-2xl border border-slate-100 bg-white p-5">
-        <div class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pelanggan</div>
-        <div class="text-2xl font-bold text-slate-800 mt-1">{{ number_format($customerCount, 0, ',', '.') }}{{ $limit ? ' / ' . number_format($limit, 0, ',', '.') : '' }}</div>
+    <div class="rounded-2xl p-5 bg-white ring-1 ring-slate-200/70">
+        <div class="text-xs font-semibold text-slate-500">Pelanggan</div>
+        <div class="text-xl font-bold text-slate-900 mt-1">{{ number_format($customerCount, 0, ',', '.') }}<span class="text-slate-400 font-medium">{{ $limit ? ' / ' . number_format($limit, 0, ',', '.') : '' }}</span></div>
         @if($limit)
-            <div class="h-2 rounded-full bg-slate-100 mt-2 overflow-hidden"><div class="h-2 {{ $customerCount >= $limit ? 'bg-rose-500' : 'bg-sky-500' }}" style="width: {{ min(100, round($customerCount / $limit * 100)) }}%"></div></div>
+            <div class="h-1.5 rounded-full bg-slate-100 mt-3 overflow-hidden"><div class="h-full rounded-full {{ $customerCount >= $limit ? 'bg-rose-500' : 'bg-theme' }}" style="width: {{ min(100, round($customerCount / $limit * 100)) }}%"></div></div>
         @else
             <div class="text-sm text-slate-500 mt-1">Tanpa batas</div>
         @endif
     </div>
 </div>
 
-@if($pending)
-    <div class="mb-6 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3">
-        Pembayaran {{ $rp($pending->amount) }} ({{ $pending->plan->name ?? '-' }}, {{ $pending->months }} bulan) sedang menunggu konfirmasi pengelola NetBill.
-    </div>
+@if($openOrder)
+    <a href="{{ route('subscription.order', $openOrder) }}" class="flex flex-wrap items-center justify-between gap-2 mb-6 rounded-2xl bg-amber-50 ring-1 ring-amber-200 px-5 py-4">
+        <div class="text-sm text-amber-900">
+            <b>Pesanan {{ $openOrder->reference }}</b> · {{ $openOrder->plan->name ?? '-' }} {{ $openOrder->months }} bulan · {{ $rp($openOrder->amount) }}
+            <div class="text-amber-700">{{ \App\Models\SubscriptionPayment::STATUSES[$openOrder->status] }}</div>
+        </div>
+        <span class="text-sm font-bold text-amber-900">Lihat pesanan →</span>
+    </a>
 @endif
 
-@if($isOwner && !$pending)
-<div class="bg-white rounded-2xl border border-slate-100 p-5 mb-6" x-data="{ plan: '{{ old('plan_id', $business->plan_id ?? $plans->first()?->id) }}', months: '{{ old('months', 1) }}', prices: @js($plans->pluck('price', 'id')) }">
-    <h3 class="font-bold text-slate-800 mb-1">Perpanjang / ganti paket</h3>
-    <p class="text-sm text-slate-500 mb-4">Pilih paket, transfer sesuai total, lalu unggah bukti transfer.</p>
-
-    <form method="POST" action="{{ route('subscription.store') }}" enctype="multipart/form-data" class="space-y-4">
-        @csrf
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            @foreach($plans as $p)
-                <label class="block rounded-2xl border-2 p-4 cursor-pointer" :class="plan == '{{ $p->id }}' ? 'border-sky-500 bg-sky-50' : 'border-slate-100'">
-                    <input type="radio" name="plan_id" value="{{ $p->id }}" x-model="plan" class="sr-only">
-                    <div class="font-bold text-slate-800">{{ $p->name }}</div>
-                    <div class="text-lg font-bold text-sky-700">{{ $rp($p->price) }}<span class="text-xs font-normal text-slate-500"> / bulan</span></div>
-                    <div class="text-xs text-slate-500 mt-1">{{ $p->limitLabel() }}</div>
-                    @if($p->description)<div class="text-xs text-slate-400 mt-1">{{ $p->description }}</div>@endif
-                </label>
-            @endforeach
+<h2 class="font-bold text-slate-900 mb-3">Pilih paket</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    @foreach($plans as $p)
+        @php $current = $business->plan_id === $p->id; $tooSmall = $p->max_customers && $customerCount > $p->max_customers; @endphp
+        <div class="relative rounded-3xl bg-white p-6 flex flex-col {{ $current ? 'ring-2 ring-[color:var(--theme)]' : 'ring-1 ring-slate-200/70' }}">
+            @if($current)<span class="absolute -top-2.5 left-6 px-2.5 py-0.5 rounded-full bg-theme text-white text-[11px] font-bold">Paket Anda</span>@endif
+            <div class="font-bold text-slate-900">{{ $p->name }}</div>
+            @if($p->description)<div class="text-sm text-slate-500 mt-0.5">{{ $p->description }}</div>@endif
+            <div class="mt-4"><span class="text-3xl font-extrabold tracking-tight text-slate-900">{{ $rp($p->price) }}</span><span class="text-sm text-slate-500"> /bulan</span></div>
+            <ul class="mt-4 space-y-2 text-sm text-slate-600 flex-1">
+                <li class="flex gap-2"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{{ $p->limitLabel() }}</li>
+                <li class="flex gap-2"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Semua fitur billing, keuangan & jaringan</li>
+                <li class="flex gap-2"><svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Staf & kolektor tanpa batas</li>
+            </ul>
+            @if($isOwner)
+                @if($tooSmall)
+                    <div class="mt-5 text-center text-xs text-slate-400 py-2.5">Pelanggan Anda melebihi batas paket ini</div>
+                @else
+                    <a href="{{ route('subscription.checkout', ['plan' => $p->id]) }}" class="mt-5 block text-center py-2.5 rounded-xl text-sm font-bold {{ $current ? 'bg-theme text-white hover:opacity-90' : 'bg-slate-900 text-white hover:bg-slate-800' }}">
+                        {{ $current ? 'Perpanjang' : 'Pilih ' . $p->name }}
+                    </a>
+                @endif
+            @endif
         </div>
+    @endforeach
+</div>
+@unless($isOwner)
+    <p class="mb-8 text-sm text-slate-500">Perpanjangan langganan dilakukan oleh pemilik usaha.</p>
+@endunless
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+<h2 class="font-bold text-slate-900 mb-3">Riwayat pesanan</h2>
+<div class="bg-white rounded-2xl ring-1 ring-slate-200/70 divide-y divide-slate-100">
+    @forelse($payments as $pay)
+        <a href="{{ route('subscription.order', $pay) }}" class="px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 text-sm hover:bg-slate-50">
             <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Lama langganan</label>
-                <select name="months" x-model="months" class="{{ $input }}">
-                    @foreach($months as $m)<option value="{{ $m }}">{{ $m }} bulan</option>@endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Bukti transfer</label>
-                <input type="file" name="proof_image" accept="image/*" required class="w-full text-sm">
+                <div class="font-semibold text-slate-800">{{ $pay->reference ?? '#' . $pay->id }} · {{ $pay->plan->name ?? '-' }} {{ $pay->months }} bulan</div>
+                <div class="text-xs text-slate-400">{{ $pay->created_at->format('d/m/Y H:i') }}
+                    @if($pay->period_end) · berlaku {{ $pay->period_start->format('d/m/Y') }} – {{ $pay->period_end->format('d/m/Y') }} @endif
+                </div>
             </div>
             <div class="text-right">
-                <div class="text-xs text-slate-500">Total bayar</div>
-                <div class="text-2xl font-bold text-slate-800" x-text="'Rp ' + Math.round((prices[plan] || 0) * months).toLocaleString('id-ID')"></div>
+                <div class="font-bold text-slate-900">{{ $rp($pay->amount) }}</div>
+                @include('admin.subscription._status', ['s' => $pay->status])
             </div>
-        </div>
-        <input type="text" name="notes" value="{{ old('notes') }}" maxlength="255" placeholder="Catatan (opsional), mis. transfer dari rekening a.n. ..." class="{{ $input }}">
-
-        @if($instructions)
-            <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 text-sm text-slate-700 whitespace-pre-line">{{ $instructions }}</div>
-        @endif
-
-        <button class="px-5 py-2.5 rounded-xl bg-sky-600 text-white text-sm font-bold hover:bg-sky-700">Kirim bukti pembayaran</button>
-    </form>
-</div>
-@elseif(!$isOwner)
-    <p class="mb-6 text-sm text-slate-500">Perpanjangan langganan dilakukan oleh pemilik usaha.</p>
-@endif
-
-<div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-    <div class="px-5 py-3 font-bold text-slate-800 border-b border-slate-100">Riwayat pembayaran</div>
-    <div class="divide-y divide-slate-100">
-        @forelse($payments as $pay)
-            <div class="px-5 py-3 flex flex-wrap justify-between gap-2 text-sm">
-                <div>
-                    <div class="font-semibold text-slate-700">{{ $pay->plan->name ?? '-' }} · {{ $pay->months }} bulan · {{ $rp($pay->amount) }}</div>
-                    <div class="text-xs text-slate-400">{{ $pay->created_at->format('d/m/Y H:i') }}
-                        @if($pay->period_end) · berlaku {{ $pay->period_start->format('d/m/Y') }} – {{ $pay->period_end->format('d/m/Y') }} @endif
-                        @if($pay->admin_notes) · {{ $pay->admin_notes }} @endif
-                    </div>
-                </div>
-                <span class="text-xs font-bold {{ ['pending' => 'text-amber-600', 'confirmed' => 'text-emerald-600', 'rejected' => 'text-rose-600'][$pay->status] }}">{{ \App\Models\SubscriptionPayment::STATUSES[$pay->status] }}</span>
-            </div>
-        @empty
-            <div class="px-5 py-8 text-center text-sm text-slate-400">Belum ada pembayaran.</div>
-        @endforelse
-    </div>
+        </a>
+    @empty
+        <div class="px-5 py-10 text-center text-sm text-slate-400">Belum ada pesanan.</div>
+    @endforelse
 </div>
 @endsection

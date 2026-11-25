@@ -73,7 +73,7 @@ class SubscriptionTest extends TestCase
 
         $this->actingAs($this->owner)->get(route('dashboard'))->assertRedirect(route('subscription.index'));
         $this->actingAs($this->owner)->get(route('customers.index'))->assertRedirect(route('subscription.index'));
-        $this->actingAs($this->owner)->get(route('subscription.index'))->assertOk()->assertSee('Berakhir')->assertSee('Kirim bukti pembayaran');
+        $this->actingAs($this->owner)->get(route('subscription.index'))->assertOk()->assertSee('Berakhir')->assertSee('Pilih Pro');
         $this->actingAs($kolektor->refresh())->get(route('mobile.home'))->assertRedirect(route('subscription.index'));
         $this->actingAs($kolektor)->get(route('subscription.index'))->assertOk()->assertSee('dilakukan oleh pemilik usaha');
 
@@ -81,36 +81,66 @@ class SubscriptionTest extends TestCase
         $this->artisan('billing:generate-invoices')->assertSuccessful();
     }
 
-    public function test_owner_pays_and_superadmin_confirms(): void
+    public function test_checkout_order_payment_and_confirmation(): void
     {
         $pro = Plan::where('name', 'Pro')->firstOrFail();
+        $this->actingAs($this->owner);
 
-        $this->actingAs($this->owner)->post(route('subscription.store'), [
-            'plan_id' => $pro->id, 'months' => 3, 'proof_image' => $this->png(),
-        ])->assertSessionHas('success');
+        $this->get(route('subscription.index'))->assertOk()->assertSee('Pilih Pro');
+        $this->get(route('subscription.checkout', ['plan' => $pro->id, 'months' => 3]))->assertOk()
+            ->assertSee('Ringkasan pesanan')->assertSee('Transfer bank')->assertSee('Segera hadir');
 
-        $payment = SubscriptionPayment::firstOrFail();
-        $this->assertSame('pending', $payment->status);
-        $this->assertEquals(300000, $payment->amount);
+        // Gateway belum dipasang → metode itu ditolak
+        $this->post(route('subscription.place'), ['plan_id' => $pro->id, 'months' => 3, 'method' => 'gateway'])->assertSessionHasErrors('method');
 
-        // Belum boleh kirim lagi selama masih menunggu
-        $this->actingAs($this->owner)->post(route('subscription.store'), [
-            'plan_id' => $pro->id, 'months' => 1, 'proof_image' => $this->png(),
-        ])->assertSessionHas('error');
+        $this->post(route('subscription.place'), ['plan_id' => $pro->id, 'months' => 3, 'method' => 'manual_transfer'])
+            ->assertRedirect();
+        $order = SubscriptionPayment::firstOrFail();
+        $this->assertSame('awaiting_payment', $order->status);
+        $this->assertEquals(300000, $order->amount);
+        $this->assertSame('NB261126-' . str_pad((string) $order->id, 5, '0', STR_PAD_LEFT), $order->reference);
+
+        // Pesanan terbuka: checkout baru diarahkan ke pesanan yang ada
+        $this->get(route('subscription.checkout'))->assertRedirect(route('subscription.order', $order));
+        $this->get(route('subscription.order', $order))->assertOk()->assertSee($order->reference)->assertSee('Kirim bukti pembayaran')->assertSee('Rp 300.000');
+
+        $this->post(route('subscription.proof', $order), ['proof_image' => $this->png(), 'notes' => 'BCA a.n. Budi'])->assertSessionHas('success');
+        $this->assertSame('pending', $order->fresh()->status);
+        $this->assertNotNull($order->fresh()->proof_image);
 
         $admin = $this->superadmin();
-        $this->actingAs($admin)->get(route('platform.payments.index'))->assertOk()->assertSee('RTRW Net')->assertSee('Rp 300.000');
-        $this->actingAs($admin)->post(route('platform.payments.confirm', $payment))->assertSessionHas('success');
+        $this->actingAs($admin)->get(route('platform.payments.index'))->assertOk()->assertSee('RTRW Net')->assertSee($order->reference);
+        $this->actingAs($admin)->post(route('platform.payments.confirm', $order))->assertSessionHas('success');
 
         $b = $this->business->fresh();
         $this->assertSame('active', $b->subscriptionStatus());
         $this->assertSame($pro->id, $b->plan_id);
         $this->assertSame('2027-02-25', $b->subscription_ends_at->toDateString()); // 26 Nov + 3 bulan − 1 hari
-        $this->assertSame('confirmed', $payment->fresh()->status);
+        $this->actingAs($this->owner)->get(route('subscription.order', $order))->assertSee('Pembayaran lunas');
 
         // Perpanjang lagi saat masih aktif: menyambung dari tanggal berakhir
         $this->actingAs($admin)->post(route('platform.tenants.extend', $b), ['plan_id' => $pro->id, 'months' => 1]);
         $this->assertSame('2027-03-25', $b->fresh()->subscription_ends_at->toDateString());
+    }
+
+    public function test_order_can_be_cancelled_and_expires(): void
+    {
+        $this->actingAs($this->owner)->post(route('subscription.place'), ['plan_id' => Plan::first()->id, 'months' => 1, 'method' => 'manual_transfer']);
+        $order = SubscriptionPayment::firstOrFail();
+        $this->post(route('subscription.cancel', $order))->assertRedirect(route('subscription.index'));
+        $this->assertSame('cancelled', $order->fresh()->status);
+
+        $this->post(route('subscription.place'), ['plan_id' => Plan::first()->id, 'months' => 1, 'method' => 'manual_transfer']);
+        $second = SubscriptionPayment::latest('id')->first();
+        Carbon::setTestNow(now()->addHours(73));
+        $this->get(route('subscription.checkout'))->assertOk(); // pesanan kedaluwarsa dibatalkan otomatis
+        $this->assertSame('cancelled', $second->fresh()->status);
+        $this->post(route('subscription.proof', $second), ['proof_image' => $this->png()])->assertStatus(422);
+
+        // Pesanan usaha lain tidak bisa dibuka
+        $other = User::factory()->create();
+        Business::registerFor($other, 'Lain');
+        $this->actingAs($other->refresh())->get(route('subscription.order', $second))->assertNotFound();
     }
 
     public function test_non_superadmin_cannot_open_platform_and_staff_cannot_pay(): void
@@ -120,9 +150,11 @@ class SubscriptionTest extends TestCase
         $admin = User::factory()->create();
         $this->business->users()->attach($admin->id, ['role' => 'admin']);
         $admin->switchBusiness($this->business);
-        $this->actingAs($admin->refresh())->post(route('subscription.store'), [
-            'plan_id' => Plan::first()->id, 'months' => 1, 'proof_image' => $this->png(),
+        $this->actingAs($admin->refresh())->post(route('subscription.place'), [
+            'plan_id' => Plan::first()->id, 'months' => 1, 'method' => 'manual_transfer',
         ])->assertForbidden();
+        $this->actingAs($admin)->get(route('subscription.checkout'))->assertForbidden();
+        $this->actingAs($admin)->get(route('subscription.index'))->assertOk()->assertDontSee('Pilih Pro');
     }
 
     public function test_superadmin_panel_suspend_resume_and_plans(): void
@@ -142,7 +174,9 @@ class SubscriptionTest extends TestCase
         $this->actingAs($admin)->post(route('platform.plans.store'), ['name' => 'Mini', 'price' => 25000, 'max_customers' => 30, 'is_active' => 1]);
         $this->assertDatabaseHas('plans', ['name' => 'Mini', 'max_customers' => 30]);
         $this->actingAs($admin)->put(route('platform.settings.update'), ['payment_instructions' => 'BCA 123 a.n. CV']);
-        $this->actingAs($this->owner)->get(route('subscription.index'))->assertSee('BCA 123 a.n. CV')->assertSee('Mini');
+        $this->actingAs($this->owner)->get(route('subscription.index'))->assertSee('Mini');
+        $this->post(route('subscription.place'), ['plan_id' => Plan::where('name', 'Mini')->value('id'), 'months' => 1, 'method' => 'manual_transfer']);
+        $this->get(route('subscription.order', SubscriptionPayment::firstOrFail()))->assertSee('BCA 123 a.n. CV');
 
         $this->artisan('netbill:superadmin', ['email' => $this->owner->email])->assertSuccessful();
         $this->assertTrue($this->owner->fresh()->is_superadmin);
@@ -163,8 +197,27 @@ class SubscriptionTest extends TestCase
 
         // Paket yang lebih kecil dari jumlah pelanggan tidak bisa dipilih
         Customer::create(['name' => 'C', 'type' => 'pppoe', 'package_fee' => 1, 'status' => 'active']);
-        $this->post(route('subscription.store'), ['plan_id' => $plan->id, 'months' => 1, 'proof_image' => $this->png()])
+        $this->post(route('subscription.place'), ['plan_id' => $plan->id, 'months' => 1, 'method' => 'manual_transfer'])
             ->assertSessionHas('error');
+        $this->assertSame(0, SubscriptionPayment::count());
+    }
+
+    public function test_profit_sharing_recipients_can_be_managed_from_report_page(): void
+    {
+        $this->actingAs($this->owner);
+        $this->get(route('reports.index'))->assertOk()->assertSee('Penerima bagi hasil');
+
+        $this->post(route('admin.profit_sharing.stakeholder.store'), ['name' => 'Investor A', 'percentage' => 60])->assertSessionHas('success');
+        $this->post(route('admin.profit_sharing.stakeholder.store'), ['name' => 'Pengelola', 'percentage' => 50])
+            ->assertSessionHas('error', fn ($m) => str_contains($m, 'Maksimal 100%') && str_contains($m, 'sisa yang tersedia 40%'));
+        $this->post(route('admin.profit_sharing.stakeholder.store'), ['name' => 'Pengelola', 'percentage' => 40])->assertSessionHas('success');
+
+        $a = \App\Models\ProfitSharingStakeholder::where('name', 'Investor A')->firstOrFail();
+        $this->put(route('admin.profit_sharing.stakeholder.update', $a->id), ['name' => 'Investor Utama', 'percentage' => 70])->assertSessionHas('error');
+        $this->put(route('admin.profit_sharing.stakeholder.update', $a->id), ['name' => 'Investor Utama', 'percentage' => 55])->assertSessionHas('success');
+        $this->assertEquals(55, $a->fresh()->percentage);
+
+        $this->get(route('reports.index'))->assertSee('Investor Utama')->assertSee('Total 95%');
     }
 
     public function test_branding_and_legal_footer(): void

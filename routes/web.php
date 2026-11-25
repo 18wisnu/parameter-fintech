@@ -251,7 +251,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- LANGGANAN NETBILL (semua anggota bisa melihat; kirim pembayaran: pemilik) ---
     Route::get('/subscription', [\App\Http\Controllers\Admin\SubscriptionController::class, 'index'])->name('subscription.index');
-    Route::post('/subscription', [\App\Http\Controllers\Admin\SubscriptionController::class, 'store'])->name('subscription.store');
+    Route::get('/subscription/checkout', [\App\Http\Controllers\Admin\SubscriptionController::class, 'checkout'])->name('subscription.checkout');
+    Route::post('/subscription/checkout', [\App\Http\Controllers\Admin\SubscriptionController::class, 'placeOrder'])->name('subscription.place');
+    Route::get('/subscription/orders/{payment}', [\App\Http\Controllers\Admin\SubscriptionController::class, 'order'])->name('subscription.order');
+    Route::post('/subscription/orders/{payment}/proof', [\App\Http\Controllers\Admin\SubscriptionController::class, 'uploadProof'])->name('subscription.proof');
+    Route::post('/subscription/orders/{payment}/cancel', [\App\Http\Controllers\Admin\SubscriptionController::class, 'cancel'])->name('subscription.cancel');
 
     // --- PANEL PENGELOLA NETBILL (superadmin) ---
     Route::middleware('superadmin')->prefix('platform')->name('platform.')->group(function () {
@@ -362,6 +366,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profit-sharing/settings/update', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'updateSettings'])->name('admin.profit_sharing.update_settings');
     Route::post('/profit-sharing/toggle-feature', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'toggleFeature'])->name('admin.profit_sharing.toggle_feature');
     Route::post('/profit-sharing/stakeholders', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'storeStakeholder'])->name('admin.profit_sharing.stakeholder.store');
+    Route::put('/profit-sharing/stakeholders/{id}', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'updateStakeholder'])->name('admin.profit_sharing.stakeholder.update');
     Route::delete('/profit-sharing/stakeholders/{id}', [\App\Http\Controllers\Admin\ProfitSharingController::class, 'destroyStakeholder'])->name('admin.profit_sharing.stakeholder.destroy');
 
     }); // end tenant.role:owner,admin

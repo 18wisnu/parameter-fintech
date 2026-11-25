@@ -5,7 +5,7 @@
 @include('platform._nav', ['title' => 'Pembayaran Langganan'])
 @php $rp = fn ($n) => 'Rp ' . number_format((float) $n, 0, ',', '.'); @endphp
 
-<div class="flex gap-2 mb-4 text-sm">
+<div class="flex flex-wrap gap-2 mb-4 text-sm">
     @foreach($statuses as $k => $l)
         <a href="{{ route('platform.payments.index', ['status' => $k]) }}" class="px-3 py-1.5 rounded-xl {{ $status === $k ? 'bg-slate-800 text-white font-semibold' : 'bg-white border border-slate-200 text-slate-600' }}">{{ $l }}</a>
     @endforeach
@@ -16,6 +16,7 @@
         <div class="bg-white rounded-2xl border border-slate-100 p-4 flex flex-wrap gap-4 justify-between">
             <div class="text-sm">
                 <a href="{{ route('platform.tenants.show', $pay->business) }}" class="font-bold text-sky-700 hover:underline">{{ $pay->business->name }}</a>
+                <span class="ml-1 font-mono text-xs text-slate-400">{{ $pay->reference }}</span>
                 <div class="text-slate-700">{{ $pay->plan->name ?? '-' }} · {{ $pay->months }} bulan · <b>{{ $rp($pay->amount) }}</b></div>
                 <div class="text-xs text-slate-400">Dikirim {{ $pay->created_at->format('d/m/Y H:i') }} oleh {{ $pay->submitter->name ?? '-' }}
                     @if($pay->notes) · "{{ $pay->notes }}" @endif
@@ -26,7 +27,7 @@
                     <a href="{{ asset('storage/' . $pay->proof_image) }}" target="_blank" class="inline-block mt-1 text-xs font-semibold text-sky-600 hover:underline">Lihat bukti transfer</a>
                 @endif
             </div>
-            @if($pay->status === 'pending')
+            @if($pay->isOpen())
                 <div class="flex flex-wrap items-start gap-2">
                     <form method="POST" action="{{ route('platform.payments.confirm', $pay) }}" onsubmit="return confirm('Konfirmasi pembayaran ini? Langganan langsung diperpanjang.')">
                         @csrf

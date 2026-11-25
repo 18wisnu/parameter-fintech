@@ -80,7 +80,7 @@
         <div class="divide-y divide-slate-100 text-sm">
             @forelse($payments as $pay)
                 <div class="px-5 py-2">
-                    <div class="flex justify-between"><span>{{ $pay->plan->name ?? '-' }} · {{ $pay->months }} bln · {{ $rp($pay->amount) }}</span><span class="text-xs font-bold">{{ \App\Models\SubscriptionPayment::STATUSES[$pay->status] }}</span></div>
+                    <div class="flex justify-between"><span><span class="font-mono text-xs text-slate-400">{{ $pay->reference }}</span> {{ $pay->plan->name ?? '-' }} · {{ $pay->months }} bln · {{ $rp($pay->amount) }}</span><span class="text-xs font-bold">{{ \App\Models\SubscriptionPayment::STATUSES[$pay->status] }}</span></div>
                     <div class="text-xs text-slate-400">{{ $pay->created_at->format('d/m/Y') }}
                         @if($pay->period_end) · {{ $pay->period_start->format('d/m/Y') }}–{{ $pay->period_end->format('d/m/Y') }} @endif
                         @if($pay->confirmer) · oleh {{ $pay->confirmer->name }} @endif
