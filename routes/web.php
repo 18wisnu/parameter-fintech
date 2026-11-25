@@ -260,7 +260,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- PANEL PENGELOLA NETBILL (superadmin) ---
     Route::middleware('superadmin')->prefix('platform')->name('platform.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Platform\TenantController::class, 'index'])->name('tenants.index');
-        Route::get('/tenants/{business}', [\App\Http\Controllers\Platform\TenantController::class, 'show'])->name('tenants.show');
+        Route::get('/customers', [\App\Http\Controllers\Platform\CustomerController::class, 'index'])->name('customers.index');
+        Route::get('/tenants/{business}',[\App\Http\Controllers\Platform\TenantController::class, 'show'])->name('tenants.show');
         Route::put('/tenants/{business}', [\App\Http\Controllers\Platform\TenantController::class, 'update'])->name('tenants.update');
         Route::post('/tenants/{business}/extend', [\App\Http\Controllers\Platform\TenantController::class, 'extend'])->name('tenants.extend');
         Route::post('/tenants/{business}/suspend', [\App\Http\Controllers\Platform\TenantController::class, 'suspend'])->name('tenants.suspend');

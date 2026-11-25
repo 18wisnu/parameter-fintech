@@ -1,5 +1,5 @@
 @php
-    $tabs = [['platform.tenants.index', 'platform.tenants.*', 'Usaha'], ['platform.payments.index', 'platform.payments.*', 'Pembayaran'], ['platform.plans.index', 'platform.plans.*', 'Paket & Pengaturan']];
+    $tabs = [['platform.customers.index', 'platform.customers.*', 'Pelanggan'], ['platform.tenants.index', 'platform.tenants.*', 'Usaha'],['platform.payments.index', 'platform.payments.*', 'Pembayaran'], ['platform.plans.index', 'platform.plans.*', 'Paket & Pengaturan']];
 @endphp
 <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
     <div>
