@@ -7,26 +7,22 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Outfit', sans-serif; }</style>
+    @include('partials.netbill_head')
 </head>
 <body class="bg-slate-50">
 
     <div class="min-h-screen flex flex-col lg:flex-row">
 
         {{-- Left Panel: Branding --}}
-        <div class="hidden lg:flex w-1/2 bg-sky-600 items-center justify-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-sky-500 to-blue-700 opacity-90"></div>
+        <div class="hidden lg:flex w-1/2 bg-[#0b1026] items-center justify-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#0b1026] via-[#1e1b4b] to-[#0c4a6e] opacity-95"></div>
 
             <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl"></div>
             <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-2xl"></div>
 
             <div class="relative z-10 text-center px-10 text-white">
-                <div class="w-24 h-24 bg-white/20 rounded-2xl mx-auto flex items-center justify-center mb-6 backdrop-blur-sm shadow-xl border border-white/20">
-                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-                <h1 class="text-4xl font-bold mb-2 tracking-wide">PARAMETER</h1>
-                <p class="text-sky-100 text-lg font-light mb-8">Sistem Manajemen Keuangan Pintar</p>
+                <img src="{{ asset('images/netbill-logo.png') }}" alt="NetBill – Internet Billing" class="w-80 max-w-full mx-auto mb-5">
+                <p class="text-sky-100/90 text-lg font-light mb-8">{{ config('netbill.tagline') }}</p>
 
                 <div class="grid grid-cols-1 gap-4 text-left max-w-xs mx-auto">
                     <div class="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 border border-white/15">
@@ -64,11 +60,7 @@
 
                 {{-- Mobile Header --}}
                 <div class="lg:hidden text-center mb-8 mt-4">
-                    <div class="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-sky-600 text-white mb-4 shadow-lg shadow-sky-200">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                    </div>
+                    <img src="{{ asset('images/netbill-logo-light.png') }}" alt="NetBill – Internet Billing" class="h-16 w-auto mx-auto mb-5">
                     <h2 class="text-2xl font-bold text-slate-800">Daftarkan Unit Bisnis</h2>
                     <p class="text-slate-500">Yang mendaftarkan menjadi pemilik (owner)</p>
                 </div>

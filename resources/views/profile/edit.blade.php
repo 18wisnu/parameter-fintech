@@ -11,6 +11,7 @@
     <style>
         body { font-family: 'Outfit', sans-serif; background: #f1f5f9; }
     </style>
+    @include('partials.netbill_head')
 </head>
 <body>
 

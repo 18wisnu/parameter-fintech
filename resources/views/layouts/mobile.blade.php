@@ -19,6 +19,7 @@
         .bg-theme-soft { background-color: color-mix(in srgb, var(--theme) 10%, white); }
         .pb-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
     </style>
+    @include('partials.netbill_head')
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 @php

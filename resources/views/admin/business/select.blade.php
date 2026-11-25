@@ -14,6 +14,7 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
+    @include('partials.netbill_head')
 </head>
 <body class="min-h-screen relative overflow-y-auto">
     
@@ -102,7 +103,7 @@
             </div>
         </div>
 
-        <div class="mt-16">@include('partials.netbill_footer', ['class' => 'text-slate-500'])</div>
+        <div class="mt-16">@include('partials.netbill_footer', ['class' => 'text-slate-500', 'dark' => true])</div>
     </main>
 </body>
 </html>

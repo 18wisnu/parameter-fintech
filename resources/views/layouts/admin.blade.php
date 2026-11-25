@@ -20,6 +20,7 @@
         .nav-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .pb-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
     </style>
+    @include('partials.netbill_head')
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased" x-data="{ sidebarOpen: false }">
 
@@ -116,10 +117,8 @@
     {{-- Sidebar --}}
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed top-0 left-0 z-50 w-64 h-full bg-white border-r border-slate-200/70 transition-transform duration-300 md:translate-x-0 flex flex-col print:hidden">
         <div class="h-14 flex items-center gap-2 px-5 border-b border-slate-100">
-            <div class="w-7 h-7 rounded-lg bg-slate-900 text-white grid place-items-center">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="{{ $icons['wifi'] }}"></path></svg>
-            </div>
-            <span class="font-extrabold tracking-tight text-slate-900">{{ config('netbill.name') }}</span>
+            <img src="{{ asset('images/netbill-logo-light.png') }}" alt="{{ config('netbill.name') }} – Internet Billing" class="h-9 w-auto">
+            <span class="sr-only">{{ config('netbill.name') }}</span>
             <button @click="sidebarOpen = false" class="ml-auto md:hidden p-1.5 rounded-lg text-slate-400 hover:bg-slate-100" aria-label="Tutup menu">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
