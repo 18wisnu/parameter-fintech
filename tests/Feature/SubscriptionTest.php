@@ -202,6 +202,25 @@ class SubscriptionTest extends TestCase
         $this->assertSame(0, SubscriptionPayment::count());
     }
 
+    public function test_platform_customer_table_and_csv(): void
+    {
+        $admin = $this->superadmin();
+        $this->actingAs($this->owner);
+        Customer::create(['name' => 'Pelanggan Rahasia', 'type' => 'pppoe', 'package_fee' => 1, 'status' => 'active']);
+
+        $this->actingAs($admin)->get(route('platform.customers.index'))->assertOk()
+            ->assertSee($this->owner->email)->assertSee('RTRW Net')->assertSee('Masa coba')
+            ->assertDontSee('Pelanggan Rahasia'); // data pelanggan internet milik usaha tidak dibuka
+
+        $this->actingAs($admin)->get(route('platform.customers.index', ['q' => 'tidak-ada-xyz']))->assertOk()->assertSee('Belum ada pelanggan');
+
+        $csv = $this->actingAs($admin)->get(route('platform.customers.index', ['export' => 'csv']))->assertOk()->getContent();
+        $this->assertStringContainsString($this->owner->email, $csv);
+        $this->assertStringContainsString('RTRW Net', $csv);
+
+        $this->actingAs($this->owner)->get(route('platform.customers.index'))->assertNotFound();
+    }
+
     public function test_profit_sharing_recipients_can_be_managed_from_report_page(): void
     {
         $this->actingAs($this->owner);
