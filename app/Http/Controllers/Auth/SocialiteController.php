@@ -12,7 +12,8 @@ class SocialiteController extends Controller
     // 1. Arahkan user ke halaman login Google
     public function redirect()
     {
-        return Socialite::driver('google')->redirect();
+        // Selalu tampilkan pemilih akun Google, supaya bisa ganti akun setelah logout
+        return Socialite::driver('google')->with(['prompt' => 'select_account'])->redirect();
     }
 
     // 2. Terima balikan data dari Google
@@ -47,7 +48,14 @@ class SocialiteController extends Controller
                 return redirect('/login')->with('error', 'Email Anda tidak terdaftar di sistem NetBill.');
             }
         } catch (\Exception $e) {
-            return redirect('/login')->with('error', 'Gagal login dengan Google.');
+            \Illuminate\Support\Facades\Log::warning('Login Google gagal: ' . $e->getMessage(), ['exception' => get_class($e)]);
+
+            // Pengguna menekan "Batal" di halaman Google
+            if (request()->filled('error')) {
+                return redirect('/login')->with('error', 'Login dengan Google dibatalkan.');
+            }
+
+            return redirect('/login')->with('error', 'Gagal login dengan Google. Silakan coba lagi.');
         }
     }
 
