@@ -55,7 +55,7 @@
                                 <span class="font-bold text-slate-800">Rp {{ number_format($voucherIncome, 0, ',', '.') }}</span>
                             </div>
                             <div class="flex justify-between items-center text-slate-600">
-                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Pendapatan PPPoE (Langganan):</span>
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Pendapatan Langganan (PPPoE / Hotspot):</span>
                                 <span class="font-bold text-slate-800">Rp {{ number_format($pppoeIncome, 0, ',', '.') }}</span>
                             </div>
                             <div class="flex justify-between items-center text-slate-600">

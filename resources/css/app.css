@@ -1,3 +1,58 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Tabel NetBill: rapat, mudah dibaca & tidak memakan tempat.
+ * Berlaku untuk semua tabel di area konten (.nb-content), menimpa padding bawaan tiap halaman.
+ * Tabel yang ingin tampil apa adanya cukup diberi kelas .nb-table-raw.
+ */
+@layer components {
+    .nb-content table:not(.nb-table-raw) {
+        @apply w-full text-[13px] leading-snug border-separate border-spacing-0;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .nb-content table:not(.nb-table-raw) thead th {
+        @apply bg-slate-50 text-slate-500 text-[11px] font-semibold normal-case tracking-normal whitespace-nowrap;
+        @apply px-3 py-2 border-b border-slate-200;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .nb-content table:not(.nb-table-raw) tbody td,
+    .nb-content table:not(.nb-table-raw) tbody th,
+    .nb-content table:not(.nb-table-raw) tfoot td,
+    .nb-content table:not(.nb-table-raw) tfoot th {
+        @apply px-3 py-2 align-middle border-b border-slate-100;
+    }
+
+    .nb-content table:not(.nb-table-raw) tbody tr:last-child > * {
+        @apply border-b-0;
+    }
+
+    .nb-content table:not(.nb-table-raw) tbody tr:hover > * {
+        @apply bg-slate-50/70;
+    }
+
+    .nb-content table:not(.nb-table-raw) tfoot > tr > * {
+        @apply bg-slate-50 font-semibold border-t border-slate-200;
+    }
+
+    /* Tombol & lencana di dalam tabel ikut ringkas */
+    .nb-content table:not(.nb-table-raw) td .rounded-lg,
+    .nb-content table:not(.nb-table-raw) td .rounded-xl {
+        @apply rounded-md;
+    }
+
+    /* Wadah gulir horizontal: bayangan tipis di tepi sebagai petunjuk bisa digeser (HP) */
+    .nb-content .overflow-x-auto {
+        background:
+            linear-gradient(to right, white 30%, rgba(255, 255, 255, 0)) left center / 24px 100% no-repeat local,
+            linear-gradient(to left, white 30%, rgba(255, 255, 255, 0)) right center / 24px 100% no-repeat local,
+            radial-gradient(farthest-side at 0 50%, rgba(15, 23, 42, .12), transparent) left center / 10px 100% no-repeat scroll,
+            radial-gradient(farthest-side at 100% 50%, rgba(15, 23, 42, .12), transparent) right center / 10px 100% no-repeat scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+}

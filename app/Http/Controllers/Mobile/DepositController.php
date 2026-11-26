@@ -34,7 +34,7 @@ class DepositController extends Controller
         $preset = [
             'customer_id' => $selected?->id,
             'amount' => $selected ? ((int) $request->query('amount') ?: null) : null,
-            'group' => $selected ? (in_array($selected->type, ['reseller', 'hotspot'], true) ? 'VOUCHER' : 'MONTHLY') : null,
+            'group' => $selected ? ($selected->type === 'reseller' ? 'VOUCHER' : 'MONTHLY') : null,
         ];
 
         return view('mobile.deposits.create', compact('customers', 'preset'));

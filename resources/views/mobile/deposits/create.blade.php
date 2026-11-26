@@ -23,8 +23,8 @@
                 <label class="block text-gray-700 text-sm font-bold mb-2">Tipe Layanan</label>
                 <select id="filter_tipe" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">-- Semua --</option>
-                    <option value="MONTHLY" @selected($preset['group'] === 'MONTHLY')>Bulanan (PPPoE / DHCP / Static)</option>
-                    <option value="VOUCHER" @selected($preset['group'] === 'VOUCHER')>Reseller / Hotspot</option>
+                    <option value="MONTHLY" @selected($preset['group'] === 'MONTHLY')>Langganan bulanan (PPPoE / Hotspot / DHCP / Static)</option>
+                    <option value="VOUCHER" @selected($preset['group'] === 'VOUCHER')>Voucher (Reseller / Outlet)</option>
                 </select>
             </div>
 
@@ -34,7 +34,7 @@
                     <option value="" disabled @selected(!$preset['customer_id'])>-- Pilih Nama Pelanggan --</option>
                     @foreach($customers as $c)
                         {{-- Atribut data-type inilah yang akan dibaca oleh Javascript di bawah --}}
-                        <option value="{{ $c->id }}" data-type="{{ in_array($c->type, ['reseller', 'hotspot'], true) ? 'VOUCHER' : 'MONTHLY' }}" @selected($preset['customer_id'] == $c->id)>
+                        <option value="{{ $c->id }}" data-type="{{ $c->type === 'reseller' ? 'VOUCHER' : 'MONTHLY' }}" @selected($preset['customer_id'] == $c->id)>
                             {{ $c->name }}{{ $c->displayCode() ? ' · ' . $c->displayCode() : '' }} ({{ \App\Models\Customer::TYPES[$c->type] ?? strtoupper($c->type) }})
                         </option>
                     @endforeach

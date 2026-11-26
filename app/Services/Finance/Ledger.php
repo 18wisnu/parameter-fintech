@@ -73,12 +73,18 @@ class Ledger
     {
         $deposit->loadMissing('customer', 'user');
         $customer = $deposit->customer;
-        $isVoucher = in_array($customer?->type, ['reseller', 'hotspot'], true);
+        // Voucher = penjualan lewat reseller/outlet. Hotspot langganan dibayar bulanan seperti PPPoE.
+        $isVoucher = $customer?->type === 'reseller';
+        $account = match (true) {
+            $isVoucher => ChartOfAccount::PENDAPATAN_VOUCHER,
+            in_array($customer?->type, ['pppoe', 'hotspot', 'general'], true) => ChartOfAccount::PENDAPATAN_INTERNET,
+            default => ChartOfAccount::PENDAPATAN_LAIN,
+        };
 
         return self::write([
             'business_id' => $deposit->business_id,
             'type' => 'income',
-            'account_id' => ChartOfAccount::byCode($isVoucher ? ChartOfAccount::PENDAPATAN_VOUCHER : ChartOfAccount::PENDAPATAN_LAIN)->id,
+            'account_id' => ChartOfAccount::byCode($account)->id,
             'source_account_id' => ChartOfAccount::byCode(ChartOfAccount::KAS)->id,
             'amount' => $deposit->amount,
             'customer_id' => $deposit->customer_id,
