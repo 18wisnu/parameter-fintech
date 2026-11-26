@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Langganan NetBill dari sisi usaha: status & paket → checkout → halaman pesanan (bayar & unggah bukti).
- * Semua anggota bisa melihat; hanya pemilik yang bisa memesan & membayar.
+ * Semua anggota bisa melihat; hanya pemilik & admin yang bisa memesan & membayar.
  */
 class SubscriptionController extends Controller
 {
@@ -156,12 +156,12 @@ class SubscriptionController extends Controller
 
     private function isOwner(Business $business): bool
     {
-        return auth()->user()->roleIn($business->id) === 'owner';
+        return auth()->user()->isManagerIn($business->id);
     }
 
     private function ensureOwner(Business $business): void
     {
-        abort_unless($this->isOwner($business), 403, 'Hanya pemilik usaha yang bisa memperpanjang langganan.');
+        abort_unless($this->isOwner($business), 403, 'Hanya pemilik atau admin yang bisa memperpanjang langganan.');
     }
 
     /** Pesanan yang masih berjalan; pesanan yang lewat batas bayar otomatis dibatalkan. */

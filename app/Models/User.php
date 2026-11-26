@@ -65,6 +65,15 @@ class User extends Authenticatable
             ->value('role');
     }
 
+    /**
+     * Pemilik & admin punya akses yang sama di usaha ini, kecuali pengaturan
+     * API server jaringan (khusus pemilik).
+     */
+    public function isManagerIn($businessId = null): bool
+    {
+        return in_array($this->roleIn($businessId ?? $this->current_business_id), ['owner', 'admin'], true);
+    }
+
     public function belongsToBusiness($businessId): bool
     {
         return $this->roleIn($businessId) !== null;

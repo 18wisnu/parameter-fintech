@@ -78,10 +78,10 @@ class MixradiusController extends Controller
         try {
             $s = (new CustomerSync($this->business()))->run();
         } catch (MixradiusException $e) {
-            return redirect()->route('admin.mixradius.edit')->with('error', 'Sinkronisasi gagal: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Sinkronisasi gagal: ' . $e->getMessage());
         }
 
-        return redirect()->route('admin.mixradius.edit')->with('success',
+        return redirect()->back()->with('success',
             "Sinkronisasi selesai: {$s['total']} pelanggan — {$s['created']} baru, {$s['updated']} diperbarui"
             . ($s['linked'] ? " ({$s['linked']} dihubungkan ke data lama berdasarkan kode pelanggan)" : '')
             . ($s['voided'] ? ". {$s['voided']} tagihan ternyata sudah dibayar di server, ditandai lunas di server" : '') . '.');

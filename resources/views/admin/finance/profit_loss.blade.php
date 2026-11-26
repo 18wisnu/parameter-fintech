@@ -59,7 +59,7 @@
             <button class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold">Tutup buku</button>
         </form>
         @else
-            <span class="text-xs text-slate-400">Hanya pemilik yang bisa menutup buku.</span>
+            <span class="text-xs text-slate-400">Hanya pemilik atau admin yang bisa menutup buku.</span>
         @endif
     </div>
 @else

@@ -278,27 +278,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- KHUSUS OWNER TENANT AKTIF ---
+    // Admin = pemilik, KECUALI pengaturan API server jaringan (kunci API) & update sistem platform.
     Route::middleware('tenant.role:owner')->group(function () {
-        // Sistem & Update
+        // Sistem & Update (kode platform, bukan data usaha)
         Route::get('/system', [\App\Http\Controllers\Admin\SystemController::class, 'index'])->name('admin.system.index');
         Route::post('/system/update', [\App\Http\Controllers\Admin\SystemController::class, 'updateVersion'])->name('admin.system.update');
 
-        Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
-        Route::get('/audit', [\App\Http\Controllers\Admin\Finance\AuditController::class, 'index'])->name('admin.audit.index');
-
-        // Tutup buku bulanan (kunci transaksi) — hanya pemilik
-        Route::post('/finance/profit-loss/close', [\App\Http\Controllers\Admin\Finance\ProfitLossController::class, 'close'])->name('finance.pl.close');
-        Route::delete('/finance/profit-loss/{closing}', [\App\Http\Controllers\Admin\Finance\ProfitLossController::class, 'reopen'])->name('finance.pl.reopen');
-
-        // Integrasi Mixradius Evo (per tenant)
+        // Integrasi API server jaringan (per tenant)
         Route::get('/integrations/server', [\App\Http\Controllers\Admin\MixradiusController::class, 'edit'])->name('admin.mixradius.edit');
         Route::put('/integrations/server', [\App\Http\Controllers\Admin\MixradiusController::class, 'update'])->name('admin.mixradius.update');
         Route::post('/integrations/server/test', [\App\Http\Controllers\Admin\MixradiusController::class, 'test'])->name('admin.mixradius.test');
-        Route::post('/integrations/server/sync', [\App\Http\Controllers\Admin\MixradiusController::class, 'sync'])->name('admin.mixradius.sync');
     });
 
     // --- OWNER & ADMIN TENANT AKTIF ---
     Route::middleware('tenant.role:owner,admin')->group(function () {
+
+    // Sinkron data dari server jaringan (memakai kunci API yang sudah diatur pemilik)
+    Route::post('/integrations/server/sync', [\App\Http\Controllers\Admin\MixradiusController::class, 'sync'])->name('admin.mixradius.sync');
+
+    Route::get('/logs', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('admin.logs.index');
+    Route::get('/audit', [\App\Http\Controllers\Admin\Finance\AuditController::class, 'index'])->name('admin.audit.index');
+
+    // Tutup buku bulanan (kunci transaksi)
+    Route::post('/finance/profit-loss/close', [\App\Http\Controllers\Admin\Finance\ProfitLossController::class, 'close'])->name('finance.pl.close');
+    Route::delete('/finance/profit-loss/{closing}', [\App\Http\Controllers\Admin\Finance\ProfitLossController::class, 'reopen'])->name('finance.pl.reopen');
 
     // --- DASHBOARD UTAMA ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -376,20 +379,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // --- JARINGAN (data langsung dari server jaringan tenant) ---
     // Kunci API hanya diatur pemilik (Pengaturan → Server Jaringan). Akses menu per peran:
-    //   pemilik  : semua, termasuk laporan jaringan & reseller (saldo/komisi)
-    //   admin    : voucher, layanan, pengguna online, tiket, pemasangan
-    //   teknisi  : layanan, pengguna online, tiket, pemasangan
-    //   kolektor : cek layanan pelanggan
+    //   pemilik & admin : semua, termasuk laporan jaringan & reseller/outlet (saldo/komisi)
+    //   teknisi         : layanan, pengguna online, tiket, pemasangan
+    //   kolektor        : cek layanan pelanggan
     Route::middleware('network')->prefix('network')->name('network.')->group(function () {
         $n = 'App\\Http\\Controllers\\Network\\';
 
-        Route::middleware('tenant.role:owner')->group(function () use ($n) {
+        Route::middleware('tenant.role:owner,admin')->group(function () use ($n) {
             Route::get('partners', [$n . 'EntityController', 'index'])->name('entities.index');
             Route::get('partners/{id}', [$n . 'EntityController', 'show'])->whereNumber('id')->name('entities.show');
             Route::get('reports', [$n . 'ReportController', 'index'])->name('reports.index');
-        });
-
-        Route::middleware('tenant.role:owner,admin')->group(function () use ($n) {
             Route::get('vouchers', [$n . 'VoucherController', 'index'])->name('vouchers.index');
             Route::get('vouchers/create', [$n . 'VoucherController', 'create'])->name('vouchers.create');
             Route::post('vouchers', [$n . 'VoucherController', 'store'])->name('vouchers.store');

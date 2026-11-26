@@ -15,7 +15,7 @@
             <div x-show="open" x-cloak x-transition class="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-xl shadow-lg py-1 z-20 text-sm">
                 <a href="{{ route('customers.export') }}" class="block px-4 py-2 hover:bg-slate-50">Export ke Excel</a>
                 <button type="button" @click="open = false; $refs.importModal.showModal()" class="w-full text-left px-4 py-2 hover:bg-slate-50">Import dari Excel</button>
-                @if($network && ($userRole ?? null) === 'owner')
+                @if($network && in_array($userRole ?? null, ['owner', 'admin'], true))
                 <form method="POST" action="{{ route('admin.mixradius.sync') }}">
                     @csrf
                     <button class="w-full text-left px-4 py-2 hover:bg-slate-50">Sinkronkan dari server</button>

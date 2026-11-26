@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    @if(auth()->user()->role === 'owner')
+    @if(auth()->user()->isManagerIn())
     <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
         
         <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col">

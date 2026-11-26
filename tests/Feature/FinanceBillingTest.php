@@ -224,8 +224,10 @@ class FinanceBillingTest extends TestCase
         // Pengaturan API hanya pemilik
         $this->actingAs($admin)->get(route('admin.mixradius.edit'))->assertForbidden();
         $this->actingAs($admin)->get(route('network.vouchers.index'))->assertOk();
-        $this->actingAs($admin)->get(route('network.reports.index'))->assertForbidden();
-        $this->actingAs($admin)->get(route('network.entities.index'))->assertForbidden();
+        // Admin = pemilik untuk menu lain, termasuk laporan jaringan & outlet
+        $this->actingAs($admin)->get(route('network.reports.index'))->assertOk()->assertDontSee('API Integrasi');
+        $this->actingAs($admin)->get(route('network.entities.index'))->assertOk();
+        $this->actingAs($teknisi)->get(route('network.entities.index'))->assertRedirect(route('mobile.home'));
 
         $this->actingAs($teknisi)->get(route('network.tickets.index'))->assertOk()
             ->assertSee('Tiket Gangguan')->assertDontSee('Buku Kas');

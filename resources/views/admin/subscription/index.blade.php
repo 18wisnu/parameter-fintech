@@ -83,7 +83,7 @@
     @endforeach
 </div>
 @unless($isOwner)
-    <p class="mb-8 text-sm text-slate-500">Perpanjangan langganan dilakukan oleh pemilik usaha.</p>
+    <p class="mb-8 text-sm text-slate-500">Perpanjangan langganan dilakukan oleh pemilik atau admin usaha.</p>
 @endunless
 
 <h2 class="font-bold text-slate-900 mb-3">Riwayat pesanan</h2>
