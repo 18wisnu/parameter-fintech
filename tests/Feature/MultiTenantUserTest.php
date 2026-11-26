@@ -21,7 +21,15 @@ class MultiTenantUserTest extends TestCase
         return [$owner->fresh(), $business];
     }
 
-    public function test_existing_email_is_linked_to_another_tenant_instead_of_rejected(): void
+    /** Penerima menerima semua undangan yang menunggu. */
+    private function acceptInvitations(User $user): void
+    {
+        foreach (\App\Models\BusinessInvitation::for($user)->get() as $inv) {
+            $this->actingAs($user)->post(route('admin.business.invitations.accept', $inv))->assertSessionHas('success');
+        }
+    }
+
+    public function test_existing_email_is_invited_to_another_tenant_instead_of_rejected(): void
     {
         [$ownerA, $bizA] = $this->makeOwnerWithBusiness('a@test.com', 'Bisnis A');
         [$ownerB, $bizB] = $this->makeOwnerWithBusiness('b@test.com', 'Bisnis B');
@@ -36,6 +44,14 @@ class MultiTenantUserTest extends TestCase
         ])->assertSessionHas('success');
 
         $budi = User::where('email', 'budi@test.com')->first();
+        // Belum tergabung sebelum Budi menekan Terima
+        $this->assertNull($budi->roleIn($bizB->id));
+        // Mengundang lagi selagi masih menunggu ditolak
+        $this->actingAs($ownerB)->post(route('admin.users.store'), [
+            'name' => 'Budi', 'email' => 'budi@test.com', 'role' => 'kolektor',
+        ])->assertSessionHas('error');
+        $this->acceptInvitations($budi);
+
         $this->assertSame(1, User::where('email', 'budi@test.com')->count());
         $this->assertSame('teknisi', $budi->roleIn($bizA->id));
         $this->assertSame('kolektor', $budi->roleIn($bizB->id));
@@ -63,7 +79,9 @@ class MultiTenantUserTest extends TestCase
             'name' => 'Saya', 'email' => 'saya@test.com', 'role' => 'kolektor', 'base_salary' => 1500000,
         ])->assertSessionHas('success');
 
+        $this->acceptInvitations($me);
         $me->refresh();
+        $this->assertSame($biz1->id, (int) $me->current_business_id); // usaha aktif tidak berpindah sendiri
         $this->assertSame(['owner', 'admin', 'kolektor'], [
             $me->roleIn($biz1->id), $me->roleIn($biz2->id), $me->roleIn($biz3->id),
         ]);

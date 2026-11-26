@@ -205,6 +205,7 @@
                     </a>
                 @endif
             @endif
+            @include('partials.invitation_banner')
             @yield('content')
         </div>
         @include('partials.netbill_footer')

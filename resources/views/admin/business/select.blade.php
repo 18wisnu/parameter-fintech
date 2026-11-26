@@ -40,6 +40,33 @@
                 <div class="mb-6 rounded-xl bg-rose-500/15 ring-1 ring-rose-300/40 px-4 py-3 text-sm text-rose-100">{{ session('error') }}</div>
             @endif
 
+            @if(($invitations ?? collect())->isNotEmpty())
+            <div class="mb-6 rounded-2xl bg-gold-400/10 ring-1 ring-gold-300/40 p-5 sm:p-6">
+                <h2 class="font-bold text-lg text-gold-300">Undangan bergabung</h2>
+                <p class="text-sm text-white/60 mt-1">Usaha berikut mengajak Anda bergabung. Usaha Anda sendiri tidak terpengaruh.</p>
+                <div class="mt-4 space-y-2.5">
+                    @foreach($invitations as $inv)
+                    <div class="rounded-xl bg-white/5 ring-1 ring-white/10 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-white truncate">{{ $inv->business->name }}</p>
+                            <p class="text-xs text-white/60 mt-0.5">Sebagai <b class="text-brand-300">{{ $inv->roleLabel() }}</b>@if($inv->inviter) · diundang oleh {{ $inv->inviter->name }}@endif · {{ $inv->created_at->diffForHumans() }}</p>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <form action="{{ route('admin.business.invitations.decline', $inv) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold text-white/80 ring-1 ring-white/20 hover:bg-white/10">Tolak</button>
+                            </form>
+                            <form action="{{ route('admin.business.invitations.accept', $inv) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 rounded-lg text-sm font-bold bg-gold-400 hover:bg-gold-300 text-navy-950">Terima</button>
+                            </form>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 sm:p-6 flex flex-col">
                     <h2 class="font-bold text-lg mb-4">Usaha terdaftar</h2>

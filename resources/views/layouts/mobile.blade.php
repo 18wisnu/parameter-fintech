@@ -48,6 +48,7 @@
     </header>
 
     <main class="nb-content max-w-lg mx-auto px-4 pt-5 pb-28">
+        @include('partials.invitation_banner')
         @yield('content')
         @include('partials.netbill_footer')
     </main>

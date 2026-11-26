@@ -239,6 +239,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/business/select', [\App\Http\Controllers\Admin\BusinessController::class, 'index'])->name('admin.business.index');
     Route::post('/business/create', [\App\Http\Controllers\Admin\BusinessController::class, 'store'])->name('admin.business.store');
     Route::post('/business/{business}/select', [\App\Http\Controllers\Admin\BusinessController::class, 'select'])->name('admin.business.select');
+    Route::post('/business/invitations/{invitation}/accept', [\App\Http\Controllers\Admin\InvitationController::class, 'accept'])->name('admin.business.invitations.accept');
+    Route::post('/business/invitations/{invitation}/decline', [\App\Http\Controllers\Admin\InvitationController::class, 'decline'])->name('admin.business.invitations.decline');
 
     // --- PROFILE ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -314,6 +316,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
     Route::put('/admin/users/{user}/update-role', [UserController::class, 'updateRole'])->name('admin.users.updateRole');
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::delete('/admin/invitations/{invitation}', [\App\Http\Controllers\Admin\InvitationController::class, 'cancel'])->name('admin.invitations.cancel');
     
     // --- MANAJEMEN GAJI (Payroll) ---
     Route::get('/salaries', [AdminSalaryController::class, 'index'])->name('admin.salaries.index');

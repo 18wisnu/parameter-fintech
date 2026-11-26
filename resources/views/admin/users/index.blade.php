@@ -48,7 +48,28 @@
         @endforeach
     </div>
     @endif
-    
+
+    @if($invitations->isNotEmpty())
+    <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+        <p class="text-sm font-semibold text-amber-900">Undangan menunggu jawaban ({{ $invitations->count() }})</p>
+        <p class="text-xs text-amber-800/80 mt-0.5">Email ini sudah punya akun NetBill. Mereka baru tergabung setelah menekan Terima saat login.</p>
+        <div class="mt-3 divide-y divide-amber-200/70">
+            @foreach($invitations as $inv)
+            <div class="py-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <div class="min-w-0">
+                    <span class="font-semibold text-slate-800">{{ $inv->email }}</span>
+                    <span class="text-slate-500">· {{ $inv->roleLabel() }} · diundang {{ $inv->created_at->diffForHumans() }}@if($inv->inviter) oleh {{ $inv->inviter->name }}@endif</span>
+                </div>
+                <form action="{{ route('admin.invitations.cancel', $inv) }}" method="POST" onsubmit="return confirm('Batalkan undangan untuk {{ $inv->email }}?')">
+                    @csrf @method('DELETE')
+                    <button class="text-xs font-semibold text-rose-600 hover:text-rose-700">Batalkan</button>
+                </form>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     <!-- Desktop View -->
     <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -230,7 +251,7 @@
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Password <span class="text-slate-300 font-normal normal-case">(Kosongkan jika email sudah punya akun)</span></label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Password <span class="text-slate-300 font-normal normal-case">(Kosongkan jika email sudah punya akun, nanti dikirim undangan)</span></label>
                 <input type="password" name="password" placeholder="Minimal 6 karakter" minlength="6"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
