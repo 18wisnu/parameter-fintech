@@ -16,7 +16,9 @@ class BusinessController extends Controller
         // Semua tenant tempat email ini terdaftar (owner yang belum ter-link sudah di-link oleh middleware)
         $businesses = $user->businesses()->orderBy('businesses.name')->get();
 
-        return view('admin.business.select', compact('businesses'));
+        $invitations = \App\Models\BusinessInvitation::for($user)->with('business', 'inviter')->latest()->get();
+
+        return view('admin.business.select', compact('businesses', 'invitations'));
     }
 
     public function store(Request $request)

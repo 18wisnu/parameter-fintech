@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\BusinessInvitation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -52,7 +53,10 @@ class UserController extends Controller
         $ownerId = (int) $business->owner_id;
         $assignableRoles = User::ASSIGNABLE_ROLES;
 
-        return view('admin.users.index', compact('users', 'ownerId', 'assignableRoles'));
+        $invitations = BusinessInvitation::pending()->where('business_id', $business->id)
+            ->with('inviter')->latest()->get();
+
+        return view('admin.users.index', compact('users', 'ownerId', 'assignableRoles', 'invitations'));
     }
 
     // Menambah Pegawai Baru / menghubungkan email yang sudah terdaftar ke tenant ini
@@ -77,15 +81,21 @@ class UserController extends Controller
                 return redirect()->back()->with('error', "Email {$request->email} sudah terdaftar sebagai pegawai di unit bisnis ini.");
             }
 
-            // Akun sudah ada (di tenant lain / daftar sendiri): cukup hubungkan.
-            // Nama & password tidak diubah supaya akun di tenant lain tidak terganggu.
-            $existing->businesses()->attach($businessId, $pivot);
-
-            if (!$existing->current_business_id) {
-                $existing->switchBusiness($businessId);
+            // Akun sudah ada (punya usaha sendiri / tergabung di usaha lain): kirim undangan.
+            // Baru tergabung setelah pemilik akun menekan "Terima". Nama & password tidak diubah.
+            $alreadyInvited = BusinessInvitation::pending()
+                ->where('business_id', $businessId)->where('email', $request->email)->exists();
+            if ($alreadyInvited) {
+                return redirect()->back()->with('error', "Undangan untuk {$request->email} masih menunggu jawaban.");
             }
 
-            return redirect()->back()->with('success', "Akun '{$existing->name}' ({$existing->email}) sudah terdaftar, dan sekarang terhubung ke unit bisnis ini. Mereka bisa login dengan password yang sudah ada.");
+            BusinessInvitation::create($pivot + [
+                'business_id' => $businessId,
+                'email' => $request->email,
+                'invited_by' => auth()->id(),
+            ]);
+
+            return redirect()->back()->with('success', "Email {$request->email} sudah punya akun NetBill, jadi kami kirimkan undangan. '{$existing->name}' akan melihatnya setelah login, dan baru tergabung setelah menekan Terima.");
         }
 
         $request->validate([
