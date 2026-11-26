@@ -8,11 +8,11 @@
         * { box-sizing: border-box; }
         body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 12px; color: #0f172a; background: #fff; }
         .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-        .toolbar button { background: #0369a1; color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .toolbar button { background: #13656f; color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .toolbar span { font-size: 12px; color: #64748b; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
         .card { border: 1px dashed #64748b; border-radius: 6px; padding: 8px; text-align: center; page-break-inside: avoid; break-inside: avoid; }
-        .biz { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; color: #0369a1; }
+        .biz { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; color: #13656f; }
         .pkg { font-size: 10px; color: #475569; margin-top: 2px; }
         .code { font-family: "Courier New", monospace; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin: 6px 0 2px; }
         .pass { font-family: "Courier New", monospace; font-size: 12px; }

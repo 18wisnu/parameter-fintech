@@ -9,4 +9,4 @@
         default => 'bg-slate-100 text-slate-600',
     };
 @endphp
-<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap {{ $tone }}">{{ $labels[$value] ?? ($value ?? '-') }}</span>
+<span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap {{ $tone }}">{{ $labels[$value] ?? ($value ?? '-') }}</span>

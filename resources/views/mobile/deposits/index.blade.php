@@ -3,7 +3,7 @@
 @section('content')
     <div class="mb-6 flex justify-between items-center px-1">
         <div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight">Semua Riwayat</h2>
+            <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Semua Riwayat</h2>
             <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.1em] mt-1">Daftar setoran dana Anda</p>
         </div>
         <div class="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-xl">
@@ -23,7 +23,7 @@
                         @endif
                     </div>
                     <div>
-                        <p class="font-black text-slate-800 text-[14px] leading-tight">{{ $deposit->description }}</p>
+                        <p class="font-bold text-slate-800 text-[14px] leading-tight">{{ $deposit->description }}</p>
                         <div class="flex items-center gap-1.5 mt-1">
                             <span class="text-[9px] text-slate-400 font-bold uppercase">{{ $deposit->created_at->format('d M, H:i') }}</span>
                             <span class="w-1 h-1 rounded-full bg-slate-200"></span>
@@ -38,7 +38,7 @@
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="font-black text-slate-900 text-sm">Rp {{ number_format($deposit->amount, 0, ',', '.') }}</p>
+                    <p class="font-bold text-slate-900 text-sm">Rp {{ number_format($deposit->amount, 0, ',', '.') }}</p>
                 </div>
             </div>
         @empty

@@ -10,7 +10,7 @@
 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <thead class="bg-slate-50 text-xs font-semibold text-slate-400">
                 <tr>
                     <th class="px-4 py-3 text-left">Batch</th>
                     <th class="px-4 py-3 text-left">Paket</th>

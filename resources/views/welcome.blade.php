@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>NetBill – Billing untuk Usaha Internet Kecil-kecilan</title>
     <meta name="description" content="NetBill: aplikasi billing & keuangan untuk RT/RW Net, hotspot, dan ISP lokal. Tagihan otomatis, setoran kolektor dari HP, PPPoE, hotspot & voucher outlet, laporan laba rugi dan bagi hasil.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
@@ -51,11 +49,11 @@
 @endphp
 
 {{-- ================= HERO ================= --}}
-<header class="relative overflow-hidden bg-[#0b1026] text-white">
-    <div class="absolute inset-0 bg-gradient-to-br from-[#0b1026] via-[#13204a] to-[#0c4a6e]"></div>
+<header class="relative overflow-hidden bg-navy-950 text-white">
+    <div class="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-900 to-brand-900"></div>
     <div class="absolute inset-0 nb-grid-bg"></div>
-    <div class="absolute -top-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-teal-400/20 blur-3xl"></div>
-    <div class="absolute -bottom-40 -left-20 w-[26rem] h-[26rem] rounded-full bg-amber-400/10 blur-3xl"></div>
+    <div class="absolute -top-32 -right-24 w-[28rem] h-[28rem] rounded-full bg-brand-400/20 blur-3xl"></div>
+    <div class="absolute -bottom-40 -left-20 w-[26rem] h-[26rem] rounded-full bg-gold-400/10 blur-3xl"></div>
 
     <nav class="relative max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
         <a href="/" class="shrink-0"><img src="{{ asset('images/netbill-logo.png') }}" alt="NetBill" class="h-9 sm:h-11 w-auto"></a>
@@ -70,7 +68,7 @@
                 <a href="{{ $dashboard }}" class="px-4 py-2 rounded-lg bg-white text-slate-900 text-sm font-bold hover:bg-slate-100">Ke Dashboard</a>
             @else
                 @if (Route::has('login'))<a href="{{ route('login') }}" class="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold text-white/90 hover:bg-white/10">Masuk</a>@endif
-                @if (Route::has('register'))<a href="{{ route('register') }}" class="px-3 sm:px-4 py-2 rounded-lg bg-amber-400 text-slate-900 text-sm font-bold hover:bg-amber-300">Coba Gratis</a>@endif
+                @if (Route::has('register'))<a href="{{ route('register') }}" class="px-3 sm:px-4 py-2 rounded-lg bg-gold-400 text-slate-900 text-sm font-bold hover:bg-gold-300">Coba Gratis</a>@endif
             @endauth
         </div>
     </nav>
@@ -89,16 +87,16 @@
             </p>
             <div class="mt-8 flex flex-wrap gap-3">
                 @auth
-                    <a href="{{ $dashboard }}" class="px-6 py-3 rounded-xl bg-amber-400 text-slate-900 font-bold shadow-lg shadow-amber-500/20 hover:bg-amber-300">Buka Dashboard</a>
+                    <a href="{{ $dashboard }}" class="px-6 py-3 rounded-xl bg-gold-400 text-slate-900 font-bold shadow-lg shadow-gold-500/20 hover:bg-gold-300">Buka Dashboard</a>
                 @else
-                    @if (Route::has('register'))<a href="{{ route('register') }}" class="px-6 py-3 rounded-xl bg-amber-400 text-slate-900 font-bold shadow-lg shadow-amber-500/20 hover:bg-amber-300">Coba gratis {{ $trial }} hari</a>@endif
+                    @if (Route::has('register'))<a href="{{ route('register') }}" class="px-6 py-3 rounded-xl bg-gold-400 text-slate-900 font-bold shadow-lg shadow-gold-500/20 hover:bg-gold-300">Coba gratis {{ $trial }} hari</a>@endif
                     <a href="#keunggulan" class="px-6 py-3 rounded-xl bg-white/10 ring-1 ring-white/25 font-semibold hover:bg-white/15">Lihat keunggulan</a>
                 @endauth
             </div>
             <ul class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/60">
-                <li class="flex items-center gap-1.5"><span class="text-teal-300">✓</span> Tanpa kartu kredit</li>
-                <li class="flex items-center gap-1.5"><span class="text-teal-300">✓</span> Masuk dengan Google</li>
-                <li class="flex items-center gap-1.5"><span class="text-teal-300">✓</span> Bisa di HP</li>
+                <li class="flex items-center gap-1.5"><span class="text-brand-300">✓</span> Tanpa kartu kredit</li>
+                <li class="flex items-center gap-1.5"><span class="text-brand-300">✓</span> Masuk dengan Google</li>
+                <li class="flex items-center gap-1.5"><span class="text-brand-300">✓</span> Bisa di HP</li>
             </ul>
         </div>
 
@@ -106,7 +104,7 @@
         <div class="relative" aria-hidden="true">
             <div class="rounded-2xl bg-white text-slate-700 shadow-2xl shadow-black/40 ring-1 ring-white/10 overflow-hidden">
                 <div class="flex items-center gap-1.5 px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-                    <span class="w-2.5 h-2.5 rounded-full bg-rose-300"></span><span class="w-2.5 h-2.5 rounded-full bg-amber-300"></span><span class="w-2.5 h-2.5 rounded-full bg-emerald-300"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-300"></span><span class="w-2.5 h-2.5 rounded-full bg-gold-300"></span><span class="w-2.5 h-2.5 rounded-full bg-emerald-300"></span>
                     <span class="ml-3 text-[11px] text-slate-400">Ringkasan bulan ini · contoh</span>
                 </div>
                 <div class="p-4 grid grid-cols-3 gap-2.5">
@@ -117,12 +115,12 @@
                 <div class="px-4 pb-4">
                     <div class="text-[11px] font-semibold text-slate-500 mb-2">Pengguna online</div>
                     <div class="flex h-2.5 rounded-full overflow-hidden">
-                        <div class="bg-indigo-500" style="width:28%"></div><div class="bg-teal-500" style="width:8%"></div><div class="bg-amber-400" style="width:64%"></div>
+                        <div class="bg-indigo-500" style="width:28%"></div><div class="bg-teal-500" style="width:8%"></div><div class="bg-gold-400" style="width:64%"></div>
                     </div>
                     <div class="mt-2 flex gap-4 text-[11px] text-slate-500">
                         <span class="flex items-center gap-1"><i class="inline-block w-2 h-2 rounded-full bg-indigo-500"></i>PPPoE</span>
                         <span class="flex items-center gap-1"><i class="inline-block w-2 h-2 rounded-full bg-teal-500"></i>Hotspot langganan</span>
-                        <span class="flex items-center gap-1"><i class="inline-block w-2 h-2 rounded-full bg-amber-400"></i>Voucher</span>
+                        <span class="flex items-center gap-1"><i class="inline-block w-2 h-2 rounded-full bg-gold-400"></i>Voucher</span>
                     </div>
                     <div class="mt-4 divide-y divide-slate-100 text-xs">
                         @foreach([['Warung Sari', 'Outlet voucher', 'Rp 450.000', 'amber'], ['Budi Santoso', 'PPPoE', 'Rp 150.000', 'indigo'], ['Rina', 'Hotspot langganan', 'Rp 100.000', 'teal']] as [$n, $t, $a, $c])
@@ -154,14 +152,14 @@
 {{-- ================= KEUNGGULAN ================= --}}
 <section id="keunggulan" class="max-w-6xl mx-auto px-4 sm:px-6 py-16 lg:py-24">
     <div class="max-w-2xl">
-        <p class="text-sm font-bold text-teal-600 uppercase tracking-wider">Keunggulan NetBill</p>
+        <p class="text-sm font-bold text-brand-600 uppercase tracking-wider">Keunggulan NetBill</p>
         <h2 class="mt-2 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Dibuat dari cara kerja usaha internet sungguhan</h2>
         <p class="mt-3 text-slate-500">Bukan aplikasi akuntansi umum. Setiap fitur menjawab masalah harian pengelola RT/RW Net: pelanggan telat bayar, setoran kolektor, voucher di banyak outlet, dan bagi hasil dengan mitra.</p>
     </div>
     <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         @foreach($features as [$title, $desc, $icon])
-            <div class="group rounded-2xl ring-1 ring-slate-200/80 p-5 bg-white hover:ring-teal-300 hover:shadow-lg hover:shadow-teal-500/5 transition">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#13204a] to-teal-600 text-white flex items-center justify-center">
+            <div class="group rounded-2xl ring-1 ring-slate-200/80 p-5 bg-white hover:ring-brand-300 hover:shadow-lg hover:shadow-brand-500/5 transition">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-navy-900 to-brand-600 text-white flex items-center justify-center">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}"/></svg>
                 </div>
                 <h3 class="mt-4 font-bold text-slate-900">{{ $title }}</h3>
@@ -175,7 +173,7 @@
 <section id="cara-kerja" class="bg-slate-50 border-y border-slate-100">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 lg:py-20 grid lg:grid-cols-2 gap-12 items-start">
         <div>
-            <p class="text-sm font-bold text-teal-600 uppercase tracking-wider">Cara kerja</p>
+            <p class="text-sm font-bold text-brand-600 uppercase tracking-wider">Cara kerja</p>
             <h2 class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight">Mulai dalam hitungan menit</h2>
             <ol class="mt-8 space-y-6">
                 @foreach([
@@ -185,14 +183,14 @@
                     ['Tagih & pantau', 'Tagihan terbit tiap bulan, kolektor setor dari HP, dan laporan laba rugi siap kapan saja.'],
                 ] as $i => [$t, $d])
                     <li class="flex gap-4">
-                        <span class="shrink-0 w-8 h-8 rounded-full bg-[#13204a] text-amber-300 text-sm font-bold flex items-center justify-center">{{ $i + 1 }}</span>
+                        <span class="shrink-0 w-8 h-8 rounded-full bg-navy-900 text-gold-300 text-sm font-bold flex items-center justify-center">{{ $i + 1 }}</span>
                         <div><h3 class="font-bold text-slate-900">{{ $t }}</h3><p class="text-sm text-slate-500 mt-0.5">{{ $d }}</p></div>
                     </li>
                 @endforeach
             </ol>
         </div>
         <div>
-            <p class="text-sm font-bold text-teal-600 uppercase tracking-wider">Satu aplikasi, banyak peran</p>
+            <p class="text-sm font-bold text-brand-600 uppercase tracking-wider">Satu aplikasi, banyak peran</p>
             <h2 class="mt-2 text-3xl font-extrabold text-slate-900 tracking-tight">Setiap orang dapat menu yang pas</h2>
             <div class="mt-8 grid sm:grid-cols-2 gap-3">
                 @foreach($roles as [$r, $d])
@@ -210,29 +208,29 @@
 @if($plans->isNotEmpty())
 <section id="harga" class="max-w-6xl mx-auto px-4 sm:px-6 py-16 lg:py-24">
     <div class="text-center max-w-2xl mx-auto">
-        <p class="text-sm font-bold text-teal-600 uppercase tracking-wider">Harga</p>
+        <p class="text-sm font-bold text-brand-600 uppercase tracking-wider">Harga</p>
         <h2 class="mt-2 text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Bayar sesuai jumlah pelanggan</h2>
         <p class="mt-3 text-slate-500">Semua paket mendapat fitur lengkap. Coba gratis {{ $trial }} hari dulu, baru pilih paket.</p>
     </div>
     <div class="mt-10 grid gap-4 {{ $plans->count() >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 max-w-3xl mx-auto' }}">
         @foreach($plans as $i => $p)
             @php $hl = $plans->count() >= 3 && $i === 1; @endphp
-            <div class="relative rounded-2xl p-6 {{ $hl ? 'bg-[#0b1026] text-white ring-2 ring-amber-400 shadow-xl' : 'bg-white ring-1 ring-slate-200' }}">
-                @if($hl)<span class="absolute -top-3 left-6 px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-900 text-[11px] font-bold">Paling dipilih</span>@endif
+            <div class="relative rounded-2xl p-6 {{ $hl ? 'bg-navy-950 text-white ring-2 ring-gold-400 shadow-xl' : 'bg-white ring-1 ring-slate-200' }}">
+                @if($hl)<span class="absolute -top-3 left-6 px-2.5 py-0.5 rounded-full bg-gold-400 text-slate-900 text-[11px] font-bold">Paling dipilih</span>@endif
                 <div class="font-bold {{ $hl ? 'text-white' : 'text-slate-900' }}">{{ $p->name }}</div>
                 <div class="mt-3 flex items-baseline gap-1">
                     <span class="text-3xl font-extrabold">{{ $rp($p->price) }}</span><span class="text-sm {{ $hl ? 'text-white/60' : 'text-slate-400' }}">/bulan</span>
                 </div>
-                <div class="mt-1 text-sm {{ $hl ? 'text-teal-300' : 'text-teal-600' }} font-semibold">{{ $p->limitLabel() }}</div>
+                <div class="mt-1 text-sm {{ $hl ? 'text-brand-300' : 'text-brand-600' }} font-semibold">{{ $p->limitLabel() }}</div>
                 @if($p->description)<p class="mt-3 text-sm {{ $hl ? 'text-white/70' : 'text-slate-500' }}">{{ $p->description }}</p>@endif
                 <ul class="mt-4 space-y-1.5 text-sm {{ $hl ? 'text-white/80' : 'text-slate-600' }}">
                     @foreach(['Semua fitur billing & laporan', 'Kolektor & teknisi tanpa batas', 'Sinkron server jaringan'] as $f)
-                        <li class="flex gap-2"><span class="{{ $hl ? 'text-amber-300' : 'text-teal-500' }}">✓</span>{{ $f }}</li>
+                        <li class="flex gap-2"><span class="{{ $hl ? 'text-gold-300' : 'text-brand-500' }}">✓</span>{{ $f }}</li>
                     @endforeach
                 </ul>
                 @guest
                     @if (Route::has('register'))
-                        <a href="{{ route('register') }}" class="mt-6 block text-center px-4 py-2.5 rounded-xl font-bold text-sm {{ $hl ? 'bg-amber-400 text-slate-900 hover:bg-amber-300' : 'bg-slate-900 text-white hover:bg-slate-700' }}">Mulai coba gratis</a>
+                        <a href="{{ route('register') }}" class="mt-6 block text-center px-4 py-2.5 rounded-xl font-bold text-sm {{ $hl ? 'bg-gold-400 text-slate-900 hover:bg-gold-300' : 'bg-slate-900 text-white hover:bg-slate-700' }}">Mulai coba gratis</a>
                     @endif
                 @endguest
             </div>
@@ -259,16 +257,16 @@
 </section>
 
 {{-- ================= CTA ================= --}}
-<section class="relative overflow-hidden bg-[#0b1026] text-white">
-    <div class="absolute inset-0 bg-gradient-to-r from-[#0b1026] via-[#13204a] to-[#0c4a6e]"></div>
+<section class="relative overflow-hidden bg-navy-950 text-white">
+    <div class="absolute inset-0 bg-gradient-to-r from-navy-950 via-navy-900 to-brand-900"></div>
     <div class="relative max-w-4xl mx-auto px-4 sm:px-6 py-14 text-center">
         <h2 class="text-2xl sm:text-3xl font-extrabold">Rapikan keuangan usaha internet Anda mulai hari ini</h2>
         <p class="mt-2 text-white/70">Gratis {{ $trial }} hari. Tidak perlu kartu kredit.</p>
         <div class="mt-6 flex flex-wrap justify-center gap-3">
             @auth
-                <a href="{{ $dashboard }}" class="px-6 py-3 rounded-xl bg-amber-400 text-slate-900 font-bold hover:bg-amber-300">Buka Dashboard</a>
+                <a href="{{ $dashboard }}" class="px-6 py-3 rounded-xl bg-gold-400 text-slate-900 font-bold hover:bg-gold-300">Buka Dashboard</a>
             @else
-                @if (Route::has('register'))<a href="{{ route('register') }}" class="px-6 py-3 rounded-xl bg-amber-400 text-slate-900 font-bold hover:bg-amber-300">Daftar sekarang</a>@endif
+                @if (Route::has('register'))<a href="{{ route('register') }}" class="px-6 py-3 rounded-xl bg-gold-400 text-slate-900 font-bold hover:bg-gold-300">Daftar sekarang</a>@endif
                 @if (Route::has('login'))<a href="{{ route('login') }}" class="px-6 py-3 rounded-xl bg-white/10 ring-1 ring-white/25 font-semibold hover:bg-white/15">Sudah punya akun? Masuk</a>@endif
             @endauth
         </div>

@@ -10,8 +10,8 @@
             <h2 class="text-lg font-bold text-slate-800">Data jaringan tidak bisa dimuat</h2>
             <p class="text-sm text-slate-600 mt-2 break-words">{{ $message }}</p>
             <div class="mt-6 flex flex-wrap gap-3">
-                <a href="{{ url()->current() }}" class="bg-slate-900 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Coba Lagi</a>
-                <a href="{{ route('dashboard') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Dashboard</a>
+                <a href="{{ url()->current() }}" class="bg-slate-900 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold">Coba Lagi</a>
+                <a href="{{ route('dashboard') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-xs font-bold">Dashboard</a>
             </div>
         </div>
     </div>

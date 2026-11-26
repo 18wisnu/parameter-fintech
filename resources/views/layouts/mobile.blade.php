@@ -4,14 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="{{ $appSettings['theme_color'] ?? '#0369a1' }}">
+    <meta name="theme-color" content="{{ $appSettings['theme_color'] ?? '#117e88' }}">
     <title>{{ $appSettings['business_name'] ?? config('netbill.name') }} · {{ config('netbill.name') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --theme: {{ $appSettings['theme_color'] ?? '#0369a1' }}; }
+        :root { --theme: {{ $appSettings['theme_color'] ?? '#117e88' }}; }
         body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
         [x-cloak] { display: none !important; }
         .bg-theme { background-color: var(--theme); }

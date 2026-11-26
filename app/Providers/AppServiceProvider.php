@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
                 $user = auth()->user();
                 $appSettings = [
                     'business_name' => 'NetBill',
-                    'theme_color' => '#0369a1',
+                    'theme_color' => '#117e88',
                     'features' => [
                         'profit_sharing' => true,
                         'reserve_fund' => true,
@@ -106,7 +106,7 @@ class AppServiceProvider extends ServiceProvider
                 // Return default settings
                 $view->with('appSettings', [
                     'business_name' => 'NetBill',
-                    'theme_color' => '#0369a1',
+                    'theme_color' => '#117e88',
                     'features' => [
                         'profit_sharing' => true,
                         'reserve_fund' => true,
