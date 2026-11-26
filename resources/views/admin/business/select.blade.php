@@ -33,6 +33,13 @@
                 <p class="text-white/60 mt-2">Masuk ke salah satu usaha Anda, atau buat usaha baru.</p>
             </div>
 
+            @if (session('success'))
+                <div class="mb-6 rounded-xl bg-brand-400/15 ring-1 ring-brand-300/40 px-4 py-3 text-sm text-brand-100">{{ session('success') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="mb-6 rounded-xl bg-rose-500/15 ring-1 ring-rose-300/40 px-4 py-3 text-sm text-rose-100">{{ session('error') }}</div>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 p-5 sm:p-6 flex flex-col">
                     <h2 class="font-bold text-lg mb-4">Usaha terdaftar</h2>
