@@ -72,7 +72,7 @@ class HotspotKindsTest extends TestCase
         $rs = Customer::create(['name' => 'Konter Jaya', 'type' => 'reseller', 'package_fee' => 0, 'status' => 'active']);
 
         $this->actingAs($kolektor->refresh())->get(route('mobile.deposits.create'))->assertOk()
-            ->assertSee('Voucher (Reseller / Outlet)')
+            ->assertSee('Voucher (Outlet)')
             ->assertSee('value="' . $hs->id . '" data-type="MONTHLY"', false)
             ->assertSee('value="' . $rs->id . '" data-type="VOUCHER"', false);
 

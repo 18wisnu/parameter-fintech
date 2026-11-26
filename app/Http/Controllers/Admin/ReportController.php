@@ -378,7 +378,7 @@ class ReportController extends Controller
     // ----------------------------------------------------------------------
 
     /**
-     * Analisa voucher: reseller/outlet mana yang paling banyak menghasilkan.
+     * Analisa voucher: outlet mana yang paling banyak menghasilkan.
      * Sumber utama: statistik tiap reseller di server jaringan (pendapatan, transaksi,
      * voucher dibuat/dipakai, komisi, stok). Pelengkap: setoran voucher di buku kas.
      */
@@ -399,11 +399,12 @@ class ReportController extends Controller
         $resellers = collect();
         $networkError = null;
         $limited = false;
+        $skipped = 0;
 
         if ($business->hasMixradius()) {
             try {
-                [$rows, $limited] = \Illuminate\Support\Facades\Cache::remember(
-                    "network:{$business->id}:reseller-stats", 600,
+                [$rows, $limited, $skipped] = \Illuminate\Support\Facades\Cache::remember(
+                    "network:{$business->id}:outlet-stats", 600,
                     fn () => $this->resellerStats($business)
                 );
                 $resellers = collect($rows);
@@ -412,16 +413,26 @@ class ReportController extends Controller
             }
         }
 
-        $resellers = $resellers->sortByDesc(fn ($r) => (float) ($r['stats'][$sort] ?? 0))->values();
-        $totals = collect(array_keys($metrics))->mapWithKeys(fn ($k) => [$k => $resellers->sum(fn ($r) => (float) ($r['stats'][$k] ?? 0))]);
-
-        // Buku kas: setoran voucher (akun 4002) 6 bulan terakhir, per bulan & per reseller
+        // Buku kas: setoran voucher (akun 4002) 6 bulan terakhir, per bulan & per outlet
         $voucherAccount = ChartOfAccount::byCode(ChartOfAccount::PENDAPATAN_VOUCHER);
         $since = now()->subMonths(5)->startOfMonth();
         $ledger = Transaction::with('customer')
             ->where('account_id', $voucherAccount->id)->where('type', 'income')
             ->where('date', '>=', $since->toDateString())
             ->get();
+
+        // Setoran bulan ini per outlet server (lewat pelanggan hasil sinkron outlet).
+        // Pendapatan di server & setoran di buku kas adalah UANG YANG SAMA: dibandingkan, tidak dijumlahkan.
+        $monthStart = now()->startOfMonth()->toDateString();
+        $depositedByEntity = $ledger->filter(fn ($t) => Carbon::parse($t->date)->toDateString() >= $monthStart && $t->customer?->mixradius_entity_id)
+            ->groupBy(fn ($t) => (string) $t->customer->mixradius_entity_id)
+            ->map(fn ($rows) => (float) $rows->sum('amount'));
+        $resellers = $resellers->map(fn ($r) => $r + ['deposited_month' => (float) ($depositedByEntity[(string) $r['id']] ?? 0)]);
+
+        $resellers = $resellers->sortByDesc(fn ($r) => (float) ($r['stats'][$sort] ?? 0))->values();
+        $totals = collect(array_keys($metrics))->mapWithKeys(fn ($k) => [$k => $resellers->sum(fn ($r) => (float) ($r['stats'][$k] ?? 0))]);
+        $totals['deposited_month'] = $resellers->sum('deposited_month');
+        $totals['ledger_month'] = (float) $ledger->filter(fn ($t) => Carbon::parse($t->date)->toDateString() >= $monthStart)->sum('amount');
 
         $trend = collect(range(0, 5))->map(function ($i) use ($since, $ledger) {
             $m = $since->copy()->addMonths($i);
@@ -437,23 +448,27 @@ class ReportController extends Controller
         ])->sortByDesc('total')->values()->take(10);
 
         return view('admin.reports.vouchers', compact(
-            'resellers', 'metrics', 'sort', 'totals', 'networkError', 'limited', 'trend', 'ledgerResellers'
+            'resellers', 'metrics', 'sort', 'totals', 'networkError', 'limited', 'skipped', 'trend', 'ledgerResellers'
         ) + ['network' => $business->hasMixradius(), 'isOwner' => auth()->user()->roleIn($business->id) === 'owner']);
     }
 
     /**
-     * Statistik reseller & outlet dari server. Dibatasi 40 mitra per pengambilan
-     * (batas 60 permintaan/menit); hasil di-cache 10 menit.
+     * Statistik OUTLET dari server. Entitas "reseller" di server adalah induk outlet;
+     * tidak ikut dijumlahkan supaya penjualan yang sama tidak terhitung dua kali.
+     * Dibatasi 40 outlet per pengambilan (batas 60 permintaan/menit); hasil di-cache 10 menit.
      *
-     * @return array{0: array, 1: bool}
+     * @return array{0: array, 1: bool, 2: int}
      */
     private function resellerStats(\App\Models\Business $business): array
     {
         $client = \App\Services\Mixradius\MixradiusClient::forBusiness($business);
         $partners = [];
+        $skipped = 0;
         foreach ($client->paginate('/v1/entities') as $e) {
-            if (in_array($e['type'] ?? null, ['reseller', 'outlet'], true)) {
+            if (($e['type'] ?? null) === 'outlet') {
                 $partners[] = $e;
+            } elseif (($e['type'] ?? null) === 'reseller') {
+                $skipped++;
             }
         }
 
@@ -472,6 +487,6 @@ class ReportController extends Controller
             ];
         }
 
-        return [$rows, $limited];
+        return [$rows, $limited, $skipped];
     }
 }

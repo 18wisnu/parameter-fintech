@@ -11,7 +11,7 @@ class Customer extends Model
 {
     use HasFactory, BelongsToTenant, Auditable;
 
-    public const TYPES = ['pppoe' => 'PPPoE', 'hotspot' => 'Hotspot (langganan)', 'general' => 'DHCP / Static', 'reseller' => 'Reseller / Outlet (voucher)'];
+    public const TYPES = ['pppoe' => 'PPPoE', 'hotspot' => 'Hotspot (langganan)', 'general' => 'DHCP / Static', 'reseller' => 'Outlet voucher'];
     public const STATUSES = ['active' => 'Aktif', 'isolated' => 'Isolir', 'inactive' => 'Nonaktif'];
     public const BILLING_TYPES = ['prepaid' => 'Prabayar', 'postpaid' => 'Pascabayar'];
     public const BILLING_CYCLES = ['monthly' => 'Bulanan', 'quarterly' => '3 Bulan', 'semi_annually' => '6 Bulan', 'annually' => 'Tahunan'];

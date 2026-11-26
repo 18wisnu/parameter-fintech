@@ -14,7 +14,7 @@
 <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
     <div>
         <h2 class="text-2xl font-bold text-slate-800">Analisa Voucher</h2>
-        <p class="text-sm text-slate-500">Reseller dan outlet mana yang paling banyak menghasilkan.</p>
+        <p class="text-sm text-slate-500">Outlet mana yang paling banyak menjual voucher, dan berapa yang sudah disetor.</p>
     </div>
     @if($network)
     <form method="GET">
@@ -27,46 +27,60 @@
 
 @if(!$network)
     <div class="bg-white rounded-2xl border border-slate-100 p-5 mb-4 text-sm text-slate-600">
-        Peringkat reseller diambil dari server jaringan. Hubungkan server dulu di <b>Pengaturan → Server Jaringan</b> (khusus pemilik).
+        Peringkat outlet diambil dari server jaringan. Hubungkan server dulu di <b>Pengaturan → Server Jaringan</b> (khusus pemilik).
         Sementara itu, di bawah ditampilkan setoran voucher yang tercatat di buku kas.
     </div>
 @elseif($networkError)
-    <div class="mb-4 p-3 rounded-xl bg-amber-50 text-amber-800 text-sm">Data reseller dari server belum bisa dimuat: {{ $networkError }}</div>
+    <div class="mb-4 p-3 rounded-xl bg-amber-50 text-amber-800 text-sm">Data outlet dari server belum bisa dimuat: {{ $networkError }}</div>
 @else
-    {{-- Ringkasan semua mitra --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+    {{-- Ringkasan semua outlet. Penjualan (server) & setoran (buku kas) = uang yang sama, tidak dijumlahkan. --}}
+    @php $gap = max(0, $totals['income_month'] - $totals['deposited_month']); @endphp
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
         <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
-            <div class="text-xs text-slate-400">Pendapatan bulan ini</div>
+            <div class="text-xs text-slate-400">Penjualan voucher bulan ini</div>
             <div class="text-lg font-bold text-emerald-600">{{ $rp($totals['income_month']) }}</div>
+            <div class="text-[11px] text-slate-400">tercatat di server · {{ $num($totals['trx_count_month']) }} transaksi</div>
         </div>
         <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
-            <div class="text-xs text-slate-400">Transaksi bulan ini</div>
-            <div class="text-lg font-bold text-slate-800">{{ $num($totals['trx_count_month']) }}</div>
+            <div class="text-xs text-slate-400">Sudah disetor bulan ini</div>
+            <div class="text-lg font-bold text-slate-800">{{ $rp($totals['deposited_month']) }}</div>
+            <div class="text-[11px] text-slate-400">buku kas, dari outlet</div>
         </div>
         <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
-            <div class="text-xs text-slate-400">Voucher dibuat bulan ini</div>
-            <div class="text-lg font-bold text-slate-800">{{ $num($totals['voucher_gen_month']) }}</div>
+            <div class="text-xs text-slate-400">Belum disetor (perkiraan)</div>
+            <div class="text-lg font-bold {{ $gap > 0 ? 'text-amber-600' : 'text-slate-800' }}">{{ $rp($gap) }}</div>
+            <div class="text-[11px] text-slate-400">penjualan − setoran</div>
         </div>
         <div class="bg-white rounded-2xl border border-slate-100 px-4 py-3">
             <div class="text-xs text-slate-400">Komisi bulan ini</div>
             <div class="text-lg font-bold text-slate-800">{{ $rp($totals['commission_month']) }}</div>
+            <div class="text-[11px] text-slate-400">{{ $num($totals['voucher_gen_month']) }} voucher dibuat</div>
         </div>
     </div>
+    <p class="text-xs text-slate-500 mb-4">
+        Penjualan di server dan setoran di buku kas adalah <b>uang yang sama</b>, jadi hanya dibandingkan, tidak dijumlahkan.
+        Pendapatan voucher di laporan keuangan hanya diambil dari setoran.
+        @if($skipped) {{ $skipped }} entitas reseller (induk outlet) di server tidak dihitung, agar penjualan outletnya tidak terhitung dua kali.@endif
+        @if($totals['ledger_month'] > $totals['deposited_month'])
+            Ada {{ $rp($totals['ledger_month'] - $totals['deposited_month']) }} setoran voucher bulan ini tanpa outlet (mis. stok dari sistem lama); tetap masuk Pendapatan Voucher, hanya tidak dibandingkan dengan penjualan server.
+        @endif
+    </p>
 
     {{-- Peringkat --}}
     <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-4">
         <div class="px-5 py-4 border-b border-slate-50 flex items-center justify-between">
-            <h3 class="font-semibold text-slate-800">Peringkat reseller & outlet</h3>
-            <span class="text-xs text-slate-400">diperbarui tiap 10 menit{{ $limited ? ' · 40 mitra pertama' : '' }}</span>
+            <h3 class="font-semibold text-slate-800">Peringkat outlet</h3>
+            <span class="text-xs text-slate-400">diperbarui tiap 10 menit{{ $limited ? ' · 40 outlet pertama' : '' }}</span>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="text-left text-xs text-slate-400 border-b border-slate-100">
                     <tr>
                         <th class="px-4 py-3 font-semibold w-8">#</th>
-                        <th class="px-4 py-3 font-semibold">Mitra</th>
+                        <th class="px-4 py-3 font-semibold">Outlet</th>
                         <th class="px-4 py-3 font-semibold min-w-[180px]">{{ $metrics[$sort] }}</th>
-                        <th class="px-4 py-3 font-semibold text-right">Pendapatan bln ini</th>
+                        <th class="px-4 py-3 font-semibold text-right">Penjualan bln ini</th>
+                        <th class="px-4 py-3 font-semibold text-right">Disetor bln ini</th>
                         <th class="px-4 py-3 font-semibold text-right">Hari ini</th>
                         <th class="px-4 py-3 font-semibold text-right">Transaksi</th>
                         <th class="px-4 py-3 font-semibold text-right">Voucher dibuat</th>
@@ -95,6 +109,7 @@
                             </div>
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap font-semibold text-emerald-700">{{ $rp($s['income_month'] ?? 0) }}</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap {{ $r['deposited_month'] < (float) ($s['income_month'] ?? 0) ? 'text-amber-700' : 'text-slate-600' }}">{{ $rp($r['deposited_month']) }}</td>
                         <td class="px-4 py-3 text-right whitespace-nowrap text-slate-600">{{ $rp($s['income_today'] ?? 0) }}</td>
                         <td class="px-4 py-3 text-right text-slate-600">{{ $num($s['trx_count_month'] ?? 0) }}</td>
                         <td class="px-4 py-3 text-right text-slate-600">{{ $num($s['voucher_gen_month'] ?? 0) }}</td>
@@ -103,7 +118,7 @@
                         <td class="px-4 py-3 text-right whitespace-nowrap text-slate-600">{{ $rp($r['balance']) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" class="px-4 py-12 text-center text-slate-400">Belum ada reseller atau outlet di server jaringan.</td></tr>
+                    <tr><td colspan="11" class="px-4 py-12 text-center text-slate-400">Belum ada outlet di server jaringan.</td></tr>
                 @endforelse
                 </tbody>
             </table>
@@ -127,8 +142,8 @@
         </div>
     </div>
     <div class="bg-white rounded-2xl border border-slate-100 p-5">
-        <h3 class="font-semibold text-slate-800 mb-1">Penyetor voucher terbanyak</h3>
-        <p class="text-xs text-slate-400 mb-4">Setoran kolektor untuk pelanggan bertipe Reseller/Hotspot.</p>
+        <h3 class="font-semibold text-slate-800 mb-1">Outlet penyetor terbanyak</h3>
+        <p class="text-xs text-slate-400 mb-4">Setoran voucher di buku kas per outlet, 6 bulan terakhir.</p>
         <div class="space-y-2">
             @forelse($ledgerResellers as $r)
                 <div class="flex items-center justify-between text-sm">

@@ -87,17 +87,27 @@ class CustomerSync
     }
 
     /**
-     * Reseller & outlet di server jaringan → pelanggan bertipe reseller, supaya bisa
+     * Outlet di server jaringan → pelanggan bertipe reseller ("Outlet voucher"), supaya bisa
      * dipilih saat setoran voucher. Tanpa tagihan bulanan (biaya paket 0).
+     *
+     * Hanya OUTLET yang diambil: penjual voucher di aplikasi ini = Outlet di server.
+     * Entitas "reseller" di server adalah induk yang membawahi outlet, jadi bila ikut
+     * dihitung, penjualan yang sama tercatat dua kali.
      * Butuh izin entities.read; bila tidak ada, dilewati tanpa menggagalkan sinkron.
      */
     private function syncPartners(\Illuminate\Support\Carbon $now): int
     {
         try {
             $partners = [];
+            $others = [];
             foreach ($this->client->paginate('/v1/entities') as $e) {
-                if (isset($e['id']) && in_array($e['type'] ?? null, ['reseller', 'outlet'], true)) {
+                if (!isset($e['id'])) {
+                    continue;
+                }
+                if (($e['type'] ?? null) === 'outlet') {
                     $partners[] = $e;
+                } else {
+                    $others[] = (string) $e['id'];
                 }
             }
         } catch (MixradiusException) {
@@ -106,11 +116,17 @@ class CustomerSync
 
         $query = Customer::withoutGlobalScope('tenant')->where('business_id', $this->business->id);
 
+        // Hasil sinkron lama dari entitas yang bukan outlet: nonaktifkan, jangan dihitung lagi
+        if ($others) {
+            (clone $query)->whereIn('mixradius_entity_id', $others)->where('status', '!=', 'inactive')
+                ->update(['status' => 'inactive']);
+        }
+
         foreach ($partners as $e) {
-            $name = trim((string) ($e['name'] ?? '')) ?: ('Reseller ' . $e['id']);
+            $name = trim((string) ($e['name'] ?? '')) ?: ('Outlet ' . $e['id']);
 
             $customer = (clone $query)->where('mixradius_entity_id', (string) $e['id'])->first()
-                // Reseller yang dulu dibuat manual dengan nama sama: hubungkan
+                // Outlet yang dulu dibuat manual (tipe reseller) dengan nama sama: hubungkan, bukan buat baru
                 ?? (clone $query)->whereNull('mixradius_entity_id')->whereNull('mixradius_id')
                     ->where('type', 'reseller')->where('name', $name)->first()
                 ?? new Customer(['type' => 'reseller', 'package_fee' => 0]);
