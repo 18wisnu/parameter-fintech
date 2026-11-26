@@ -90,7 +90,7 @@
                         @if($c->email)<div class="text-xs text-slate-400">{{ $c->email }}</div>@endif
                     </td>
                     <td class="px-4 py-3">
-                        <span class="text-slate-700">{{ \App\Models\Customer::TYPES[$c->type] ?? strtoupper((string) $c->type) }}</span>
+                        @include('partials.type_badge', ['type' => $c->type])
                         @if($c->mixradius_username)<div class="text-xs text-slate-400 font-mono">{{ $c->mixradius_username }}</div>@endif
                     </td>
                     <td class="px-4 py-3">

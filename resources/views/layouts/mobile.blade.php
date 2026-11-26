@@ -49,7 +49,7 @@
         </div>
     </header>
 
-    <main class="max-w-lg mx-auto px-4 pt-5 pb-28">
+    <main class="nb-content max-w-lg mx-auto px-4 pt-5 pb-28">
         @yield('content')
         @include('partials.netbill_footer')
     </main>

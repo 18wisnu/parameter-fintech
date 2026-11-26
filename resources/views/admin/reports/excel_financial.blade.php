@@ -39,7 +39,7 @@
         </tr>
         <tr>
             <td style="text-align: center;">1.2</td>
-            <td colspan="2">Pendapatan Internet (PPPoE / Langganan)</td>
+            <td colspan="2">Pendapatan Langganan (PPPoE / Hotspot / DHCP)</td>
             <td style="text-align: right;">{{ number_format($pppoeIncome, 0, ',', '.') }}</td>
         </tr>
         <tr>

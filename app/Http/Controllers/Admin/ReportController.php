@@ -47,9 +47,15 @@ class ReportController extends Controller
             $desc = strtolower($t->description ?? '');
             $code = $t->account->code ?? '';
 
-            if ($code == '4002' || str_contains($desc, 'voucher') || str_contains($desc, 'hotspot')) {
+            // Akun lebih dulu: 4001 = langganan (PPPoE / hotspot langganan / DHCP), 4002 = voucher.
+            // Kata kunci keterangan hanya untuk transaksi lama di akun lain.
+            if ($code == '4002') {
                 $voucherIncome += $t->amount;
-            } elseif ($code == '4001' || str_contains($desc, 'pppoe') || str_contains($desc, 'tagihan')) {
+            } elseif ($code == '4001') {
+                $pppoeIncome += $t->amount;
+            } elseif (str_contains($desc, 'voucher')) {
+                $voucherIncome += $t->amount;
+            } elseif (str_contains($desc, 'pppoe') || str_contains($desc, 'tagihan')) {
                 $pppoeIncome += $t->amount;
             } elseif (in_array($code, ['4003', '4004']) || str_contains($desc, 'pasang') || str_contains($desc, 'instalasi') || str_contains($desc, 'registrasi')) {
                 $pasangBaruIncome += $t->amount;

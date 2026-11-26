@@ -48,7 +48,7 @@
                         @if(!empty($s['is_online']))<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1" title="Online"></span>@endif
                         {{ $s['username'] ?? '-' }}
                     </td>
-                    <td class="px-4 py-3 text-xs text-slate-500">{{ $types[$s['service_type'] ?? ''] ?? ($s['service_type'] ?? '-') }} · {{ ($s['billing_type'] ?? '') === 'postpaid' ? 'Pascabayar' : 'Prabayar' }}</td>
+                    <td class="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">@include('partials.type_badge', ['type' => $s['service_type'] ?? null]) <span class="ml-1">{{ ($s['billing_type'] ?? '') === 'postpaid' ? 'Pascabayar' : 'Prabayar' }}</span></td>
                     <td class="px-4 py-3 text-slate-600">{{ $s['product']['name'] ?? '-' }}
                         <div class="text-[10px] text-slate-400">{{ $s['product']['bandwidth'] ?? '' }}{{ isset($s['product']['price']) ? ' · Rp ' . number_format($s['product']['price'], 0, ',', '.') : '' }}</div></td>
                     <td class="px-4 py-3 text-center">@include('network.partials.badge', ['value' => $s['status'] ?? null, 'labels' => $statuses])</td>

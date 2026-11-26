@@ -196,7 +196,7 @@
     </aside>
 
     <main class="min-h-screen pt-14 pb-20 md:pt-0 md:pb-0 md:ml-64 print:ml-0 print:pt-0 print:pb-0">
-        <div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        <div class="nb-content p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             @php $sub = $appSettings['subscription'] ?? null; @endphp
             @if($sub && !request()->routeIs('subscription.*', 'platform.*'))
                 @if(in_array($sub['status'], ['expired', 'suspended'], true))
