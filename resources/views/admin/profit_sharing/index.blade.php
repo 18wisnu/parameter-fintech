@@ -9,7 +9,7 @@
     @endif
 
     <div class="mb-10 text-center lg:text-left">
-        <h2 class="text-3xl font-black text-slate-800 tracking-tight">Master Pengaturan Aplikasi</h2>
+        <h2 class="text-3xl font-bold text-slate-800 tracking-tight">Master Pengaturan Aplikasi</h2>
         <p class="text-slate-500 mt-2">Sesuaikan identitas bisnis, tema warna, dan fitur aktif aplikasi Anda.</p>
     </div>
 
@@ -60,8 +60,8 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
                     <div>
-                        <h3 class="text-xl font-black text-slate-800">Identitas Bisnis</h3>
-                        <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mt-1">Branding & Look</p>
+                        <h3 class="text-xl font-bold text-slate-800">Identitas Bisnis</h3>
+                        <p class="text-xs font-medium text-slate-400 mt-1">Branding & Look</p>
                     </div>
                 </div>
 
@@ -91,8 +91,8 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                     </div>
                     <div>
-                        <h3 class="text-xl font-black text-slate-800">Manajemen Fitur</h3>
-                        <p class="text-xs font-medium text-slate-400 uppercase tracking-widest mt-1">Aktifkan Kebutuhan Bisnis</p>
+                        <h3 class="text-xl font-bold text-slate-800">Manajemen Fitur</h3>
+                        <p class="text-xs font-medium text-slate-400 mt-1">Aktifkan Kebutuhan Bisnis</p>
                     </div>
                 </div>
 
@@ -123,7 +123,7 @@
                             </div>
                         </div>
                         <div class="flex flex-col select-none pointer-events-none">
-                            <span class="text-xs font-black text-slate-800 leading-none">{{ $info[0] }}</span>
+                            <span class="text-xs font-bold text-slate-800 leading-none">{{ $info[0] }}</span>
                             <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tight mt-1">{{ $info[1] }}</span>
                         </div>
                     </div>
@@ -140,7 +140,7 @@
                         <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
-                        <h3 class="text-xl font-black text-slate-800">Persentase Simpanan</h3>
+                        <h3 class="text-xl font-bold text-slate-800">Persentase Simpanan</h3>
                     </div>
                     <p class="text-sm text-slate-500 leading-relaxed font-medium">Tentukan berapa persen laba bersih yang akan disisihkan sebagai dana cadangan atau tabungan usaha sebelum dibagikan ke stakeholder.</p>
                 </div>
@@ -149,8 +149,8 @@
                     <div class="flex-1 w-full">
                         <div class="relative">
                             <input type="number" name="reserve_percentage" value="{{ $reservePercentage }}" step="0.01" min="0" max="100"
-                                class="w-full pl-6 pr-12 py-5 bg-slate-50 border-none rounded-2xl text-slate-800 font-black focus:ring-2 focus:ring-sky-500 transition-all text-2xl">
-                            <span class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">%</span>
+                                class="w-full pl-6 pr-12 py-5 bg-slate-50 border-none rounded-2xl text-slate-800 font-bold focus:ring-2 focus:ring-sky-500 transition-all text-2xl">
+                            <span class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">%</span>
                         </div>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
         </div>
 
         <div class="flex justify-start mb-14">
-            <button type="submit" class="bg-slate-900 hover:bg-black text-white px-12 py-5 rounded-3xl font-black transition-all active:scale-95 shadow-2xl shadow-slate-200 flex items-center gap-3 group">
+            <button type="submit" class="bg-slate-900 hover:bg-black text-white px-12 py-5 rounded-3xl font-bold transition-all active:scale-95 shadow-2xl shadow-slate-200 flex items-center gap-3 group">
                 <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 Simpan Semua Perubahan
             </button>
@@ -170,17 +170,17 @@
         <!-- Form Tambah -->
         <div class="lg:col-span-1">
             <div class="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm sticky top-10">
-                <h3 class="text-lg font-black text-slate-800 mb-6">Tambah Penerima</h3>
+                <h3 class="text-lg font-bold text-slate-800 mb-6">Tambah Penerima</h3>
                 <form action="{{ route('admin.profit_sharing.stakeholder.store') }}" method="POST" class="space-y-6">
                     @csrf
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Nama Stakeholder</label>
+                        <label class="block text-xs font-bold text-slate-400 mb-2">Nama Stakeholder</label>
                         <input type="text" name="name" required
                             class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl text-slate-800 font-bold focus:ring-2 focus:ring-sky-500 transition-all" 
                             placeholder="Contoh: Junaidi & Eka">
                     </div>
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Persentase Jatah (%)</label>
+                        <label class="block text-xs font-bold text-slate-400 mb-2">Persentase Jatah (%)</label>
                         <div class="relative">
                             <input type="number" name="percentage" required step="0.01" min="0" max="100"
                                 class="w-full pl-6 pr-12 py-4 bg-slate-50 border-none rounded-2xl text-slate-800 font-bold focus:ring-2 focus:ring-sky-500 transition-all" 
@@ -188,7 +188,7 @@
                             <span class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-lg shadow-emerald-100">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-emerald-100">
                         Tambah Stakeholder
                     </button>
                 </form>
@@ -208,19 +208,19 @@
                 <table class="w-full">
                     <thead>
                         <tr class="border-b border-slate-50">
-                            <th class="text-left py-8 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nama Stakeholder</th>
-                            <th class="text-center py-8 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Persentase</th>
-                            <th class="text-right py-8 px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Aksi</th>
+                            <th class="text-left py-8 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Nama Stakeholder</th>
+                            <th class="text-center py-8 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Persentase</th>
+                            <th class="text-right py-8 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         @forelse($stakeholders as $item)
                         <tr class="group hover:bg-slate-50/50 transition-colors">
                             <td class="py-6 px-8">
-                                <span class="font-black text-slate-700 block">{{ $item->name }}</span>
+                                <span class="font-bold text-slate-700 block">{{ $item->name }}</span>
                             </td>
                             <td class="py-6 px-8 text-center">
-                                <span class="inline-flex items-center px-4 py-2 bg-sky-50 text-sky-700 rounded-xl font-black text-sm">
+                                <span class="inline-flex items-center px-4 py-2 bg-sky-50 text-sky-700 rounded-xl font-bold text-sm">
                                     {{ $item->percentage }}%
                                 </span>
                             </td>
@@ -244,7 +244,7 @@
                                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
                                         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                     </div>
-                                    <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Belum ada stakeholder terdaftar</p>
+                                    <p class="text-slate-400 font-bold uppercase text-[10px] tracking-wide">Belum ada stakeholder terdaftar</p>
                                 </div>
                             </td>
                         </tr>
@@ -257,8 +257,8 @@
                 $totalS = $stakeholders->sum('percentage');
             @endphp
             <div class="mt-6 flex justify-between items-center px-10">
-                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Terdistribusi</span>
-                <span class="text-xl font-black {{ $totalS == 100 ? 'text-emerald-500' : 'text-rose-500' }}">{{ $totalS }}%</span>
+                <span class="text-xs font-bold text-slate-400">Total Terdistribusi</span>
+                <span class="text-xl font-bold {{ $totalS == 100 ? 'text-emerald-500' : 'text-rose-500' }}">{{ $totalS }}%</span>
             </div>
         </div>
     </div>

@@ -10,7 +10,7 @@
         body { margin: 0; background: #e2e8f0; font-family: 'Courier New', ui-monospace, monospace; color: #000; font-size: {{ $paper === '80' ? '13px' : '12px' }}; line-height: 1.35; }
         .toolbar { position: sticky; top: 0; z-index: 2; background: #0f172a; color: #fff; padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; font-family: Arial, sans-serif; font-size: 13px; }
         .toolbar a, .toolbar button { color: #fff; text-decoration: none; border: 1px solid #475569; border-radius: 8px; padding: 6px 10px; background: transparent; font-size: 13px; cursor: pointer; }
-        .toolbar .on { background: #0284c7; border-color: #0284c7; }
+        .toolbar .on { background: #117e88; border-color: #117e88; }
         .toolbar .print { background: #059669; border-color: #059669; font-weight: 700; }
         .receipt { width: {{ $w }}; max-width: 100%; margin: 12px auto; background: #fff; padding: 4mm 3mm; box-shadow: 0 1px 4px rgba(0,0,0,.15); page-break-after: always; }
         .c { text-align: center; }

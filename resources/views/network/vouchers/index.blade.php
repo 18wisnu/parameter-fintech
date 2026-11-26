@@ -18,13 +18,13 @@
         <option value="">Semua paket</option>
         @foreach($products as $p)<option value="{{ $p['id'] }}" @selected((string) request('product_id') === (string) $p['id'])>{{ $p['name'] }}</option>@endforeach
     </select>
-    <button class="bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase tracking-widest py-2">Filter</button>
+    <button class="bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-xs font-bold py-2">Filter</button>
 </form>
 
 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <thead class="bg-slate-50 text-xs font-semibold text-slate-400">
                 <tr>
                     <th class="px-4 py-3 text-left">Kode</th>
                     <th class="px-4 py-3 text-left">Paket</th>

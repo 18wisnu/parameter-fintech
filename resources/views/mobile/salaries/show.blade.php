@@ -19,7 +19,7 @@
                     {{ $salary->status == 'paid' ? 'Sudah Dibayar' : 'Pending' }}
                 </div>
             </div>
-            <h2 class="text-4xl font-black">Rp {{ number_format($salary->total_amount, 0, ',', '.') }}</h2>
+            <h2 class="text-4xl font-bold">Rp {{ number_format($salary->total_amount, 0, ',', '.') }}</h2>
         </div>
         
         <div class="p-5 space-y-4">
@@ -67,7 +67,7 @@
                 </p>
             </div>
             <div class="text-right">
-                <p class="font-black text-gray-900">Rp {{ number_format($item->total_amount, 0, ',', '.') }}</p>
+                <p class="font-bold text-gray-900">Rp {{ number_format($item->total_amount, 0, ',', '.') }}</p>
                 @if($item->activation_bonus > 0)
                     <p class="text-[10px] text-emerald-500 font-bold">+{{ number_format($item->activation_bonus, 0, ',', '.') }} Bonus</p>
                 @endif

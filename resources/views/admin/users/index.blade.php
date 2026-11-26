@@ -9,7 +9,7 @@
         </div>
         <div>
             <button onclick="document.getElementById('modalTambahPegawai').classList.remove('hidden')" 
-                class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-sky-100 transition-all active:scale-95">
+                class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-sky-100 transition-all active:scale-95">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Tambah Pegawai
             </button>
@@ -54,11 +54,11 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="border-b border-slate-100 text-slate-400 text-sm">
-                    <th class="px-4 py-3 font-black uppercase tracking-widest text-[10px]">Nama Pegawai</th>
-                    <th class="px-4 py-3 font-black uppercase tracking-widest text-[10px]">Email</th>
-                    <th class="px-4 py-3 font-black uppercase tracking-widest text-[10px]">Jabatan Saat Ini</th>
-                    <th class="px-4 py-3 font-black uppercase tracking-widest text-[10px] text-right">Gaji Pokok</th>
-                    <th class="px-4 py-3 font-black uppercase tracking-widest text-[10px] text-center">Aksi & Jabatan</th>
+                    <th class="px-4 py-3 font-bold text-[10px]">Nama Pegawai</th>
+                    <th class="px-4 py-3 font-bold text-[10px]">Email</th>
+                    <th class="px-4 py-3 font-bold text-[10px]">Jabatan Saat Ini</th>
+                    <th class="px-4 py-3 font-bold text-[10px] text-right">Gaji Pokok</th>
+                    <th class="px-4 py-3 font-bold text-[10px] text-center">Aksi & Jabatan</th>
                 </tr>
             </thead>
             <tbody>
@@ -71,7 +71,7 @@
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                 </div>
-                                <span class="text-[9px] text-emerald-600 font-black uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded">Online</span>
+                                <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded">Online</span>
                             @else
                                 <span class="w-2 h-2 bg-slate-300 rounded-full" title="Offline"></span>
                             @endif
@@ -80,7 +80,7 @@
                     </td>
                     <td class="px-4 py-4 text-slate-500 text-sm font-medium">{{ $user->email }}</td>
                     <td class="px-4 py-4">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold
                             {{ $user->role == 'owner' ? 'bg-purple-100 text-purple-600' : 'bg-sky-100 text-sky-600' }}">
                             {{ $user->role ?? 'Staff' }}
                         </span>
@@ -100,10 +100,10 @@
                                     <option value="{{ $r }}" {{ $user->role == $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
                                     @endforeach
                                 </select>
-                                <button type="submit" class="bg-slate-900 text-white px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sky-600 transition-colors shadow-sm">Save</button>
+                                <button type="submit" class="bg-slate-900 text-white px-2.5 py-1.5 rounded-xl text-xs font-semibold hover:bg-sky-600 transition-colors shadow-sm">Save</button>
                             </form>
                             @else
-                            <span class="text-[10px] font-black uppercase tracking-widest text-purple-500">Pemilik Tenant</span>
+                            <span class="text-xs font-semibold text-purple-500">Pemilik Tenant</span>
                             @endif
 
                             <!-- Edit Detail Button -->
@@ -135,39 +135,39 @@
         @foreach($users as $user)
             <div class="bg-slate-50 rounded-[2rem] p-6 border border-slate-100 relative overflow-hidden">
                 @if($user->isOnline())
-                    <div class="absolute top-0 right-0 px-4 py-1 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest rounded-bl-2xl">Online</div>
+                    <div class="absolute top-0 right-0 px-4 py-1 bg-emerald-500 text-white text-xs font-semibold rounded-bl-2xl">Online</div>
                 @endif
                 
                 <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center font-black text-slate-800 text-lg uppercase border border-slate-100">
+                    <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center font-bold text-slate-800 text-lg uppercase border border-slate-100">
                         {{ substr($user->name, 0, 1) }}
                     </div>
                     <div>
-                        <h4 class="font-black text-slate-800 text-base leading-tight">{{ $user->name }}</h4>
+                        <h4 class="font-bold text-slate-800 text-base leading-tight">{{ $user->name }}</h4>
                         <p class="text-[10px] text-slate-400 font-bold lowercase mt-0.5 tracking-tight">{{ $user->email }}</p>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between py-2 border-y border-slate-200/40 text-xs">
                     <span class="text-slate-400 font-bold">Gaji Pokok:</span>
-                    <span class="font-black text-slate-800">Rp {{ number_format($user->base_salary ?? 0, 0, ',', '.') }}</span>
+                    <span class="font-bold text-slate-800">Rp {{ number_format($user->base_salary ?? 0, 0, ',', '.') }}</span>
                 </div>
 
                 <div class="flex items-center justify-between mt-4">
                     <div>
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Jabatan Sekarang</p>
-                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white border border-slate-100 text-slate-600">
+                        <p class="text-[9px] font-bold text-slate-400 mb-1">Jabatan Sekarang</p>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white border border-slate-100 text-slate-600">
                             {{ $user->role ?? 'Staff' }}
                         </span>
                     </div>
                     
                     <div class="flex items-center gap-2">
                         <button onclick="openEditModal({{ json_encode(['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role, 'base_salary' => (float) ($user->base_salary ?? 0), 'is_owner' => $user->id === $ownerId]) }})"
-                            class="bg-white border border-slate-200 text-sky-600 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all">
+                            class="bg-white border border-slate-200 text-sky-600 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm active:scale-95 transition-all">
                             Edit
                         </button>
                         @if($user->id !== $ownerId)
-                        <button onclick="document.getElementById('mobile-role-{{ $user->id }}').classList.toggle('hidden')" class="bg-white border border-slate-200 text-slate-600 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all">
+                        <button onclick="document.getElementById('mobile-role-{{ $user->id }}').classList.toggle('hidden')" class="bg-white border border-slate-200 text-slate-600 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm active:scale-95 transition-all">
                             Role
                         </button>
                         @endif
@@ -188,13 +188,13 @@
                     <form action="{{ route('admin.users.updateRole', $user->id) }}" method="POST">
                         @csrf
                         @method('PUT')
-                        <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Pilih Jabatan Baru</label>
+                        <label class="block text-[9px] font-bold text-slate-400 mb-2">Pilih Jabatan Baru</label>
                         <select name="role" class="w-full text-sm border-slate-200 rounded-xl focus:ring-sky-500 mb-4 bg-slate-50">
                             @foreach($assignableRoles as $r)
                             <option value="{{ $r }}" {{ $user->role == $r ? 'selected' : '' }}>{{ ucfirst($r) }}</option>
                             @endforeach
                         </select>
-                        <button type="submit" class="w-full bg-sky-600 text-white font-black py-3 rounded-xl shadow-lg shadow-sky-100 text-[10px] uppercase tracking-widest">Update Jabatan</button>
+                        <button type="submit" class="w-full bg-sky-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-sky-100 text-[10px]">Update Jabatan</button>
                     </form>
                 </div>
             </div>
@@ -207,7 +207,7 @@
     <div class="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in duration-200">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h3 class="text-xl font-black text-slate-800">Tambah Pegawai Baru</h3>
+                <h3 class="text-xl font-bold text-slate-800">Tambah Pegawai Baru</h3>
                 <p class="text-xs text-slate-400 mt-0.5">Buat akun untuk staf atau teknisi lapangan.</p>
             </div>
             <button onclick="document.getElementById('modalTambahPegawai').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
@@ -218,26 +218,26 @@
         <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-4">
             @csrf
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Nama Lengkap</label>
                 <input type="text" name="name" required placeholder="Contoh: Budi Santoso"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Email Akun</label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Email Akun</label>
                 <input type="email" name="email" required placeholder="budi@example.com"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Password <span class="text-slate-300 font-normal normal-case">(Kosongkan jika email sudah punya akun)</span></label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Password <span class="text-slate-300 font-normal normal-case">(Kosongkan jika email sudah punya akun)</span></label>
                 <input type="password" name="password" placeholder="Minimal 6 karakter" minlength="6"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan / Role</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Jabatan / Role</label>
                     <select name="role" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
                         @foreach($assignableRoles as $r)
                         <option value="{{ $r }}">{{ ucfirst($r) }}</option>
@@ -246,7 +246,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok di Unit Ini (Rp)</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Gaji Pokok di Unit Ini (Rp)</label>
                     <input type="number" name="base_salary" min="0" placeholder="0"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
                 </div>
@@ -254,11 +254,11 @@
 
             <div class="pt-4 flex gap-3">
                 <button type="button" onclick="document.getElementById('modalTambahPegawai').classList.add('hidden')" 
-                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition">
+                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3.5 rounded-xl font-bold text-xs transition">
                     Batal
                 </button>
                 <button type="submit" 
-                    class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-200 transition active:scale-95">
+                    class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-3.5 rounded-xl font-bold text-xs shadow-lg shadow-sky-200 transition active:scale-95">
                     Simpan Pegawai
                 </button>
             </div>
@@ -271,7 +271,7 @@
     <div class="bg-white rounded-[2rem] max-w-lg w-full p-8 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in duration-200">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h3 class="text-xl font-black text-slate-800">Edit Profil Pegawai</h3>
+                <h3 class="text-xl font-bold text-slate-800">Edit Profil Pegawai</h3>
                 <p class="text-xs text-slate-400 mt-0.5">Ubah data profil, jabatan, atau reset password.</p>
             </div>
             <button onclick="document.getElementById('modalEditPegawai').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
@@ -283,26 +283,26 @@
             @csrf
             @method('PUT')
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Nama Lengkap</label>
                 <input type="text" id="edit_name" name="name" required
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Email Akun</label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Email Akun</label>
                 <input type="email" id="edit_email" name="email" required
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Password Baru <span class="text-slate-300 font-normal normal-case">(Kosongkan jika tidak diganti)</span></label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Password Baru <span class="text-slate-300 font-normal normal-case">(Kosongkan jika tidak diganti)</span></label>
                 <input type="password" id="edit_password" name="password" placeholder="••••••••" minlength="6"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jabatan / Role</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Jabatan / Role</label>
                     <select id="edit_role" name="role" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all disabled:opacity-60">
                         @foreach($assignableRoles as $r)
                         <option value="{{ $r }}">{{ ucfirst($r) }}</option>
@@ -312,7 +312,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Gaji Pokok di Unit Ini (Rp)</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1.5">Gaji Pokok di Unit Ini (Rp)</label>
                     <input type="number" id="edit_base_salary" name="base_salary" min="0" placeholder="0"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
                 </div>
@@ -320,11 +320,11 @@
 
             <div class="pt-4 flex gap-3">
                 <button type="button" onclick="document.getElementById('modalEditPegawai').classList.add('hidden')" 
-                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition">
+                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3.5 rounded-xl font-bold text-xs transition">
                     Batal
                 </button>
                 <button type="submit" 
-                    class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-200 transition active:scale-95">
+                    class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-3.5 rounded-xl font-bold text-xs shadow-lg shadow-sky-200 transition active:scale-95">
                     Perbarui Data
                 </button>
             </div>

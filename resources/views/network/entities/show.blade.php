@@ -29,8 +29,8 @@
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
     @foreach($tiles as [$label, $value])
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ $label }}</p>
-        <p class="mt-2 text-xl font-black text-slate-800 tabular-nums">{{ $value }}</p>
+        <p class="text-xs font-semibold text-slate-400">{{ $label }}</p>
+        <p class="mt-2 text-xl font-bold text-slate-800 tabular-nums">{{ $value }}</p>
     </div>
     @endforeach
 </div>

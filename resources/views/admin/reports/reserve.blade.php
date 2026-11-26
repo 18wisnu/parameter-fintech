@@ -17,7 +17,7 @@
     <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200 flex flex-col justify-between h-full relative overflow-hidden group">
         <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-10 blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
         <div class="relative z-10">
-            <p class="text-indigo-100 text-xs font-bold mb-2 uppercase tracking-widest">Total Dana Tersimpan</p>
+            <p class="text-indigo-100 text-xs font-bold mb-2">Total Dana Tersimpan</p>
             <h3 class="text-3xl lg:text-4xl font-extrabold tracking-tight">Rp {{ number_format($saldoCadangan, 0, ',', '.') }}</h3>
         </div>
         <div class="relative z-10 mt-8">

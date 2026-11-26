@@ -7,29 +7,21 @@
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #f1f5f9; }
+        body {  background: #f1f5f9; }
     </style>
     @include('partials.netbill_head')
 </head>
 <body>
 
 {{-- Top Navigation --}}
-<nav class="bg-sky-600 shadow-lg shadow-sky-200/50">
+<nav class="bg-gradient-to-r from-navy-950 via-navy-900 to-brand-900 shadow-lg shadow-navy-900/20">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center border border-white/25">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-                <span class="text-white font-bold text-lg tracking-wide">PARAMETER</span>
-            </div>
+            <a href="{{ url('/dashboard') }}" class="flex items-center"><img src="{{ asset('images/netbill-logo.png') }}" alt="NetBill" class="h-9 w-auto"></a>
 
             <div class="flex items-center gap-3">
-                <a href="{{ url('/dashboard') }}" class="text-sky-100 hover:text-white text-sm font-medium transition-colors">
+                <a href="{{ url('/dashboard') }}" class="text-white/70 hover:text-white text-sm font-medium transition-colors">
                     ← Dashboard
                 </a>
 
@@ -57,10 +49,10 @@
         {{-- User Card --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div class="h-24 bg-gradient-to-br from-sky-500 to-blue-600"></div>
+                <div class="h-24 bg-gradient-to-br from-navy-900 to-brand-600"></div>
                 <div class="px-6 pb-6 -mt-10">
                     <div class="w-20 h-20 bg-white rounded-2xl shadow-lg border-4 border-white flex items-center justify-center mb-4">
-                        <div class="w-full h-full bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center">
+                        <div class="w-full h-full bg-gradient-to-br from-navy-900 to-brand-600 rounded-xl flex items-center justify-center">
                             <span class="text-white text-2xl font-bold">
                                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                             </span>

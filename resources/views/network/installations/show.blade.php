@@ -31,7 +31,7 @@
         @foreach($rows as $label => $value)
             @continue($label === 'Alasan Ditolak' && !$value)
             <div class="{{ in_array($label, ['Alamat', 'Catatan']) ? 'sm:col-span-2' : '' }}">
-                <dt class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ $label }}</dt>
+                <dt class="text-xs font-semibold text-slate-400">{{ $label }}</dt>
                 <dd class="mt-1 font-bold text-slate-700 break-words">
                     @if($label === 'Status')
                         @include('network.partials.badge', ['value' => $installation['status'] ?? null, 'labels' => $statuses])

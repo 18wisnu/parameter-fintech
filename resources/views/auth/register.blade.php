@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Daftar - NetBill</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Outfit', sans-serif; }</style>
+
     @include('partials.netbill_head')
 </head>
 <body class="bg-slate-50">
@@ -14,11 +13,11 @@
     <div class="min-h-screen flex flex-col lg:flex-row">
 
         {{-- Left Panel: Branding --}}
-        <div class="hidden lg:flex w-1/2 bg-[#0b1026] items-center justify-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#0b1026] via-[#1e1b4b] to-[#0c4a6e] opacity-95"></div>
+        <div class="hidden lg:flex w-1/2 bg-navy-950 items-center justify-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-navy-950 via-navy-900 to-brand-900 opacity-95"></div>
 
-            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-white opacity-10 rounded-full blur-3xl"></div>
-            <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-gold-400 opacity-10 rounded-full blur-3xl"></div>
+            <div class="absolute top-0 right-0 w-64 h-64 bg-brand-400 opacity-20 rounded-full blur-2xl"></div>
 
             <div class="relative z-10 text-center px-10 text-white">
                 <img src="{{ asset('images/netbill-logo.png') }}" alt="NetBill – Internet Billing" class="w-80 max-w-full mx-auto mb-5">

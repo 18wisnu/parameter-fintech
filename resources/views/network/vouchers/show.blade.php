@@ -31,11 +31,11 @@
             @endphp
             @foreach($rows as $label => $value)
             <div>
-                <dt class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ $label }}</dt>
+                <dt class="text-xs font-semibold text-slate-400">{{ $label }}</dt>
                 <dd class="mt-1 font-bold text-slate-700 break-words">
                     @if($label === 'Status')
                         @include('network.partials.badge', ['value' => $voucher['status'] ?? null, 'labels' => $statuses])
-                        @if(!empty($voucher['usage']['is_online']))<span class="ml-1 text-[10px] font-black text-emerald-600">● ONLINE</span>@endif
+                        @if(!empty($voucher['usage']['is_online']))<span class="ml-1 text-[10px] font-bold text-emerald-600">● ONLINE</span>@endif
                     @else
                         {{ $value }}
                     @endif
@@ -56,13 +56,13 @@
                 @csrf @method('PUT')
                 <input type="hidden" name="status" value="inactive">
                 <input type="text" name="reason" placeholder="Alasan (opsional)" class="w-full px-3 py-2 rounded-xl border-slate-200 text-sm">
-                <button class="w-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Nonaktifkan</button>
+                <button class="w-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl text-xs font-bold">Nonaktifkan</button>
             </form>
             @else
             <form action="{{ route('network.vouchers.status', $voucher['code']) }}" method="POST">
                 @csrf @method('PUT')
                 <input type="hidden" name="status" value="active">
-                <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-black uppercase tracking-widest">Aktifkan Kembali</button>
+                <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold">Aktifkan Kembali</button>
             </form>
             @endif
         </div>

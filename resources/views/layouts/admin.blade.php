@@ -6,8 +6,6 @@
     <meta name="theme-color" content="{{ $appSettings['theme_color'] }}">
     <title>{{ $appSettings['business_name'] }} · {{ config('netbill.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root { --theme: {{ $appSettings['theme_color'] }}; }
         body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }

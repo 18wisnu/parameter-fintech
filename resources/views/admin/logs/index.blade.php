@@ -14,13 +14,13 @@
     <div id="tab-activity" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="p-6 border-b border-slate-50 flex justify-between items-center">
             <h2 class="font-bold text-slate-800">Aktivitas Real-time</h2>
-            <span class="text-[10px] bg-sky-50 text-sky-600 px-3 py-1 rounded-full font-black uppercase tracking-widest">Logging On</span>
+            <span class="text-[10px] bg-sky-50 text-sky-600 px-3 py-1 rounded-full font-bold">Logging On</span>
         </div>
         
         <!-- Desktop Table view (hidden on mobile) -->
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left">
-                <thead class="bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b">
+                <thead class="bg-slate-50 text-slate-400 text-xs font-semibold border-b">
                     <tr>
                         <th class="px-6 py-4">Waktu</th>
                         <th class="px-6 py-4">Petugas</th>
@@ -37,7 +37,7 @@
                                 <div class="w-7 h-7 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-xs uppercase">{{ substr($log->user->name ?? '?', 0, 1) }}</div>
                                 <div>
                                     <p class="text-sm font-bold text-slate-700 leading-none">{{ $log->user->name ?? 'System' }}</p>
-                                    <p class="text-[9px] text-slate-400 uppercase font-black mt-1">{{ $log->user->role ?? '-' }}</p>
+                                    <p class="text-[9px] text-slate-400 uppercase font-bold mt-1">{{ $log->user->role ?? '-' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -75,16 +75,16 @@
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-[10px] text-slate-400 font-bold border rounded-lg px-2 py-0.5">{{ $log->created_at->format('d M, H:i') }}</span>
-                        <span class="text-[9px] bg-sky-100 text-sky-600 font-black uppercase tracking-widest px-2 py-0.5 rounded-lg">{{ $log->user->role ?? '-' }}</span>
+                        <span class="text-[9px] bg-sky-100 text-sky-600 font-bold px-2 py-0.5 rounded-lg">{{ $log->user->role ?? '-' }}</span>
                     </div>
                     <div class="flex items-center gap-3 mb-3">
                         <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center font-bold">{{ substr($log->user->name ?? '?', 0, 1) }}</div>
-                        <p class="font-black text-slate-700 text-sm">{{ $log->user->name ?? 'System' }}</p>
+                        <p class="font-bold text-slate-700 text-sm">{{ $log->user->name ?? 'System' }}</p>
                     </div>
                     <p class="text-sm font-bold text-slate-500 bg-slate-50 p-3 rounded-2xl mb-2">{{ $log->activity }}</p>
                     @if($log->payload && count($log->payload) > 0)
                         <details class="bg-slate-900 rounded-xl p-3">
-                            <summary class="text-[9px] text-sky-400 font-black uppercase cursor-pointer">Lihat Payload</summary>
+                            <summary class="text-[9px] text-sky-400 font-bold uppercase cursor-pointer">Lihat Payload</summary>
                             <pre class="text-[8px] text-slate-400 mt-2 overflow-x-auto">{{ json_encode($log->payload, JSON_PRETTY_PRINT) }}</pre>
                         </details>
                     @endif

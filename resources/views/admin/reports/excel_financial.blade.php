@@ -7,12 +7,12 @@
     <table>
         <!-- Header Perusahaan -->
         <tr>
-            <th colspan="4" style="font-size: 16pt; font-weight: bold; text-align: center; height: 35px; background-color: #0284c7; color: #ffffff;">
+            <th colspan="4" style="font-size: 16pt; font-weight: bold; text-align: center; height: 35px; background-color: #117e88; color: #ffffff;">
                 {{ strtoupper($businessName) }}
             </th>
         </tr>
         <tr>
-            <th colspan="4" style="font-size: 13pt; font-weight: bold; text-align: center; height: 25px; background-color: #0369a1; color: #ffffff;">
+            <th colspan="4" style="font-size: 13pt; font-weight: bold; text-align: center; height: 25px; background-color: #13656f; color: #ffffff;">
                 LAPORAN KEUANGAN &amp; PEMBAGIAN HASIL
             </th>
         </tr>
@@ -25,10 +25,10 @@
 
         <!-- BAGIAN 1: PENDAPATAN -->
         <tr>
-            <th colspan="3" style="background-color: #e0f2fe; color: #0369a1; font-weight: bold; font-size: 11pt; border-bottom: 2px solid #0284c7;">
+            <th colspan="3" style="background-color: #d0f4f1; color: #13656f; font-weight: bold; font-size: 11pt; border-bottom: 2px solid #117e88;">
                 1. PENDAPATAN (REVENUE)
             </th>
-            <th style="background-color: #e0f2fe; color: #0369a1; font-weight: bold; font-size: 11pt; text-align: right; border-bottom: 2px solid #0284c7;">
+            <th style="background-color: #d0f4f1; color: #13656f; font-weight: bold; font-size: 11pt; text-align: right; border-bottom: 2px solid #117e88;">
                 NOMINAL (RP)
             </th>
         </tr>
@@ -105,7 +105,7 @@
             <th colspan="3" style="background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 12pt;">
                 3. LABA BERSIH OPERASIONAL (NET PROFIT)
             </th>
-            <th style="background-color: #0f172a; color: #38bdf8; font-weight: bold; font-size: 12pt; text-align: right;">
+            <th style="background-color: #0f172a; color: #36b9bb; font-weight: bold; font-size: 12pt; text-align: right;">
                 Rp {{ number_format($netProfit, 0, ',', '.') }}
             </th>
         </tr>
@@ -131,7 +131,7 @@
             <td colspan="3" style="font-style: italic; color: #64748b;">
                 Sisa Laba Bersih yang Siap Dibagikan ke Stakeholder (Distributable Profit)
             </td>
-            <td style="text-align: right; font-weight: bold; color: #0284c7;">
+            <td style="text-align: right; font-weight: bold; color: #117e88;">
                 Rp {{ number_format($distributable, 0, ',', '.') }}
             </td>
         </tr>

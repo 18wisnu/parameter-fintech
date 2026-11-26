@@ -44,10 +44,10 @@
                     <!-- Card Pendapatan -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                         <div class="flex justify-between items-center mb-3">
-                            <p class="text-slate-400 text-xs font-black uppercase tracking-wider">Total Pendapatan</p>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Pendapatan</p>
                             <span class="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-bold">Revenue</span>
                         </div>
-                        <h3 class="text-3xl font-black text-emerald-600 mb-4">+ Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
+                        <h3 class="text-3xl font-bold text-emerald-600 mb-4">+ Rp {{ number_format($revenue, 0, ',', '.') }}</h3>
                         
                         <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
                             <div class="flex justify-between items-center text-slate-600">
@@ -74,10 +74,10 @@
                     <!-- Card Pengeluaran -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                         <div class="flex justify-between items-center mb-3">
-                            <p class="text-slate-400 text-xs font-black uppercase tracking-wider">Total Pengeluaran</p>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Pengeluaran</p>
                             <span class="text-xs px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg font-bold">Expense</span>
                         </div>
-                        <h3 class="text-3xl font-black text-rose-600 mb-4">- Rp {{ number_format($expense, 0, ',', '.') }}</h3>
+                        <h3 class="text-3xl font-bold text-rose-600 mb-4">- Rp {{ number_format($expense, 0, ',', '.') }}</h3>
                         
                         <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
                             <div class="flex justify-between items-center text-slate-600">
@@ -99,8 +99,8 @@
 
                     <!-- Card Laba Bersih -->
                     <div class="bg-slate-900 p-6 rounded-2xl shadow-xl text-white border border-slate-800">
-                        <p class="text-slate-400 text-xs font-black uppercase tracking-wider">Laba Bersih Operasional (Net Profit)</p>
-                        <h3 class="text-3xl font-black text-sky-400 mt-2">Rp {{ number_format($netProfit, 0, ',', '.') }}</h3>
+                        <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Laba Bersih Operasional (Net Profit)</p>
+                        <h3 class="text-3xl font-bold text-sky-400 mt-2">Rp {{ number_format($netProfit, 0, ',', '.') }}</h3>
                         <p class="text-[11px] text-slate-400 mt-2">Dihitung dari Total Pendapatan dikurangi Total Pengeluaran riil.</p>
                     </div>
                 </div>
@@ -121,7 +121,7 @@
                             </div>
 
                             <div class="pt-2 space-y-2">
-                                <p class="text-xs text-slate-500 font-bold mb-1 ml-1">JATAH PEMILIK</p>
+                                <p class="text-xs text-slate-500 font-bold mb-1 ml-1">Jatah pemilik</p>
                                 
                                 @foreach($shares as $index => $share)
                                     @php

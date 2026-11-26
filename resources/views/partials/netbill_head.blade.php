@@ -5,3 +5,10 @@
 <link rel="manifest" href="{{ asset('site.webmanifest') }}">
 <meta name="application-name" content="{{ config('netbill.name') }}">
 <meta name="apple-mobile-web-app-title" content="{{ config('netbill.name') }}">
+{{-- Huruf NetBill (sama di semua halaman) --}}
+@once
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; }</style>
+@endonce

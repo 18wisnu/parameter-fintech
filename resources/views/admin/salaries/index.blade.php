@@ -90,7 +90,7 @@
                                 <td class="px-6 py-4">
                                     <span class="text-sm text-emerald-600 font-bold">+Rp {{ number_format($salary->activation_bonus, 0, ',', '.') }}</span>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-slate-900 font-black">Rp {{ number_format($salary->total_amount, 0, ',', '.') }}</td>
+                                <td class="px-6 py-4 text-sm text-slate-900 font-bold">Rp {{ number_format($salary->total_amount, 0, ',', '.') }}</td>
                                 <td class="px-6 py-4 text-center">
                                     @if($salary->status == 'paid')
                                         <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200">Terbayar</span>

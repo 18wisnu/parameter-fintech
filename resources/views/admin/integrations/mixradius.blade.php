@@ -30,19 +30,19 @@
             </label>
 
             <div>
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">URL Panel Mixradius</label>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1.5">URL Panel Mixradius</label>
                 <input type="url" name="mixradius_base_url" value="{{ old('mixradius_base_url', $business->mixradius_base_url) }}" placeholder="https://billing.domainanda.com"
                     class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">API Key</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1.5">API Key</label>
                     <input type="password" name="mixradius_api_key" autocomplete="off" placeholder="{{ $hasKey ? '•••••••• (tersimpan, kosongkan jika tidak diganti)' : 'Masukkan API key' }}"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">API Secret</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1.5">API Secret</label>
                     <input type="password" name="mixradius_api_secret" autocomplete="off" placeholder="{{ $hasSecret ? '•••••••• (tersimpan, kosongkan jika tidak diganti)' : 'Masukkan API secret' }}"
                         class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all">
                 </div>
@@ -50,7 +50,7 @@
             <p class="text-xs text-slate-400">API key &amp; secret disimpan terenkripsi dan tidak pernah ditampilkan kembali.</p>
 
             <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-sky-100 transition active:scale-95">
+                <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-3 rounded-xl text-xs font-bold shadow-md shadow-sky-100 transition active:scale-95">
                     Simpan Pengaturan
                 </button>
             </div>
@@ -59,7 +59,7 @@
         <div class="mt-3 flex flex-col sm:flex-row gap-3">
             <form action="{{ route('admin.mixradius.test') }}" method="POST">
                 @csrf
-                <button type="submit" class="w-full sm:w-auto bg-slate-900 hover:bg-slate-700 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition active:scale-95">
+                <button type="submit" class="w-full sm:w-auto bg-slate-900 hover:bg-slate-700 text-white px-5 py-3 rounded-xl text-xs font-bold transition active:scale-95">
                     Tes Koneksi
                 </button>
             </form>
@@ -67,7 +67,7 @@
             @if($business->hasMixradius())
             <form action="{{ route('admin.mixradius.sync') }}" method="POST" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='Menyinkronkan…';">
                 @csrf
-                <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition active:scale-95">
+                <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-xs font-bold transition active:scale-95">
                     Sinkronkan Pelanggan Sekarang
                 </button>
             </form>

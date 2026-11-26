@@ -8,12 +8,12 @@
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #1e293b; background: #f1f5f9; font-size: 13px; }
         .toolbar { position: sticky; top: 0; background: #0f172a; color: #fff; padding: 10px 16px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
-        .toolbar button, .toolbar a { background: #0284c7; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; text-decoration: none; }
+        .toolbar button, .toolbar a { background: #117e88; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer; text-decoration: none; }
         .toolbar a { background: transparent; border: 1px solid #475569; }
         .sheet { max-width: 720px; margin: 16px auto; padding: 0 12px; }
         .inv { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; margin-bottom: 16px; page-break-inside: avoid; position: relative; overflow: hidden; }
-        .head { display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid {{ $business->theme_color ?: '#0284c7' }}; padding-bottom: 12px; margin-bottom: 14px; }
-        .biz { font-size: 20px; font-weight: 900; color: {{ $business->theme_color ?: '#0284c7' }}; }
+        .head { display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid {{ $business->theme_color ?: '#117e88' }}; padding-bottom: 12px; margin-bottom: 14px; }
+        .biz { font-size: 20px; font-weight: 900; color: {{ $business->theme_color ?: '#117e88' }}; }
         .muted { color: #64748b; font-size: 12px; }
         .title { text-align: right; }
         .title b { font-size: 18px; letter-spacing: 2px; }

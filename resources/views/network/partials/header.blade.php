@@ -13,7 +13,7 @@
     @if(!empty($actions))
     <div class="flex flex-wrap gap-2">
         @foreach($actions as $a)
-            <a href="{{ $a[1] }}" class="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition {{ ($a[2] ?? false) ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-100' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">{{ $a[0] }}</a>
+            <a href="{{ $a[1] }}" class="px-4 py-2.5 rounded-xl text-xs font-bold transition {{ ($a[2] ?? false) ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-100' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50' }}">{{ $a[0] }}</a>
         @endforeach
     </div>
     @endif
