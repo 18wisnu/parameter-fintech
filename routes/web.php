@@ -191,7 +191,9 @@ use App\Http\Controllers\Admin\SalaryController as AdminSalaryController;
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    return view('welcome');
+    return view('welcome', [
+        'plans' => \App\Models\Plan::where('is_active', true)->orderBy('sort')->orderBy('price')->get(),
+    ]);
 });
 
 Route::get('/auth/google', [SocialiteController::class, 'redirect'])->name('auth.google');
