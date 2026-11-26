@@ -125,17 +125,27 @@ class MixradiusSyncTest extends TestCase
             ]),
         ]);
 
+        // Hasil sinkron lama dari entitas reseller (induk) → harus dinonaktifkan
+        $old = new Customer(['name' => 'Toko Andi', 'type' => 'reseller', 'package_fee' => 0, 'status' => 'active']);
+        $old->business_id = $biz->id;
+        $old->mixradius_entity_id = '50';
+        $old->save();
+
         $this->actingAs($owner)->post(route('admin.mixradius.sync'))->assertSessionHas('success');
         $this->actingAs($owner)->post(route('admin.mixradius.sync')); // tidak duplikat
 
-        $resellers = Customer::withoutGlobalScope('tenant')->where('business_id', $biz->id)->where('type', 'reseller')->get();
-        $this->assertSame(['Toko Andi', 'Warung Sari'], $resellers->pluck('name')->sort()->values()->all());
-        $this->assertFalse($resellers->first()->isLinked());
-        $this->assertEquals(0, $resellers->first()->package_fee);
+        // Penjual voucher di aplikasi = Outlet di server; reseller induk tidak ikut supaya tidak dobel
+        $outlets = Customer::withoutGlobalScope('tenant')->where('business_id', $biz->id)->where('type', 'reseller')->where('status', 'active')->get();
+        $this->assertSame(['Warung Sari'], $outlets->pluck('name')->all());
+        $this->assertSame('51', $outlets->first()->mixradius_entity_id);
+        $this->assertFalse($outlets->first()->isLinked());
+        $this->assertEquals(0, $outlets->first()->package_fee);
+        $this->assertSame('inactive', $old->fresh()->status);
 
         $this->actingAs($owner)->get(route('mobile.deposits.create'))
             ->assertOk()
-            ->assertSee('Toko Andi')
+            ->assertSee('Warung Sari')
+            ->assertSee('Outlet voucher')
             ->assertSee('data-type="VOUCHER"', false);
     }
 

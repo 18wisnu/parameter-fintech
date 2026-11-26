@@ -24,7 +24,7 @@
                 <select id="filter_tipe" class="w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">-- Semua --</option>
                     <option value="MONTHLY" @selected($preset['group'] === 'MONTHLY')>Langganan bulanan (PPPoE / Hotspot / DHCP / Static)</option>
-                    <option value="VOUCHER" @selected($preset['group'] === 'VOUCHER')>Voucher (Reseller / Outlet)</option>
+                    <option value="VOUCHER" @selected($preset['group'] === 'VOUCHER')>Voucher (Outlet)</option>
                 </select>
             </div>
 

@@ -244,17 +244,36 @@ class FinanceBillingTest extends TestCase
         $this->connect();
         $stats = fn ($income, $trx) => ['income_month' => $income, 'trx_count_month' => $trx, 'voucher_gen_month' => 10, 'commission_month' => 1000, 'income_today' => 0, 'voucher_stock' => 5];
         Http::fake([
-            'panel.test/api/v1/entities/3' => Http::response(['success' => true, 'data' => ['id' => 3, 'name' => 'Konter Kecil', 'type' => 'reseller', 'balance' => 0, 'stats' => $stats(50000, 9)]]),
+            'panel.test/api/v1/entities/3' => Http::response(['success' => true, 'data' => ['id' => 3, 'name' => 'Konter Kecil', 'type' => 'outlet', 'balance' => 0, 'stats' => $stats(50000, 9)]]),
             'panel.test/api/v1/entities/4' => Http::response(['success' => true, 'data' => ['id' => 4, 'name' => 'Warung Besar', 'type' => 'outlet', 'balance' => 0, 'stats' => $stats(900000, 2)]]),
+            'panel.test/api/v1/entities/2' => Http::response(['success' => true, 'data' => ['id' => 2, 'name' => 'Induk Reseller', 'type' => 'reseller', 'balance' => 0, 'stats' => $stats(950000, 11)]]),
             'panel.test/api/v1/entities*' => Http::response(['success' => true, 'data' => ['items' => [
                 ['id' => 1, 'name' => 'Pusat', 'type' => 'isp'],
-                ['id' => 3, 'name' => 'Konter Kecil', 'type' => 'reseller'],
-                ['id' => 4, 'name' => 'Warung Besar', 'type' => 'outlet'],
+                ['id' => 2, 'name' => 'Induk Reseller', 'type' => 'reseller'],
+                ['id' => 3, 'name' => 'Konter Kecil', 'type' => 'outlet', 'parent_id' => 2],
+                ['id' => 4, 'name' => 'Warung Besar', 'type' => 'outlet', 'parent_id' => 2],
             ], 'total_pages' => 1]]),
         ]);
 
+        // Setoran Warung Besar di buku kas bulan ini → kolom "Disetor", bukan ditambahkan ke penjualan
+        $this->actingAs($this->owner);
+        $outlet = $this->customer(['name' => 'Warung Besar', 'type' => 'reseller', 'package_fee' => 0, 'mixradius_entity_id' => '4']);
+        $trx = new Transaction([
+            'date' => now()->toDateString(), 'type' => 'income', 'amount' => 600000, 'description' => 'Setoran voucher',
+            'account_id' => ChartOfAccount::byCode(ChartOfAccount::PENDAPATAN_VOUCHER)->id, 'customer_id' => $outlet->id,
+        ]);
+        $trx->business_id = $this->business->id;
+        $trx->user_id = $this->owner->id;
+        $trx->save();
+
         $html = $this->actingAs($this->owner)->get(route('reports.vouchers'))->assertOk()
-            ->assertSee('Rp 950.000')->assertDontSee('Pusat')->assertDontSee('ixradius')->getContent();
+            ->assertSee('Rp 950.000')      // penjualan 2 outlet saja (reseller induk tidak ikut → bukan Rp 1.900.000)
+            ->assertDontSee('Rp 1.900.000')->assertDontSee('Rp 1.550.000')
+            ->assertSee('Rp 600.000')      // sudah disetor
+            ->assertSee('Rp 350.000')      // belum disetor
+            ->assertDontSee('Induk Reseller')
+            ->assertSee('1 entitas reseller')
+            ->assertDontSee('Pusat')->assertDontSee('ixradius')->getContent();
         $this->assertTrue(strpos($html, 'Warung Besar') < strpos($html, 'Konter Kecil'), 'urut pendapatan');
 
         \Illuminate\Support\Facades\Cache::flush();

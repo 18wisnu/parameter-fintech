@@ -73,7 +73,7 @@ class Ledger
     {
         $deposit->loadMissing('customer', 'user');
         $customer = $deposit->customer;
-        // Voucher = penjualan lewat reseller/outlet. Hotspot langganan dibayar bulanan seperti PPPoE.
+        // Voucher = setoran dari Outlet (tipe reseller di aplikasi = Outlet di server). Hotspot langganan dibayar bulanan seperti PPPoE.
         $isVoucher = $customer?->type === 'reseller';
         $account = match (true) {
             $isVoucher => ChartOfAccount::PENDAPATAN_VOUCHER,
