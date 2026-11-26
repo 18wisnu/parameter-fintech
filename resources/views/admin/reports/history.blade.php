@@ -124,7 +124,7 @@
                         @if($trx->proof_image)
                             <a href="{{ asset('storage/' . $trx->proof_image) }}" target="_blank" class="text-xs font-semibold text-slate-500 hover:text-slate-800">Bukti</a>
                         @endif
-                        @if(($userRole ?? null) === 'owner')
+                        @if(in_array($userRole ?? null, ['owner', 'admin'], true))
                             <form action="{{ route('transactions.destroy', $trx->id) }}" method="POST" class="inline" onsubmit="return confirm('Hapus transaksi ini dari buku kas secara permanen?')">
                                 @csrf @method('DELETE')
                                 <button class="ml-2 text-xs text-slate-300 hover:text-rose-600" title="Hapus">✕</button>

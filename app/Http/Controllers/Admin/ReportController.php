@@ -226,8 +226,8 @@ class ReportController extends Controller
 
     public function storeUsage(Request $request)
     {
-        if (auth()->user()->role !== 'owner') {
-            return redirect()->back()->with('error', 'Akses ditolak! Anda bukan Owner.');
+        if (!auth()->user()->isManagerIn()) {
+            return redirect()->back()->with('error', 'Akses ditolak: khusus pemilik atau admin.');
         }
 
         $request->validate([
@@ -250,8 +250,8 @@ class ReportController extends Controller
     public function storeInjection(Request $request)
     {
         // 🔒 CEK ROLE OWNER
-        if (auth()->user()->role !== 'owner') {
-            return redirect()->back()->with('error', 'Akses ditolak! Anda bukan Owner.');
+        if (!auth()->user()->isManagerIn()) {
+            return redirect()->back()->with('error', 'Akses ditolak: khusus pemilik atau admin.');
         }
 
         $request->validate([
@@ -449,7 +449,7 @@ class ReportController extends Controller
 
         return view('admin.reports.vouchers', compact(
             'resellers', 'metrics', 'sort', 'totals', 'networkError', 'limited', 'skipped', 'trend', 'ledgerResellers'
-        ) + ['network' => $business->hasMixradius(), 'isOwner' => auth()->user()->roleIn($business->id) === 'owner']);
+        ) + ['network' => $business->hasMixradius(), 'isOwner' => auth()->user()->isManagerIn($business->id)]);
     }
 
     /**

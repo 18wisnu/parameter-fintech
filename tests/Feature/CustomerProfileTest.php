@@ -238,7 +238,7 @@ class CustomerProfileTest extends TestCase
         $this->connect();
         Http::fake();
         $this->actingAs($this->owner)->get(route('customers.index'))->assertOk()
-            ->assertSee('Keuangan')->assertSee('Jaringan')->assertSee('Pengaturan')->assertSee('Server Jaringan')
+            ->assertSee('Keuangan')->assertSee('Jaringan')->assertSee('Pengaturan')->assertSee('API Integrasi')
             ->assertDontSee('ixradius');
     }
 }

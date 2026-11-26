@@ -27,7 +27,7 @@
 
 @if(!$network)
     <div class="bg-white rounded-2xl border border-slate-100 p-5 mb-4 text-sm text-slate-600">
-        Peringkat outlet diambil dari server jaringan. Hubungkan server dulu di <b>Pengaturan → Server Jaringan</b> (khusus pemilik).
+        Peringkat outlet diambil dari server jaringan. Hubungkan server dulu di <b>Pengaturan → API Integrasi</b> (khusus pemilik).
         Sementara itu, di bawah ditampilkan setoran voucher yang tercatat di buku kas.
     </div>
 @elseif($networkError)

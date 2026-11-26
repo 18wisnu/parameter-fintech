@@ -75,7 +75,7 @@ class SubscriptionTest extends TestCase
         $this->actingAs($this->owner)->get(route('customers.index'))->assertRedirect(route('subscription.index'));
         $this->actingAs($this->owner)->get(route('subscription.index'))->assertOk()->assertSee('Berakhir')->assertSee('Pilih Pro');
         $this->actingAs($kolektor->refresh())->get(route('mobile.home'))->assertRedirect(route('subscription.index'));
-        $this->actingAs($kolektor)->get(route('subscription.index'))->assertOk()->assertSee('dilakukan oleh pemilik usaha');
+        $this->actingAs($kolektor)->get(route('subscription.index'))->assertOk()->assertSee('dilakukan oleh pemilik atau admin usaha');
 
         // Tugas otomatis melewati usaha yang terkunci
         $this->artisan('billing:generate-invoices')->assertSuccessful();
@@ -150,11 +150,15 @@ class SubscriptionTest extends TestCase
         $admin = User::factory()->create();
         $this->business->users()->attach($admin->id, ['role' => 'admin']);
         $admin->switchBusiness($this->business);
-        $this->actingAs($admin->refresh())->post(route('subscription.place'), [
+        // Admin boleh memperpanjang langganan seperti pemilik
+        $this->actingAs($admin->refresh())->get(route('subscription.checkout'))->assertOk();
+
+        $teknisi = User::factory()->create();
+        $this->business->users()->attach($teknisi->id, ['role' => 'teknisi']);
+        $teknisi->switchBusiness($this->business);
+        $this->actingAs($teknisi->refresh())->post(route('subscription.place'), [
             'plan_id' => Plan::first()->id, 'months' => 1, 'method' => 'manual_transfer',
-        ])->assertForbidden();
-        $this->actingAs($admin)->get(route('subscription.checkout'))->assertForbidden();
-        $this->actingAs($admin)->get(route('subscription.index'))->assertOk()->assertDontSee('Pilih Pro');
+        ])->assertStatus(403);
     }
 
     public function test_superadmin_panel_suspend_resume_and_plans(): void

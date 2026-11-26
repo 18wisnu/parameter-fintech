@@ -149,9 +149,8 @@ class FinanceControlsTest extends TestCase
 
         $this->get(route('finance.pl.index', ['month' => '2026-10']))->assertOk()->assertSee('Rp 130.000')->assertSee('Tutup buku');
 
-        // Admin tidak boleh menutup buku; bulan berjalan tidak bisa ditutup
-        $admin = $this->member('admin');
-        $this->actingAs($admin)->post(route('finance.pl.close'), ['month' => '2026-10'])->assertForbidden();
+        // Teknisi tidak boleh menutup buku; bulan berjalan tidak bisa ditutup
+        $this->actingAs($this->member('teknisi'))->post(route('finance.pl.close'), ['month' => '2026-10'])->assertRedirect(route('mobile.home'));
         $this->actingAs($this->owner)->post(route('finance.pl.close'), ['month' => '2026-11'])->assertSessionHas('error');
 
         $this->post(route('finance.pl.close'), ['month' => '2026-10'])->assertSessionHas('success');
@@ -203,8 +202,8 @@ class FinanceControlsTest extends TestCase
         Business::registerFor($other, 'Tenant Lain');
         $this->actingAs($other->refresh())->get(route('admin.audit.index'))->assertOk()->assertDontSee($inv->invoice_number);
 
-        // Admin tidak bisa membuka jejak audit
-        $this->actingAs($this->member('admin'))->get(route('admin.audit.index'))->assertForbidden();
+        // Admin bisa membuka jejak audit (sama seperti pemilik)
+        $this->actingAs($this->member('admin'))->get(route('admin.audit.index'))->assertOk()->assertSee($inv->invoice_number);
     }
 
     public function test_deleting_payment_requires_owner_and_reopens_invoice(): void
@@ -215,7 +214,7 @@ class FinanceControlsTest extends TestCase
         $trx = Transaction::where('invoice_id', $inv->id)->first();
         $this->assertTrue((bool) $trx->is_locked);
 
-        $this->actingAs($this->member('admin'))->delete(route('transactions.destroy', $trx->id))->assertSessionHas('error');
+        $this->actingAs($this->member('kolektor'))->delete(route('transactions.destroy', $trx->id))->assertRedirect(route('mobile.home'));
         $this->assertNotNull(Transaction::find($trx->id));
 
         $this->actingAs($this->owner)->delete(route('transactions.destroy', $trx->id))->assertSessionHas('warning');
@@ -279,8 +278,8 @@ class FinanceControlsTest extends TestCase
         foreach (['finance.cash.index', 'finance.receivables.index', 'finance.pl.index'] as $route) {
             $this->get(route($route))->assertOk();
         }
-        $this->get(route('finance.pl.index'))->assertSee('Hanya pemilik');
-        $this->get(route('dashboard'))->assertOk()->assertSee('Tutup Kas Harian')->assertDontSee('Jejak Audit');
+        $this->get(route('finance.pl.index'))->assertOk()->assertDontSee('Hanya pemilik');
+        $this->get(route('dashboard'))->assertOk()->assertSee('Tutup Kas Harian')->assertSee('Jejak Audit')->assertDontSee('API Integrasi');
     }
 
     public function test_deleting_deposit_transaction_cancels_the_deposit(): void

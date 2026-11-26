@@ -20,7 +20,7 @@ class TransactionController extends Controller
         $transaction = Transaction::findOrFail($id); // tenant scope
 
         $user = auth()->user();
-        if ($transaction->is_locked && $user->roleIn($user->current_business_id) !== 'owner') {
+        if ($transaction->is_locked && !$user->isManagerIn($user->current_business_id)) {
             return back()->with('error', 'Transaksi dari pembayaran tagihan / setoran kolektor hanya bisa dihapus oleh pemilik.');
         }
 

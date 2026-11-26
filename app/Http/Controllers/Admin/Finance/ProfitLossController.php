@@ -43,7 +43,7 @@ class ProfitLossController extends Controller
 
     public function close(Request $request)
     {
-        abort_unless($this->isOwner(), 403, 'Hanya pemilik yang bisa menutup buku.');
+        abort_unless($this->isOwner(), 403, 'Hanya pemilik atau admin yang bisa menutup buku.');
 
         $data = $request->validate(['month' => 'required|date_format:Y-m', 'notes' => 'nullable|string|max:500']);
         $month = Carbon::createFromFormat('Y-m-d', $data['month'] . '-01')->startOfMonth();
@@ -74,7 +74,7 @@ class ProfitLossController extends Controller
 
     public function reopen(PeriodClosing $closing)
     {
-        abort_unless($this->isOwner(), 403, 'Hanya pemilik yang bisa membuka kembali tutup buku.');
+        abort_unless($this->isOwner(), 403, 'Hanya pemilik atau admin yang bisa membuka kembali tutup buku.');
 
         $label = $closing->period->locale('id')->translatedFormat('F Y');
         $month = $closing->period->format('Y-m');
@@ -88,7 +88,7 @@ class ProfitLossController extends Controller
     {
         $user = auth()->user();
 
-        return $user->roleIn($user->current_business_id) === 'owner';
+        return $user->isManagerIn($user->current_business_id);
     }
 
     private function month(?string $value): ?Carbon
