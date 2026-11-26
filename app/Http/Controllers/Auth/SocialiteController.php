@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
@@ -43,10 +46,33 @@ class SocialiteController extends Controller
                 // Panggil "Satpam" untuk mengarahkan halaman berdasarkan role
                 return $this->redirectByRole($user);
 
-            } else {
-                // Jika email tidak dikenal, tolak!
-                return redirect('/login')->with('error', 'Email Anda tidak terdaftar di sistem NetBill.');
             }
+
+            if (blank($googleUser->email)) {
+                return redirect('/login')->with('error', 'Akun Google Anda tidak memberikan alamat email. Silakan daftar dengan email & kata sandi.');
+            }
+
+            // Email belum terdaftar: buat akun baru, lalu arahkan untuk membuat usaha (masa coba gratis)
+            $user = User::create([
+                'name' => $googleUser->name ?: strstr($googleUser->email, '@', true),
+                'email' => strtolower($googleUser->email),
+                'password' => Hash::make(Str::random(40)), // masuk lewat Google; kata sandi bisa diatur nanti
+                'role' => 'owner',
+                'google_id' => $googleUser->id,
+            ]);
+            $user->forceFill(['email_verified_at' => now()])->save(); // email sudah diverifikasi Google
+
+            event(new Registered($user));
+            Auth::login($user);
+
+            \App\Models\ActivityLog::create([
+                'user_id' => $user->id,
+                'activity' => 'Daftar via Google',
+                'ip_address' => request()->ip(),
+            ]);
+
+            return redirect()->route('admin.business.index')
+                ->with('success', 'Akun Anda berhasil dibuat. Buat usaha pertama Anda untuk mulai masa coba gratis. Kalau Anda pegawai, minta pemilik usaha menambahkan email ini di menu Pegawai.');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::warning('Login Google gagal: ' . $e->getMessage(), ['exception' => get_class($e)]);
 
