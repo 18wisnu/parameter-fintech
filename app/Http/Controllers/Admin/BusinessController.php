@@ -47,6 +47,10 @@ class BusinessController extends Controller
             abort(403, 'Anda tidak memiliki akses ke bisnis ini.');
         }
 
+        if ($business->isPendingDeletion()) {
+            return redirect()->route('admin.business.index')->with('error', "Usaha {$business->name} sedang menunggu dihapus dan tidak bisa dibuka.");
+        }
+
         // Auto-link owner to pivot table if missing
         if ($isOwner && !$isLinked) {
             $user->businesses()->syncWithoutDetaching([$business->id => ['role' => 'owner']]);

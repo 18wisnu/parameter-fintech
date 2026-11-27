@@ -47,7 +47,7 @@ class CustomerController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $customerCounts = Customer::withoutGlobalScope('tenant')
+        $customerCounts = Customer::withoutGlobalScope('tenant')->subscribers()
             ->selectRaw('business_id, COUNT(*) as n')->groupBy('business_id')->pluck('n', 'business_id');
         $lastSeen = DB::table('sessions')->whereNotNull('user_id')
             ->selectRaw('user_id, MAX(last_activity) as t')->groupBy('user_id')->pluck('t', 'user_id');
@@ -75,7 +75,7 @@ class CustomerController extends Controller
                 fputcsv($out, [
                     $r->user->name, $r->user->email, $r->user->google_id ? 'ya' : 'tidak',
                     $b->name, $b->plan->name ?? '-', Business::SUBSCRIPTION_LABELS[$b->subscriptionStatus()],
-                    $b->accessEndsAt()?->format('Y-m-d') ?? '-', Customer::withoutGlobalScope('tenant')->where('business_id', $b->id)->count(),
+                    $b->accessEndsAt()?->format('Y-m-d') ?? '-', $b->customerCount(),
                     $r->user->created_at?->format('Y-m-d'), $r->last_seen?->format('Y-m-d H:i') ?? '-',
                 ]);
             }

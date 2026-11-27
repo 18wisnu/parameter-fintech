@@ -17,7 +17,7 @@ class TenantController extends Controller
     {
         $businesses = Business::with(['plan', 'owner'])->orderBy('name')->get();
 
-        $customerCounts = Customer::withoutGlobalScope('tenant')
+        $customerCounts = Customer::withoutGlobalScope('tenant')->subscribers()
             ->selectRaw('business_id, COUNT(*) as n')->groupBy('business_id')->pluck('n', 'business_id');
         $staffCounts = DB::table('business_user')
             ->selectRaw('business_id, COUNT(*) as n')->groupBy('business_id')->pluck('n', 'business_id');

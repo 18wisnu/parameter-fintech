@@ -14,7 +14,7 @@
     $wa = $customer->phone ? preg_replace('/^0/', '62', preg_replace('/\D/', '', $customer->phone)) : null;
 @endphp
 
-<a href="{{ route('customers.index') }}" class="text-sm text-slate-500 hover:text-slate-800">← Pelanggan</a>
+@if($customer->isOutlet())<a href="{{ route('outlets.index') }}" class="text-sm text-slate-500 hover:text-slate-800">← Outlet</a>@else<a href="{{ route('customers.index') }}" class="text-sm text-slate-500 hover:text-slate-800">← Pelanggan</a>@endif
 
 <div class="flex flex-wrap items-start justify-between gap-3 mt-2 mb-6">
     <div>

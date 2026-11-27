@@ -55,7 +55,7 @@
     <input type="hidden" name="status" value="{{ request('status') }}">
     <select name="type" onchange="this.form.submit()" class="py-2 rounded-xl border-slate-200 text-sm text-slate-600">
         <option value="">Semua layanan</option>
-        @foreach(\App\Models\Customer::TYPES as $k => $v)<option value="{{ $k }}" @selected(request('type') === $k)>{{ $v }}</option>@endforeach
+        @foreach(\App\Models\Customer::subscriberTypes() as $k => $v)<option value="{{ $k }}" @selected(request('type') === $k)>{{ $v }}</option>@endforeach
     </select>
     <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari nama, kode, HP, username…" class="flex-1 min-w-[200px] py-2 px-3 rounded-xl border-slate-200 text-sm">
 </form>
