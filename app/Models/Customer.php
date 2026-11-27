@@ -14,6 +14,30 @@ class Customer extends Model
     public const TYPES = ['pppoe' => 'PPPoE', 'hotspot' => 'Hotspot (langganan)', 'general' => 'DHCP / Static', 'reseller' => 'Outlet voucher'];
     public const STATUSES = ['active' => 'Aktif', 'isolated' => 'Isolir', 'inactive' => 'Nonaktif'];
     public const BILLING_TYPES = ['prepaid' => 'Prabayar', 'postpaid' => 'Pascabayar'];
+
+    /** Tipe untuk pelanggan langganan (menu Pelanggan). Outlet voucher punya menu sendiri. */
+    public const OUTLET_TYPE = 'reseller';
+
+    public static function subscriberTypes(): array
+    {
+        return array_diff_key(self::TYPES, [self::OUTLET_TYPE => true]);
+    }
+
+    public function isOutlet(): bool
+    {
+        return $this->type === self::OUTLET_TYPE;
+    }
+
+    /** Pelanggan langganan saja (tanpa outlet voucher). */
+    public function scopeSubscribers($query)
+    {
+        return $query->where(fn ($q) => $q->whereNull('type')->orWhere('type', '!=', self::OUTLET_TYPE));
+    }
+
+    public function scopeOutlets($query)
+    {
+        return $query->where('type', self::OUTLET_TYPE);
+    }
     public const BILLING_CYCLES = ['monthly' => 'Bulanan', 'quarterly' => '3 Bulan', 'semi_annually' => '6 Bulan', 'annually' => 'Tahunan'];
 
     protected $fillable = [

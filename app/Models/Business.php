@@ -48,7 +48,30 @@ class Business extends Model
         'trial_ends_at' => 'date',
         'subscription_ends_at' => 'date',
         'suspended_at' => 'datetime',
+        'deletion_scheduled_at' => 'datetime',
     ];
+
+    /** Masa tunggu sebelum usaha yang diminta dihapus benar-benar dihapus permanen (hari). */
+    public const DELETION_GRACE_DAYS = 30;
+
+    public function isPendingDeletion(): bool
+    {
+        return $this->deletion_scheduled_at !== null;
+    }
+
+    /** Kunci usaha dan jadwalkan penghapusan permanen. */
+    public function scheduleDeletion(User $by): void
+    {
+        $this->forceFill([
+            'deletion_scheduled_at' => now()->addDays(self::DELETION_GRACE_DAYS),
+            'deletion_requested_by' => $by->id,
+        ])->save();
+    }
+
+    public function cancelDeletion(): void
+    {
+        $this->forceFill(['deletion_scheduled_at' => null, 'deletion_requested_by' => null])->save();
+    }
 
     /**
      * Daftarkan tenant baru. Yang mendaftarkan otomatis menjadi owner tenant ini
@@ -186,7 +209,8 @@ class Business extends Model
 
     public function customerCount(): int
     {
-        return Customer::withoutGlobalScope('tenant')->where('business_id', $this->id)->count();
+        // Outlet voucher tidak dihitung dalam batas paket
+        return Customer::withoutGlobalScope('tenant')->where('business_id', $this->id)->subscribers()->count();
     }
 
     /** Masih boleh menambah $n pelanggan secara manual / impor? */

@@ -47,6 +47,7 @@
     $main = [
         ['dashboard', 'dashboard', 'Dashboard', 'home', $isManager],
         ['customers.index', 'customers.*', 'Pelanggan', 'users', $isManager && $f('customer_data')],
+        ['outlets.index', 'outlets.*', 'Outlet', 'building', $isManager && $f('customer_data')],
         ['invoices.index', 'invoices.*', 'Tagihan', 'bill', $isManager && $f('invoices')],
     ];
 
@@ -79,6 +80,7 @@
             ['admin.audit.index', 'admin.audit.*', 'Jejak Audit', $isManager],
             ['admin.logs.index', 'admin.logs.*', 'Log Sistem', $isManager],
             ['admin.system.index', 'admin.system.*', 'Update Sistem', $isOwner],
+            ['admin.danger.index', 'admin.danger.*', 'Reset & Hapus Usaha', $isOwner],
         ]],
     ];
 

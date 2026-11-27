@@ -22,3 +22,6 @@ if (config('mixradius.auto_sync')) {
     ->monthlyOn(1, '00:15')->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::command('billing:generate-invoices')
     ->hourly()->when(fn () => now()->day === 1 && now()->hour > 0)->withoutOverlapping();
+
+// Usaha yang diminta dihapus: hapus permanen setelah masa tunggu 30 hari lewat
+\Illuminate\Support\Facades\Schedule::command('netbill:purge-businesses')->dailyAt('02:30')->withoutOverlapping();

@@ -239,6 +239,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/business/select', [\App\Http\Controllers\Admin\BusinessController::class, 'index'])->name('admin.business.index');
     Route::post('/business/create', [\App\Http\Controllers\Admin\BusinessController::class, 'store'])->name('admin.business.store');
     Route::post('/business/{business}/select', [\App\Http\Controllers\Admin\BusinessController::class, 'select'])->name('admin.business.select');
+    Route::post('/business/{business}/restore', [\App\Http\Controllers\Admin\DangerZoneController::class, 'restore'])->name('admin.business.restore');
     Route::post('/business/invitations/{invitation}/accept', [\App\Http\Controllers\Admin\InvitationController::class, 'accept'])->name('admin.business.invitations.accept');
     Route::post('/business/invitations/{invitation}/decline', [\App\Http\Controllers\Admin\InvitationController::class, 'decline'])->name('admin.business.invitations.decline');
 
@@ -290,6 +291,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/integrations/server', [\App\Http\Controllers\Admin\MixradiusController::class, 'edit'])->name('admin.mixradius.edit');
         Route::put('/integrations/server', [\App\Http\Controllers\Admin\MixradiusController::class, 'update'])->name('admin.mixradius.update');
         Route::post('/integrations/server/test', [\App\Http\Controllers\Admin\MixradiusController::class, 'test'])->name('admin.mixradius.test');
+
+        // Zona bahaya: reset data & hapus usaha
+        Route::get('/settings/danger-zone', [\App\Http\Controllers\Admin\DangerZoneController::class, 'index'])->name('admin.danger.index');
+        Route::post('/settings/danger-zone/reset', [\App\Http\Controllers\Admin\DangerZoneController::class, 'reset'])->name('admin.danger.reset');
+        Route::delete('/settings/danger-zone/business', [\App\Http\Controllers\Admin\DangerZoneController::class, 'destroy'])->name('admin.danger.destroy');
     });
 
     // --- OWNER & ADMIN TENANT AKTIF ---
@@ -334,6 +340,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');
     Route::post('customers/import', [CustomerController::class, 'import'])->name('customers.import');
     Route::resource('customers', CustomerController::class);
+    Route::get('outlets', [\App\Http\Controllers\Admin\OutletController::class, 'index'])->name('outlets.index');
 
     // --- TAGIHAN (Invoice) ---
     Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');

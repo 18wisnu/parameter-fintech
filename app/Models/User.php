@@ -112,12 +112,16 @@ class User extends Authenticatable
             $this->businesses()->attach($id, ['role' => 'owner']);
         }
 
-        if ($this->current_business_id && $this->belongsToBusiness($this->current_business_id)) {
+        // Usaha yang sedang menunggu dihapus tidak bisa dibuka
+        $usable = fn ($id) => $this->belongsToBusiness($id)
+            && Business::whereKey($id)->whereNull('deletion_scheduled_at')->exists();
+
+        if ($this->current_business_id && $usable($this->current_business_id)) {
             $this->switchBusiness($this->current_business_id); // sinkronkan role
             return true;
         }
 
-        $first = $this->businesses()->orderBy('businesses.id')->first();
+        $first = $this->businesses()->whereNull('businesses.deletion_scheduled_at')->orderBy('businesses.id')->first();
         if ($first) {
             $this->switchBusiness($first);
             return true;

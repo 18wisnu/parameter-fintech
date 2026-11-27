@@ -72,6 +72,21 @@
                     <h2 class="font-bold text-lg mb-4">Usaha terdaftar</h2>
                     <div class="space-y-2.5 flex-1 overflow-y-auto max-h-[420px]">
                         @forelse($businesses as $item)
+                        @if($item->isPendingDeletion())
+                        <div class="w-full bg-rose-500/10 ring-1 ring-rose-300/30 px-4 py-3.5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-white/80 truncate">{{ $item->name }}</p>
+                                <p class="text-xs text-rose-200 mt-0.5">Dikunci · dihapus permanen {{ $item->deletion_scheduled_at->translatedFormat('d F Y') }}</p>
+                            </div>
+                            @if((int) $item->owner_id === (int) Auth::id())
+                            <form action="{{ route('admin.business.restore', $item) }}" method="POST" class="shrink-0">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-navy-950 hover:bg-gold-300">Batalkan penghapusan</button>
+                            </form>
+                            @endif
+                        </div>
+                        @continue
+                        @endif
                         <form action="{{ route('admin.business.select', $item->id) }}" method="POST">
                             @csrf
                             <button type="submit" class="w-full bg-white/5 hover:bg-white/10 ring-1 ring-white/10 hover:ring-brand-300/60 px-4 py-3.5 rounded-xl flex items-center justify-between gap-3 transition group text-left">

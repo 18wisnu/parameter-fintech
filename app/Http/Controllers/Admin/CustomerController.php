@@ -24,7 +24,12 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Customer::query()->orderBy('name');
+        if ($request->type === Customer::OUTLET_TYPE) {
+            return redirect()->route('outlets.index');
+        }
+
+        // Outlet voucher punya menu sendiri (Outlet)
+        $query = Customer::query()->subscribers()->orderBy('name');
 
         if ($search = trim((string) $request->search)) {
             $query->where(function ($q) use ($search) {
@@ -44,17 +49,17 @@ class CustomerController extends Controller
             default => null,
         };
 
-        if ($request->filled('type') && array_key_exists($request->type, Customer::TYPES)) {
+        if ($request->filled('type') && array_key_exists($request->type, Customer::subscriberTypes())) {
             $query->where('type', $request->type);
         }
 
         $customers = $query->paginate(20)->withQueryString();
 
         $counts = [
-            'all' => Customer::count(),
-            'active' => Customer::where('status', '!=', 'inactive')->where('is_isolated', false)->where('status', '!=', 'isolated')->count(),
-            'isolated' => Customer::where('status', '!=', 'inactive')->where(fn ($q) => $q->where('is_isolated', true)->orWhere('status', 'isolated'))->count(),
-            'inactive' => Customer::where('status', 'inactive')->count(),
+            'all' => Customer::subscribers()->count(),
+            'active' => Customer::subscribers()->where('status', '!=', 'inactive')->where('is_isolated', false)->where('status', '!=', 'isolated')->count(),
+            'isolated' => Customer::subscribers()->where('status', '!=', 'inactive')->where(fn ($q) => $q->where('is_isolated', true)->orWhere('status', 'isolated'))->count(),
+            'inactive' => Customer::subscribers()->where('status', 'inactive')->count(),
         ];
 
         return view('admin.customers.index', compact('customers', 'counts') + ['network' => $this->business()->hasMixradius()]);
@@ -80,9 +85,11 @@ class CustomerController extends Controller
         return view('admin.customers.show', compact('customer', 'invoices', 'remote', 'remoteError'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.customers.create', $this->formData(new Customer(['type' => 'pppoe', 'billing_type' => 'prepaid', 'billing_cycle' => 'monthly'])));
+        $type = array_key_exists((string) $request->type, Customer::TYPES) ? $request->type : 'pppoe';
+
+        return view('admin.customers.create', $this->formData(new Customer(['type' => $type, 'billing_type' => 'prepaid', 'billing_cycle' => 'monthly'])));
     }
 
     public function store(Request $request)
@@ -90,7 +97,9 @@ class CustomerController extends Controller
         $business = $this->business();
         $network = $business->hasMixradius();
 
-        if (!$business->canAddCustomers()) {
+        // Outlet voucher tidak dihitung dalam batas paket
+        $isOutlet = !$network && $request->type === Customer::OUTLET_TYPE;
+        if (!$isOutlet && !$business->canAddCustomers()) {
             return back()->withInput()->with('error', $this->limitMessage($business));
         }
 
@@ -206,9 +215,12 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        $wasOutlet = $customer->isOutlet();
         $customer->delete();
 
-        return redirect()->route('customers.index')->with('success', 'Pelanggan dihapus dari aplikasi.');
+        return $wasOutlet
+            ? redirect()->route('outlets.index')->with('success', 'Outlet dihapus dari aplikasi.')
+            : redirect()->route('customers.index')->with('success', 'Pelanggan dihapus dari aplikasi.');
     }
 
     // Export & Import

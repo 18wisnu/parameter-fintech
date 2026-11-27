@@ -42,6 +42,7 @@ class InvoiceGenerator
             ->where('business_id', $this->business->id)
             ->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'inactive'))
             ->where('package_fee', '>', 0)
+            ->subscribers() // outlet voucher tidak ditagih bulanan
             ->get();
 
         foreach ($customers as $customer) {
